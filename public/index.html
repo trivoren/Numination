@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Numination - La primera IA educativa 100% colombiana" />
+  <meta name="theme-color" content="#003893" />
+  <title>Numination 🇨🇴 — La IA que habla el idioma de nuestra educación</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════════════
+       PANTALLA 1 — LANDING
+       ═══════════════════════════════════════════════════════ -->
+  <div id="screen-landing" class="screen active">
+
+    <nav class="nav">
+      <div class="nav-inner">
+        <a href="#" class="nav-brand" data-nav="landing">
+          <span class="flag"><i></i><i></i><i></i></span>
+          <span class="nav-brand-text">Numination</span>
+        </a>
+
+        <ul class="nav-menu">
+          <li><a href="#features">Características</a></li>
+          <li><a href="#roles">Para quién</a></li>
+          <li><a href="#impact">Impacto</a></li>
+          <li><a href="#about">Nosotros</a></li>
+        </ul>
+
+        <div class="nav-cta">
+          <button class="btn btn-ghost" id="nav-theme">🌙</button>
+          <button class="btn btn-outline" data-action="open-chat-guest">Probar</button>
+          <button class="btn btn-primary" data-action="open-chat-guest">Comenzar</button>
+        </div>
+      </div>
+    </nav>
+
+    <header class="hero">
+      <div class="hero-bg">
+        <span class="blob blob-a"></span>
+        <span class="blob blob-b"></span>
+        <span class="blob blob-c"></span>
+      </div>
+
+      <div class="hero-inner">
+        <div class="hero-pill">
+          <span class="dot-live"></span>
+          Hecho en Colombia 🇨🇴 · 100% gratis
+        </div>
+
+        <h1 class="hero-title">
+          La IA que habla el
+          <span class="grad">idioma de nuestra educación</span>
+        </h1>
+
+        <p class="hero-lead">
+          Numination es la primera inteligencia artificial educativa 100% colombiana.
+          Tutor personal 24/7 para estudiantes y asistente pedagógico para profesores,
+          contextualizado a los DBA, estándares del MEN y pruebas Saber.
+        </p>
+
+        <div class="hero-actions">
+          <button class="btn btn-primary btn-xl" data-action="open-chat-guest">
+            Comenzar gratis
+            <span class="arrow">→</span>
+          </button>
+          <button class="btn btn-outline btn-xl" data-action="scroll-features">
+            Ver características
+          </button>
+        </div>
+
+        <div class="hero-stats">
+          <div class="hstat">
+            <div class="hstat-val" data-count="1100">0</div>
+            <div class="hstat-lbl">Municipios</div>
+          </div>
+          <div class="hstat">
+            <div class="hstat-val" data-count="24">0</div>
+            <div class="hstat-lbl">Horas disponible</div>
+          </div>
+          <div class="hstat">
+            <div class="hstat-val" data-count="2">0</div>
+            <div class="hstat-lbl">Motores IA</div>
+          </div>
+          <div class="hstat">
+            <div class="hstat-val" data-count="100">0</div>
+            <div class="hstat-lbl">% colombiano</div>
+          </div>
+        </div>
+
+        <div class="hero-mock">
+          <div class="mock-bar">
+            <span class="mock-dot dot-r"></span>
+            <span class="mock-dot dot-y"></span>
+            <span class="mock-dot dot-g"></span>
+            <span class="mock-url">numination.co</span>
+          </div>
+          <div class="mock-body">
+            <div class="mock-row mock-user">Explícame la fotosíntesis con un ejemplo del café</div>
+            <div class="mock-row mock-bot">
+              ¡Claro! Piensa en un cafetal en el Eje Cafetero ☕. Las hojas toman luz
+              del sol, agua y CO₂ para producir su alimento y liberar oxígeno. 🌱
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <section class="section" id="features">
+      <div class="container">
+        <div class="sec-head">
+          <span class="tag">Características</span>
+          <h2 class="sec-title">Todo lo que necesitas, en un solo lugar</h2>
+          <p class="sec-sub">Diseñado desde cero para el contexto educativo colombiano.</p>
+        </div>
+
+        <div class="grid-feat">
+          <article class="feat">
+            <div class="feat-icon i-blue">📘</div>
+            <h3>Planes de clase</h3>
+            <p>Alineados con los DBA y estándares del MEN, listos en minutos.</p>
+          </article>
+          <article class="feat">
+            <div class="feat-icon i-yellow">✅</div>
+            <h3>Evaluaciones tipo Saber</h3>
+            <p>Formato ICFES, rúbricas y análisis por competencia.</p>
+          </article>
+          <article class="feat">
+            <div class="feat-icon i-red">⏰</div>
+            <h3>Tutoría 24/7</h3>
+            <p>Un tutor paciente que repite las veces que necesites.</p>
+          </article>
+          <article class="feat">
+            <div class="feat-icon i-green">🎯</div>
+            <h3>Adaptación DUA</h3>
+            <p>Versiones diferenciadas para distintos ritmos de aprendizaje.</p>
+          </article>
+          <article class="feat">
+            <div class="feat-icon i-purple">🇨🇴</div>
+            <h3>Contexto colombiano</h3>
+            <p>Ejemplos con café, cumbia, ríos Magdalena y Cauca. Nada importado.</p>
+          </article>
+          <article class="feat">
+            <div class="feat-icon i-cyan">⚡</div>
+            <h3>Doble motor IA</h3>
+            <p>Gemini para razonamiento profundo, Mistral para tareas rápidas.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-alt" id="roles">
+      <div class="container">
+        <div class="sec-head">
+          <span class="tag">Para quién</span>
+          <h2 class="sec-title">Dos experiencias, un mismo propósito</h2>
+        </div>
+
+        <div class="grid-roles">
+          <article class="role role-teacher">
+            <div class="role-emoji">👨‍🏫</div>
+            <h3>Para profesores</h3>
+            <p class="role-lead">Recupera tu tiempo, enfócate en enseñar</p>
+            <ul>
+              <li>Planes de clase listos en minutos</li>
+              <li>Evaluaciones alineadas con DBA</li>
+              <li>Rúbricas con criterios claros</li>
+              <li>Adaptaciones DUA automáticas</li>
+              <li>Retroalimentación asistida por IA</li>
+            </ul>
+            <button class="btn btn-primary btn-block" data-role-start="teacher">Entrar como profesor</button>
+          </article>
+
+          <article class="role role-student">
+            <div class="role-emoji">🎓</div>
+            <h3>Para estudiantes</h3>
+            <p class="role-lead">Un tutor paciente disponible siempre</p>
+            <ul>
+              <li>Explicaciones paso a paso</li>
+              <li>Preparación para Saber 11</li>
+              <li>Técnicas de estudio efectivas</li>
+              <li>Apoyo motivacional real</li>
+              <li>Ayuda con tareas sin hacer trampa</li>
+            </ul>
+            <button class="btn btn-outline btn-block" data-role-start="student">Entrar como estudiante</button>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="impact">
+      <div class="container">
+        <div class="sec-head">
+          <span class="tag">Nuestro compromiso</span>
+          <h2 class="sec-title">Cerrar las brechas educativas de Colombia</h2>
+          <p class="sec-sub">Una tutoría de calidad sin importar tu código postal.</p>
+        </div>
+        <div class="grid-impact">
+          <div class="impact"><div class="impact-num">32</div><div class="impact-lbl">Departamentos</div></div>
+          <div class="impact"><div class="impact-num">1100+</div><div class="impact-lbl">Municipios</div></div>
+          <div class="impact"><div class="impact-num">24/7</div><div class="impact-lbl">Disponibilidad</div></div>
+          <div class="impact"><div class="impact-num">$0</div><div class="impact-lbl">Costo estudiantes</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-dark" id="about">
+      <div class="container">
+        <div class="about-grid">
+          <div>
+            <span class="tag tag-light">Nosotros</span>
+            <h2 class="about-title">Hecho por jóvenes colombianos, para Colombia</h2>
+            <p class="about-p">
+              Numination fue creada por <strong>Álvaro García Gómez</strong> y
+              <strong>Robinson Rodríguez Gómez</strong>, dos estudiantes
+              colombianos de 14 años que soñaron con transformar la educación
+              de su país.
+            </p>
+            <p class="about-p">
+              No es una IA genérica importada. Es un asistente pedagógico pensado
+              desde el contexto colombiano: sus regiones, su cultura, su sistema
+              educativo, sus pruebas Saber y sus DBA.
+            </p>
+            <blockquote class="about-quote">
+              "Queremos que ningún estudiante colombiano se quede sin un tutor
+              que le explique con paciencia, sin importar dónde viva."
+            </blockquote>
+          </div>
+          <div class="creators">
+            <div class="creator">
+              <div class="creator-av">Á</div>
+              <div>
+                <div class="creator-name">Álvaro García Gómez</div>
+                <div class="creator-role">Cofundador · 14 años</div>
+              </div>
+            </div>
+            <div class="creator">
+              <div class="creator-av">R</div>
+              <div>
+                <div class="creator-name">Robinson Rodríguez Gómez</div>
+                <div class="creator-role">Cofundador · 14 años</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta">
+      <div class="container cta-inner">
+        <h2>¿Listo para probar Numination?</h2>
+        <p>Empieza gratis en menos de un minuto.</p>
+        <button class="btn btn-yellow btn-xl" data-action="open-chat-guest">
+          Comenzar ahora
+        </button>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-brand">
+          <span class="flag"><i></i><i></i><i></i></span>
+          <span>Numination</span>
+        </div>
+        <p class="footer-tag">La IA que habla el idioma de nuestra educación 🇨🇴</p>
+        <p class="footer-copy">© 2026 Numination · Hecho con 💛💙❤️ en Colombia</p>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       PANTALLA 2 — CHAT
+       ═══════════════════════════════════════════════════════ -->
+  <div id="screen-chat" class="screen">
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-head">
+        <a href="#" class="sidebar-brand" data-nav="landing">
+          <span class="flag"><i></i><i></i><i></i></span>
+          <span>Numination</span>
+        </a>
+      </div>
+
+      <button class="btn-new" id="btn-new-chat">
+        <span>+</span> Nueva conversación
+      </button>
+
+      <div class="sidebar-scroll" id="conversations">
+        <div class="sidebar-label">Recientes</div>
+        <div id="conv-list"></div>
+      </div>
+
+      <div class="sidebar-foot">
+        <button class="side-action" id="btn-settings">
+          <span>⚙️</span> Ajustes
+        </button>
+        <button class="side-action" id="btn-clear">
+          <span>🗑️</span> Borrar todo
+        </button>
+      </div>
+    </aside>
+
+    <!-- Área principal -->
+    <main class="main">
+      <header class="chat-header">
+        <button class="menu-toggle" id="menu-toggle">☰</button>
+
+        <div class="header-brand">
+          <span class="flag small"><i></i><i></i><i></i></span>
+          <span class="header-title">Numination</span>
+        </div>
+
+        <div class="header-tabs">
+          <button class="tab active" data-role="student">🎓 Estudiante</button>
+          <button class="tab" data-role="teacher">👨‍🏫 Profesor</button>
+        </div>
+
+        <div class="header-right">
+          <div class="provider-tabs">
+            <button class="ptab active" data-provider="gemini">✨ Gemini</button>
+            <button class="ptab" data-provider="mistral">🌪️ Mistral</button>
+          </div>
+          <button class="icon-btn" id="btn-theme-chat" title="Modo oscuro">🌙</button>
+        </div>
+      </header>
+
+      <div class="chat-scroll" id="chat-scroll">
+        <div class="chat-empty" id="chat-empty">
+          <div class="empty-emoji">🇨🇴</div>
+          <h2>¡Hola! Soy Numination</h2>
+          <p>Estoy aquí para acompañarte. ¿Sobre qué quieres hablar hoy?</p>
+          <div class="suggest" id="suggest-box"></div>
+        </div>
+        <div id="messages"></div>
+      </div>
+
+      <footer class="composer">
+        <div class="composer-box">
+          <textarea
+            id="input"
+            rows="1"
+            maxlength="4000"
+            placeholder="Escribe tu pregunta... (Enter para enviar, Shift+Enter para salto)"
+          ></textarea>
+         <button id="mic-btn" class="mic" title="Dictar por voz">
+  <span>🎤</span>
+</button>
+<button id="send-btn" class="send" title="Enviar">
+  <span>➤</span>
+</button>
+        </div>
+        <div class="composer-hint">
+          <span id="char-count">0 / 4000</span>
+          <span>·</span>
+          <span id="provider-hint">Respondiendo con Gemini</span>
+        </div>
+      </footer>
+    </main>
+
+    <!-- Overlay sidebar móvil -->
+    <div class="overlay" id="overlay"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       MODAL — AJUSTES
+       ═══════════════════════════════════════════════════════ -->
+  <div class="modal" id="modal-settings">
+    <div class="modal-box">
+      <button class="modal-x" id="modal-settings-close">×</button>
+      <h2 class="modal-title">Ajustes</h2>
+
+      <div class="set-row">
+        <label>Tema</label>
+        <div class="seg">
+          <button data-theme="light">☀️ Claro</button>
+          <button data-theme="dark">🌙 Oscuro</button>
+        </div>
+      </div>
+
+      <div class="set-row">
+        <label>Motor preferido</label>
+        <div class="seg">
+          <button data-prov="gemini">✨ Gemini</button>
+          <button data-prov="mistral">🌪️ Mistral</button>
+        </div>
+      </div>
+
+      <div class="set-row">
+        <label>Rol actual</label>
+        <div class="seg">
+          <button data-role-set="student">🎓 Estudiante</button>
+          <button data-role-set="teacher">👨‍🏫 Profesor</button>
+        </div>
+      </div>
+
+      <div class="set-row">
+        <label>Exportar</label>
+        <button class="btn btn-outline" id="btn-export">📥 Descargar conversación</button>
+      </div>
+
+      <div class="set-row">
+        <label>Acerca de</label>
+        <p class="set-note">
+          Numination v1.0 · Creada por Álvaro García Gómez y Robinson Rodríguez Gómez.
+          Hecha con 💛💙❤️ en Colombia.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toasts -->
+  <div class="toasts" id="toasts"></div>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

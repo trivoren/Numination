@@ -1,0 +1,59 @@
+# ══════════════════════════════════════════════════════════════
+#  NUMINATION — Archivos que NUNCA deben subirse a Git
+# ══════════════════════════════════════════════════════════════
+
+# ─── Dependencias ───
+node_modules/
+package-lock.json
+
+# ─── Secretos y API keys (¡NUNCA SUBIR!) ───
+env.local.js
+.env
+.env.*
+!.env.example
+
+# ─── Firebase ───
+serviceAccountKey.json
+.firebase/
+firebase-debug.log
+
+# ─── Logs ───
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ─── Sistema operativo ───
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ─── Editores ───
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+
+# ─── Build y temporales ───
+dist/
+build/
+.cache/
+tmp/
+temp/
+*.tmp
+
+# ─── Cobertura de tests ───
+coverage/
+.nyc_output/
+
+# ─── Otros ───
+*.bak
+*.orig

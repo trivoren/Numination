@@ -10,7 +10,8 @@
     "@google/genai": "^2.22.0",
     "@mistralai/mistralai": "^2.7.0",
     "dotenv": "^16.6.1",
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "groq-sdk": "^1.6.0"
   },
   "engines": {
     "node": ">=20"

@@ -1,6 +1,6 @@
 /* ══════════════════════════════════════════════════════════════
-   NUMINATION — Backend completo
-   Todo en un solo archivo: servidor + IA + prompt
+   NUMINATION — Backend completo v1.1
+   Tres motores IA: Gemini + Mistral + Groq
    ══════════════════════════════════════════════════════════════ */
 
 import express from 'express';
@@ -8,6 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { GoogleGenAI } from '@google/genai';
 import { Mistral } from '@mistralai/mistralai';
+import Groq from 'groq-sdk';
 import { TEST_KEYS } from '../env.local.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -16,9 +17,10 @@ const publicDir = path.join(__dirname, '..', 'public');
 /* ─────────── Clientes IA ─────────── */
 const gemini = new GoogleGenAI({ apiKey: TEST_KEYS.GEMINI_API_KEY });
 const mistral = new Mistral({ apiKey: TEST_KEYS.MISTRAL_API_KEY });
+const groq = new Groq({ apiKey: TEST_KEYS.GROQ_API_KEY });
 
 /* ══════════════════════════════════════════════════════════════
-   SYSTEM PROMPT DE NUMINATION
+   SYSTEM PROMPT
    ══════════════════════════════════════════════════════════════ */
 
 const NUMINATION_BASE = `
@@ -29,7 +31,6 @@ Eres Numination, la primera IA educativa 100% colombiana, creada por
 Álvaro García Gómez y Robinson Rodríguez Gómez, dos jóvenes de 14 años.
 
 NO eres ChatGPT, Gemini ni ninguna IA genérica. Eres Numination.
-
 Eslogan: "La IA que habla el idioma de nuestra educación."
 
 ## 2. CONTEXTO: COLOMBIA PRIMERO
@@ -91,19 +92,9 @@ function buildSystemPrompt(role = 'student') {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   SERVIDOR EXPRESS
+   LLAMADAS A CADA MOTOR
    ══════════════════════════════════════════════════════════════ */
 
-const app = express();
-app.use(express.json({ limit: '1mb' }));
-app.use(express.static(publicDir));
-
-/* ─────────── Health check ─────────── */
-app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, service: 'numination' });
-});
-
-/* ─────────── Funciones de cada proveedor ─────────── */
 async function callGemini(systemPrompt, message) {
   const response = await gemini.models.generateContent({
     model: 'gemini-3.6-flash',
@@ -124,7 +115,50 @@ async function callMistral(systemPrompt, message) {
   return response.choices?.[0]?.message?.content ?? '';
 }
 
-/* ─────────── Chat con fallback automático ─────────── */
+async function callGroq(systemPrompt, message) {
+  const response = await groq.chat.completions.create({
+    model: 'openai/gpt-oss-120b',
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: message },
+    ],
+    temperature: 0.7,
+    max_tokens: 2048,
+  });
+  return response.choices?.[0]?.message?.content ?? '';
+}
+
+/* ══════════════════════════════════════════════════════════════
+   HELPERS
+   ══════════════════════════════════════════════════════════════ */
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+function isRetryable(err) {
+  const msg = String(err?.message ?? '');
+  const status = err?.status ?? err?.code ?? 0;
+  return (
+    status === 429 || status === 503 || status === 500 ||
+    msg.includes('503') || msg.includes('429') ||
+    msg.includes('UNAVAILABLE') || msg.includes('Rate limit') ||
+    msg.includes('high demand') || msg.includes('overloaded')
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SERVIDOR EXPRESS
+   ══════════════════════════════════════════════════════════════ */
+
+const app = express();
+app.use(express.json({ limit: '1mb' }));
+app.use(express.static(publicDir));
+
+/* ─────────── Health check ─────────── */
+app.get('/api/health', (_req, res) => {
+  res.json({ ok: true, service: 'numination', motors: ['gemini', 'mistral', 'groq'] });
+});
+
+/* ─────────── Chat con reintentos y 3 motores ─────────── */
 app.post('/api/chat', async (req, res) => {
   try {
     const { message, provider = 'gemini', role = 'student' } = req.body ?? {};
@@ -134,45 +168,60 @@ app.post('/api/chat', async (req, res) => {
     }
 
     const systemPrompt = buildSystemPrompt(role);
-
-    // Orden de intentos: primero el elegido, después el otro
-    const primary = provider === 'mistral' ? 'mistral' : 'gemini';
-    const fallback = primary === 'gemini' ? 'mistral' : 'gemini';
+    const primary = ['gemini', 'mistral', 'groq'].includes(provider) ? provider : 'gemini';
 
     const callers = {
       gemini: callGemini,
       mistral: callMistral,
+      groq: callGroq,
     };
 
-    let reply = '';
-    let usedProvider = primary;
+    const allProviders = ['gemini', 'mistral', 'groq'];
+    const others = allProviders.filter((p) => p !== primary);
+
+    const attempts = [
+      { provider: primary,   delay: 0 },
+      { provider: primary,   delay: 1000 },
+      { provider: others[0], delay: 1000 },
+      { provider: others[1], delay: 1500 },
+      { provider: others[0], delay: 2000 },
+      { provider: others[1], delay: 3000 },
+    ];
+
     let lastError = null;
 
-    // Intento 1: el proveedor elegido
-    try {
-      reply = await callers[primary](systemPrompt, message);
-    } catch (err) {
-      console.warn(`[chat] ${primary} falló: ${err.message}. Intentando con ${fallback}...`);
-      lastError = err;
+    for (let i = 0; i < attempts.length; i++) {
+      const { provider: prov, delay } = attempts[i];
+      if (delay > 0) await sleep(delay);
 
-      // Intento 2: el otro proveedor
       try {
-        reply = await callers[fallback](systemPrompt, message);
-        usedProvider = fallback;
-      } catch (err2) {
-        console.error(`[chat] ${fallback} también falló:`, err2.message);
-        return res.status(503).json({
-          error: 'Ambos motores están saturados en este momento. Intenta de nuevo en unos segundos.',
-        });
+        console.log(`[chat] Intento ${i + 1}/${attempts.length} con ${prov}...`);
+        const reply = await callers[prov](systemPrompt, message);
+
+        if (reply && reply.trim()) {
+          console.log(`[chat] ✅ Respondió ${prov}`);
+          return res.json({ reply, provider: prov });
+        }
+        throw new Error('Respuesta vacía');
+      } catch (err) {
+        const msg = String(err?.message ?? '').slice(0, 120);
+        console.warn(`[chat] ${prov} falló: ${msg}`);
+        lastError = err;
+        if (!isRetryable(err)) break;
       }
     }
 
-    res.json({ reply, provider: usedProvider });
+    console.error('[chat] Todos los intentos fallaron');
+    return res.status(503).json({
+      error: 'Los motores de IA están saturados. Espera unos segundos e intenta de nuevo.',
+      detail: String(lastError?.message ?? '').slice(0, 200),
+    });
   } catch (err) {
     console.error('[chat] error inesperado:', err);
     res.status(500).json({ error: err.message });
   }
 });
+
 /* ─────────── SPA fallback ─────────── */
 app.get('*', (_req, res) => {
   res.sendFile(path.join(publicDir, 'index.html'));
@@ -182,4 +231,5 @@ app.get('*', (_req, res) => {
 const PORT = process.env.PORT ?? 8080;
 app.listen(PORT, () => {
   console.log(`🇨🇴 Numination escuchando en http://localhost:${PORT}`);
+  console.log(`🤖 Motores: Gemini + Mistral + Groq`);
 });

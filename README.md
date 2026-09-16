@@ -1,4 +1,3 @@
-```markdown
 <div align="center">
 
 # 🇨🇴 Numination
@@ -6,13 +5,16 @@
 ### La IA que habla el idioma de nuestra educación
 
 **La primera inteligencia artificial educativa 100% colombiana.**
+**Creada por [Kraq](https://github.com/kraq).**
 
 [![Estado](https://img.shields.io/badge/estado-activo-success?style=for-the-badge)](#)
-[![Versión](https://img.shields.io/badge/versión-1.0.0-blue?style=for-the-badge)](#)
+[![Versión](https://img.shields.io/badge/versi%C3%B3n-1.0.0-blue?style=for-the-badge)](#)
 [![Licencia](https://img.shields.io/badge/licencia-MIT-yellow?style=for-the-badge)](#-licencia)
 [![Hecho en](https://img.shields.io/badge/hecho%20en-Colombia-FCD116?style=for-the-badge)](#)
+[![Kraq](https://img.shields.io/badge/by-Kraq-111111?style=for-the-badge)](#-sobre-kraq)
 
 [Descripción](#-sobre-numination) ·
+[Sobre Kraq](#-sobre-kraq) ·
 [Características](#-características) ·
 [Instalación](#-instalación) ·
 [Uso](#-guía-de-uso) ·
@@ -27,6 +29,7 @@
 ## 📖 Tabla de contenidos
 
 - [Sobre Numination](#-sobre-numination)
+- [Sobre Kraq](#-sobre-kraq)
 - [Características](#-características)
 - [Demo en vivo](#-demo-en-vivo)
 - [Capturas de pantalla](#-capturas-de-pantalla)
@@ -86,6 +89,20 @@ Que en 2030, cualquier estudiante colombiano —sin importar dónde viva— teng
 
 ---
 
+## 🏢 Sobre Kraq
+
+**Kraq** es el estudio que crea Numination y otros productos digitales colombianos.
+
+> Dos mentes, catorce años, una misma convicción: la tecnología puede cerrar brechas que la geografía no debería imponer.
+
+Kraq nace de una idea simple: si la educación de calidad depende de dónde naciste, entonces hay que construir herramientas que no le pregunten a nadie su código postal antes de ayudar. Numination es el primer producto de ese proyecto — pensado, diseñado y programado por su propio equipo fundador.
+
+- 🎯 **Enfoque**: productos de IA e ingeniería de software con impacto social real en Colombia
+- 🌱 **Filosofía**: construir en público, aprender haciendo, priorizar a quien menos oportunidades tiene
+- 🇨🇴 **Origen**: 100% colombiano, de principio a fin
+
+---
+
 ## ✨ Características
 
 ### Para estudiantes
@@ -121,7 +138,7 @@ Que en 2030, cualquier estudiante colombiano —sin importar dónde viva— teng
 
 ## 🎬 Demo en vivo
 
-> **URL de producción:** _(pendiente — pendiente de deploy)_
+> **URL de producción:** _(pendiente — próximo deploy)_
 >
 > **Video demo:** _(pendiente — próximamente en YouTube)_
 
@@ -135,41 +152,42 @@ Mientras tanto, puedes correrlo localmente siguiendo la [guía de instalación](
 
 ```
 ┌────────────────────────────────────────────────────────────┐
-│  🇨🇴 Numination                        Probar   Comenzar  │
+│  🇨🇴 Numination                        Probar   Comenzar   │
 ├────────────────────────────────────────────────────────────┤
-│                                                            │
-│            La IA que habla el idioma de                    │
-│                nuestra educación                           │
-│                                                            │
-│   Numination es la primera inteligencia artificial        │
-│   educativa 100% colombiana. Tutor personal 24/7.         │
-│                                                            │
-│      [ Comenzar gratis → ]   [ Ver características ]      │
-│                                                            │
-│   1100        24         2         100                    │
-│  Municipios  Horas   Motores   % colombiano               │
-│                                                            │
+│                                                              │
+│            La IA que habla el idioma de                     │
+│                nuestra educación                             │
+│                                                              │
+│   Numination es la primera inteligencia artificial          │
+│   educativa 100% colombiana. Tutor personal 24/7.           │
+│   Un producto de Kraq.                                      │
+│                                                              │
+│      [ Comenzar gratis → ]   [ Ver características ]        │
+│                                                              │
+│   1100        24         2         100                      │
+│  Municipios  Horas   Motores   % colombiano                 │
+│                                                              │
 └────────────────────────────────────────────────────────────┘
 ```
 
 ### Chat con estudiante
 
 ```
-┌──────────┬─────────────────────────────────────────────────┐
-│ + Nueva  │  🎓 Estudiante   👨‍🏫 Profesor    ✨ Gemini  🌙 │
-├──────────┼─────────────────────────────────────────────────┤
-│ Recientes│                                                 │
-│          │  Yo: Explícame la fotosíntesis con un          │
-│ • Hola   │      ejemplo del café colombiano               │
-│ • Plan   │                                                 │
-│          │  🇨🇴 Numination · 08:16 a.m. · gemini         │
-│          │  ¡Claro! Piensa en un cafetal del Eje          │
-│          │  Cafetero ☕. Las hojas del cafeto toman       │
-│          │  luz del sol, agua y CO₂ para producir su      │
-│          │  alimento y liberar oxígeno.                    │
-│          │                                                 │
-│ Ajustes  │  [ Escribe tu pregunta... ]              [➤]   │
-└──────────┴─────────────────────────────────────────────────┘
+┌──────────┬───────────────────────────────────────────────────┐
+│ + Nueva  │  🎓 Estudiante   👨‍🏫 Profesor    ✨ Gemini  🌙   │
+├──────────┼───────────────────────────────────────────────────┤
+│ Recientes│                                                   │
+│          │  Yo: Explícame la fotosíntesis con un            │
+│ • Hola   │      ejemplo del café colombiano                 │
+│ • Plan   │                                                   │
+│          │  🇨🇴 Numination · 08:16 a.m. · gemini           │
+│          │  ¡Claro! Piensa en un cafetal del Eje            │
+│          │  Cafetero ☕. Las hojas del cafeto toman          │
+│          │  luz del sol, agua y CO₂ para producir su        │
+│          │  alimento y liberar oxígeno.                      │
+│          │                                                   │
+│ Ajustes  │  [ Escribe tu pregunta... ]                [➤]   │
+└──────────┴───────────────────────────────────────────────────┘
 ```
 
 ---
@@ -216,59 +234,59 @@ Mientras tanto, puedes correrlo localmente siguiendo la [guía de instalación](
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     NAVEGADOR DEL USUARIO                    │
-│                                                              │
-│  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐ │
-│  │   Landing      │  │   Chat UI      │  │  localStorage  │ │
-│  │  (index.html)  │  │   (app.js)     │  │  (historial)   │ │
-│  └────────────────┘  └────────────────┘  └────────────────┘ │
-│           │                  │                              │
-│           └──────────────────┴──────────────────────────────┤
-│                              │                              │
-│                              ▼                              │
-│                     fetch('/api/chat')                      │
+│                     NAVEGADOR DEL USUARIO                     │
+│                                                                │
+│  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐  │
+│  │   Landing       │  │   Chat UI      │  │  localStorage  │  │
+│  │  (index.html)   │  │   (app.js)     │  │  (historial)   │  │
+│  └────────────────┘  └────────────────┘  └────────────────┘  │
+│           │                  │                                │
+│           └──────────────────┴────────────────────────────────┤
+│                              │                                │
+│                              ▼                                │
+│                     fetch('/api/chat')                        │
 └─────────────────────────────┬───────────────────────────────┘
-                              │
-                              │ HTTP POST (JSON)
-                              ▼
+                               │
+                               │ HTTP POST (JSON)
+                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                  SERVIDOR EXPRESS (Node.js)                 │
-│                                                              │
-│  ┌────────────────────────────────────────────────────────┐ │
-│  │              src/index.js                              │ │
-│  │                                                        │ │
-│  │  1. Recibe { message, provider, role }                 │ │
-│  │  2. Construye el system prompt según el rol            │ │
-│  │  3. Intenta con el proveedor elegido                   │ │
-│  │  4. Si falla, fallback al otro proveedor               │ │
-│  │  5. Devuelve { reply, provider }                       │ │
-│  └────────────────────────────────────────────────────────┘ │
-│           │                                    │            │
-│           ▼                                    ▼            │
-│  ┌──────────────────┐                 ┌──────────────────┐  │
-│  │  Google Gemini   │                 │   Mistral AI     │  │
-│  │  (3.6-flash)     │                 │  (small-latest)  │  │
-│  └──────────────────┘                 └──────────────────┘  │
+│                  SERVIDOR EXPRESS (Node.js)                   │
+│                                                                │
+│  ┌──────────────────────────────────────────────────────────┐│
+│  │              src/index.js                                ││
+│  │                                                          ││
+│  │  1. Recibe { message, provider, role }                   ││
+│  │  2. Construye el system prompt según el rol              ││
+│  │  3. Intenta con el proveedor elegido                     ││
+│  │  4. Si falla, fallback al otro proveedor                 ││
+│  │  5. Devuelve { reply, provider }                         ││
+│  └──────────────────────────────────────────────────────────┘│
+│           │                                    │              │
+│           ▼                                    ▼              │
+│  ┌──────────────────┐                 ┌──────────────────┐   │
+│  │  Google Gemini    │                 │   Mistral AI     │   │
+│  │  (3.6-flash)      │                 │  (small-latest)  │   │
+│  └──────────────────┘                 └──────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ### Estructura de archivos
 
 ```
-numination ai web/
+numination-ai-web/
 ├── public/                     # Frontend estático
 │   ├── index.html              # Estructura de la app
 │   ├── styles.css              # Estilos completos
 │   └── app.js                  # Lógica del cliente
 │
-├── src/                        # Backend
+├── src/                         # Backend
 │   └── index.js                # Servidor Express + IA + prompt
 │
-├── .env.example                # Ejemplo de variables (plantilla)
-├── .gitignore                  # Archivos que NO se suben
-├── env.local.js                # 🔴 API keys (NO subir)
-├── package.json                # Dependencias y scripts
-└── README.md                   # Este archivo
+├── .env.example                 # Ejemplo de variables (plantilla)
+├── .gitignore                   # Archivos que NO se suben
+├── env.local.js                 # 🔴 API keys (NO subir)
+├── package.json                 # Dependencias y scripts
+└── README.md                    # Este archivo
 ```
 
 ---
@@ -301,7 +319,7 @@ Si alguno no funciona, instálalo antes de seguir.
 ### Paso 1: Clonar el repositorio
 
 ```bash
-git clone https://github.com/trivoren/Numination.git
+git clone https://github.com/kraq/Numination.git
 cd Numination
 ```
 
@@ -530,7 +548,7 @@ Invoke-RestMethod -Uri "http://localhost:8080/api/chat" `
 
 1. Crea cuenta en [railway.app](https://railway.app) con GitHub
 2. **New Project** → **Deploy from GitHub repo**
-3. Selecciona `trivoren/Numination`
+3. Selecciona `kraq/Numination`
 4. Railway detecta Node.js automáticamente
 5. Ve a **Variables** y agrega:
    - `GEMINI_API_KEY` = tu key
@@ -639,9 +657,13 @@ No. Necesita conectarse a las APIs de IA que requieren internet.
 
 Sí. La interfaz es responsive.
 
+### ¿Quién está detrás de Numination?
+
+**Kraq**, el estudio fundado por Álvaro García Gómez y Robinson Rodríguez Gómez.
+
 ### ¿Cómo reporto un bug?
 
-Abre un issue en [github.com/trivoren/Numination/issues](https://github.com/trivoren/Numination/issues).
+Abre un issue en [github.com/kraq/Numination/issues](https://github.com/kraq/Numination/issues).
 
 ### ¿Puedo contribuir?
 
@@ -749,12 +771,12 @@ Sí. Está en `src/index.js`, en `NUMINATION_BASE`.
 ## 👥 Autores
 
 **Álvaro García Gómez**
-- Cofundador · 14 años
-- 📧 trivorensupport@gmail.com
-- 🐙 [@trivoren](https://github.com/trivoren)
+- Cofundador de Kraq · 14 años
+- 📧 kraqsupport@gmail.com
+- 🐙 [@kraq](https://github.com/kraq)
 
 **Robinson Rodríguez Gómez**
-- Cofundador · 14 años
+- Cofundador de Kraq · 14 años
 
 ---
 
@@ -765,7 +787,7 @@ Este proyecto está bajo la licencia **MIT**.
 ```
 MIT License
 
-Copyright (c) 2026 Álvaro García Gómez & Robinson Rodríguez Gómez
+Copyright (c) 2026 Kraq — Álvaro García Gómez & Robinson Rodríguez Gómez
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -790,15 +812,14 @@ SOFTWARE.
 
 <div align="center">
 
-### 🇨🇴 Hecho con 💛💙❤️ en Colombia
+### 🇨🇴 Hecho con 💛💙❤️ en Colombia, por Kraq
 
 **Numination — La IA que habla el idioma de nuestra educación**
 
 *"Queremos que ningún estudiante colombiano se quede sin un tutor que le explique con paciencia, sin importar dónde viva."*
 
-**— Álvaro & Robinson, 14 años**
+**— Álvaro & Robinson, fundadores de Kraq, 14 años**
 
 ⭐ Si te gusta el proyecto, dale una estrella en GitHub ⭐
 
 </div>
-```

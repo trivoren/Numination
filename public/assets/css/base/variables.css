@@ -1,0 +1,119 @@
+/* ============================================================
+   Tokens de diseño Numination
+   Paleta bandera Colombia + neutros + dark mode AA/AAA
+   ============================================================ */
+
+:root {
+  /* --- Marca (light) --- */
+  --brand-blue:    #003893;
+  --brand-blue-lt: #7EA6E0;
+  --brand-blue-md: #4D7FD1;
+  --brand-yellow:  #FFCD00;
+  --brand-red:     #C8102E;
+  --brand-red-lt:  #FF6B85;
+
+  /* --- Superficies (light) --- */
+  --bg:        #ffffff;
+  --bg-elev:   #f8fafc;
+  --bg-muted:  #f1f5f9;
+  --fg:        #0f172a;
+  --fg-muted:  #475569;
+  --fg-subtle: #64748b;
+  --border:    #e2e8f0;
+  --border-strong: #cbd5e1;
+
+  /* --- Estados --- */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger:  var(--brand-red);
+
+  /* --- Tipografía --- */
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+
+  --text-xs:   0.75rem;
+  --text-sm:   0.875rem;
+  --text-base: 1rem;
+  --text-lg:   1.125rem;
+  --text-xl:   1.25rem;
+  --text-2xl:  1.5rem;
+  --text-3xl:  1.875rem;
+  --text-4xl:  2.25rem;
+  --text-5xl:  3rem;
+
+  --leading-tight:  1.15;
+  --leading-snug:   1.35;
+  --leading-normal: 1.55;
+  --leading-loose:  1.75;
+
+  /* --- Espaciado (escala 4px) --- */
+  --space-1:  0.25rem;
+  --space-2:  0.5rem;
+  --space-3:  0.75rem;
+  --space-4:  1rem;
+  --space-5:  1.25rem;
+  --space-6:  1.5rem;
+  --space-8:  2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-28: 7rem;
+
+  /* --- Radios --- */
+  --radius-sm: 6px;
+  --radius:    10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-2xl: 28px;
+  --radius-full: 9999px;
+
+  /* --- Sombras --- */
+  --shadow-sm:  0 1px 2px rgba(15,23,42,.05);
+  --shadow:     0 1px 3px rgba(15,23,42,.08), 0 4px 12px -4px rgba(15,23,42,.10);
+  --shadow-md:  0 4px 8px rgba(15,23,42,.08), 0 12px 28px -10px rgba(15,23,42,.18);
+  --shadow-lg:  0 8px 16px rgba(15,23,42,.10), 0 24px 48px -16px rgba(15,23,42,.22);
+  --shadow-cta: 0 8px 24px -8px rgba(255,205,0,.55);
+  --shadow-cta-h: 0 12px 32px -8px rgba(255,205,0,.75);
+
+  /* --- Transiciones --- */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 150ms;
+  --dur:      220ms;
+  --dur-slow: 400ms;
+
+  /* --- Layout --- */
+  --container: 72rem;
+  --section-y: clamp(4rem, 8vw, 7rem);
+
+  /* --- Focus --- */
+  --focus-ring: 0 0 0 3px rgba(255,205,0,.55);
+}
+
+/* ============================================================
+   Dark mode
+   Azul #003893 y rojo #C8102E NO cumplen AA sobre fondo oscuro.
+   Se sustituyen por variantes aclaradas manteniendo identidad.
+   ============================================================ */
+
+[data-theme="dark"] {
+  --brand-blue:    #7EA6E0;  /* texto/acento — AA 6.8:1 */
+  --brand-blue-md: #4D7FD1;  /* fondos — AA 4.6:1 vs blanco */
+  --brand-red:     #FF6B85;  /* AA 5.3:1 */
+
+  --bg:        #0A0F1E;
+  --bg-elev:   #111830;
+  --bg-muted:  #1B2440;
+  --fg:        #F1F5F9;   /* AAA 15.8:1 */
+  --fg-muted:  #94A3B8;   /* AA  7.1:1 */
+  --fg-subtle: #64748B;
+  --border:    #1E293B;
+  --border-strong: #334155;
+
+  --shadow-sm:  0 1px 2px rgba(0,0,0,.4);
+  --shadow:     0 1px 3px rgba(0,0,0,.5), 0 4px 12px -4px rgba(0,0,0,.5);
+  --shadow-md:  0 4px 8px rgba(0,0,0,.5), 0 12px 28px -10px rgba(0,0,0,.6);
+  --shadow-lg:  0 8px 16px rgba(0,0,0,.5), 0 24px 48px -16px rgba(0,0,0,.7);
+
+  --focus-ring: 0 0 0 3px rgba(255,205,0,.5);
+}

@@ -1,7 +1,6 @@
 /* ══════════════════════════════════════════════════════════════
-   NUMINATION — Backend v1.2
+   NUMINATION — Backend v1.3 (compatible Vercel + local)
    Motores: Gemini (1) + NVIDIA Kimi K3 (2) + Groq (3)
-   Soporte de archivos: imágenes, PDFs, texto
    ══════════════════════════════════════════════════════════════ */
 
 import express from 'express';
@@ -10,16 +9,34 @@ import { fileURLToPath } from 'node:url';
 import { GoogleGenAI } from '@google/genai';
 import Groq from 'groq-sdk';
 import OpenAI from 'openai';
-import { TEST_KEYS } from '../env.local.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, '..', 'public');
 
+/* ─────────── API Keys (local → env.local.js | Vercel → process.env) ─────────── */
+let TEST_KEYS = {};
+try {
+  const mod = await import('../env.local.js');
+  TEST_KEYS = mod.TEST_KEYS ?? {};
+} catch {
+  // En Vercel no existe env.local.js — usamos process.env
+}
+
+const KEYS = {
+  GEMINI_API_KEY: process.env.GEMINI_API_KEY ?? TEST_KEYS.GEMINI_API_KEY,
+  NVIDIA_API_KEY: process.env.NVIDIA_API_KEY ?? TEST_KEYS.NVIDIA_API_KEY,
+  GROQ_API_KEY:   process.env.GROQ_API_KEY   ?? TEST_KEYS.GROQ_API_KEY,
+};
+
+if (!KEYS.GEMINI_API_KEY) console.warn('⚠️  GEMINI_API_KEY no configurada');
+if (!KEYS.NVIDIA_API_KEY) console.warn('⚠️  NVIDIA_API_KEY no configurada');
+if (!KEYS.GROQ_API_KEY)   console.warn('⚠️  GROQ_API_KEY no configurada');
+
 /* ─────────── Clientes IA ─────────── */
-const gemini = new GoogleGenAI({ apiKey: TEST_KEYS.GEMINI_API_KEY });
-const groq = new Groq({ apiKey: TEST_KEYS.GROQ_API_KEY });
+const gemini = new GoogleGenAI({ apiKey: KEYS.GEMINI_API_KEY });
+const groq = new Groq({ apiKey: KEYS.GROQ_API_KEY });
 const nvidia = new OpenAI({
-  apiKey: TEST_KEYS.NVIDIA_API_KEY,
+  apiKey: KEYS.NVIDIA_API_KEY,
   baseURL: 'https://integrate.api.nvidia.com/v1',
 });
 
@@ -202,7 +219,16 @@ app.use(express.json({ limit: '15mb' }));
 app.use(express.static(publicDir));
 
 app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, service: 'numination', motors: PROVIDERS, order: PROVIDERS });
+  res.json({
+    ok: true,
+    service: 'numination',
+    motors: PROVIDERS,
+    keys: {
+      gemini: !!KEYS.GEMINI_API_KEY,
+      nvidia: !!KEYS.NVIDIA_API_KEY,
+      groq: !!KEYS.GROQ_API_KEY,
+    },
+  });
 });
 
 app.post('/api/chat', async (req, res) => {
@@ -220,7 +246,6 @@ app.post('/api/chat', async (req, res) => {
     const primary = PROVIDERS.includes(provider) ? provider : 'gemini';
     const ordered = [primary, ...PROVIDERS.filter((p) => p !== primary)];
 
-    // Cadena: elegido → elegido → 2do → 3ro → 2do → 3ro
     const attempts = [
       { provider: ordered[0], delay: 0 },
       { provider: ordered[0], delay: 1000 },
@@ -268,8 +293,13 @@ app.get('*', (_req, res) => {
   res.sendFile(path.join(publicDir, 'index.html'));
 });
 
-const PORT = process.env.PORT ?? 8080;
-app.listen(PORT, () => {
-  console.log(`🇨🇴 Numination escuchando en http://localhost:${PORT}`);
-  console.log(`🤖 Motores: 1) Gemini · 2) Kimi K3 · 3) Groq`);
-});
+/* ─────────── Arranque (local) vs export (Vercel) ─────────── */
+if (process.env.VERCEL !== '1') {
+  const PORT = process.env.PORT ?? 8080;
+  app.listen(PORT, () => {
+    console.log(`🇨🇴 Numination escuchando en http://localhost:${PORT}`);
+    console.log(`🤖 Motores: 1) Gemini · 2) Kimi K3 · 3) Groq`);
+  });
+}
+
+export default app;

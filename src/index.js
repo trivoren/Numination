@@ -1,14 +1,15 @@
 /* ══════════════════════════════════════════════════════════════
-   NUMINATION — Backend completo v1.1
-   Tres motores IA: Gemini + Mistral + Groq
+   NUMINATION — Backend v1.2
+   Motores: Gemini (1) + NVIDIA Kimi K3 (2) + Groq (3)
+   Soporte de archivos: imágenes, PDFs, texto
    ══════════════════════════════════════════════════════════════ */
 
 import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { GoogleGenAI } from '@google/genai';
-import { Mistral } from '@mistralai/mistralai';
 import Groq from 'groq-sdk';
+import OpenAI from 'openai';
 import { TEST_KEYS } from '../env.local.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -16,8 +17,11 @@ const publicDir = path.join(__dirname, '..', 'public');
 
 /* ─────────── Clientes IA ─────────── */
 const gemini = new GoogleGenAI({ apiKey: TEST_KEYS.GEMINI_API_KEY });
-const mistral = new Mistral({ apiKey: TEST_KEYS.MISTRAL_API_KEY });
 const groq = new Groq({ apiKey: TEST_KEYS.GROQ_API_KEY });
+const nvidia = new OpenAI({
+  apiKey: TEST_KEYS.NVIDIA_API_KEY,
+  baseURL: 'https://integrate.api.nvidia.com/v1',
+});
 
 /* ══════════════════════════════════════════════════════════════
    SYSTEM PROMPT
@@ -29,7 +33,6 @@ const NUMINATION_BASE = `
 ## 1. IDENTIDAD
 Eres Numination, la primera IA educativa 100% colombiana, creada por
 Álvaro García Gómez y Robinson Rodríguez Gómez, dos jóvenes de 14 años.
-
 NO eres ChatGPT, Gemini ni ninguna IA genérica. Eres Numination.
 Eslogan: "La IA que habla el idioma de nuestra educación."
 
@@ -64,8 +67,7 @@ Tu rol NO es terapéutico: acompañas y orientas.
 
 ## 6. TONO
 Cálido, profesional, paciente, motivador, claro, empático.
-Con profesores: colegas. Con estudiantes: cercano.
-Con niños: lúdico.
+Con profesores: colegas. Con estudiantes: cercano. Con niños: lúdico.
 
 ## 7. FORMATO
 Usa Markdown: listas, negritas, tablas cuando aporten claridad.
@@ -95,38 +97,84 @@ function buildSystemPrompt(role = 'student') {
    LLAMADAS A CADA MOTOR
    ══════════════════════════════════════════════════════════════ */
 
-async function callGemini(systemPrompt, message) {
+async function callGemini(systemPrompt, message, file) {
+  const parts = [{ text: message || '(analiza el archivo adjunto)' }];
+
+  if (file && file.data) {
+    parts.push({
+      inlineData: {
+        mimeType: file.mimeType,
+        data: file.data,
+      },
+    });
+  }
+
   const response = await gemini.models.generateContent({
     model: 'gemini-3.6-flash',
-    contents: [{ role: 'user', parts: [{ text: message }] }],
+    contents: [{ role: 'user', parts }],
     config: { systemInstruction: systemPrompt },
   });
   return response.text ?? '';
 }
 
-async function callMistral(systemPrompt, message) {
-  const response = await mistral.chat.complete({
-    model: 'mistral-small-latest',
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: message },
-    ],
+async function callNvidia(systemPrompt, message, file) {
+  const messages = [{ role: 'system', content: systemPrompt }];
+  const isImage = file && file.data && file.mimeType?.startsWith('image/');
+
+  if (isImage) {
+    messages.push({
+      role: 'user',
+      content: [
+        { type: 'text', text: message || 'Analiza esta imagen y descríbela o resuelve lo que pida.' },
+        {
+          type: 'image_url',
+          image_url: { url: `data:${file.mimeType};base64,${file.data}` },
+        },
+      ],
+    });
+  } else {
+    const note = file && file.data ? '\n\n[El usuario adjuntó un archivo que no puedo procesar. Menciónalo brevemente y responde al texto.]' : '';
+    messages.push({ role: 'user', content: (message || '(sin texto)') + note });
+  }
+
+  const response = await nvidia.chat.completions.create({
+    model: 'moonshotai/kimi-k3',
+    messages,
+    temperature: 0.7,
+    max_tokens: 2048,
   });
   return response.choices?.[0]?.message?.content ?? '';
 }
 
-async function callGroq(systemPrompt, message) {
+async function callGroq(systemPrompt, message, file) {
+  const note = file && file.data
+    ? '\n\n[El usuario adjuntó un archivo, pero mi motor actual solo procesa texto. Menciónalo brevemente y responde con la información disponible.]'
+    : '';
+
   const response = await groq.chat.completions.create({
     model: 'openai/gpt-oss-120b',
     messages: [
       { role: 'system', content: systemPrompt },
-      { role: 'user', content: message },
+      { role: 'user', content: (message || '(sin texto)') + note },
     ],
     temperature: 0.7,
     max_tokens: 2048,
   });
   return response.choices?.[0]?.message?.content ?? '';
 }
+
+/* ══════════════════════════════════════════════════════════════
+   ORDEN DE PRIORIDAD
+   ══════════════════════════════════════════════════════════════ */
+
+const PROVIDERS = ['gemini', 'nvidia', 'groq'];
+const PROVIDER_NAMES = { gemini: 'Gemini', nvidia: 'Kimi K3', groq: 'Groq' };
+
+const callers = {
+  gemini: callGemini,
+  nvidia: callNvidia,
+  groq: callGroq,
+};
 
 /* ══════════════════════════════════════════════════════════════
    HELPERS
@@ -146,46 +194,40 @@ function isRetryable(err) {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   SERVIDOR EXPRESS
+   SERVIDOR
    ══════════════════════════════════════════════════════════════ */
 
 const app = express();
-app.use(express.json({ limit: '1mb' }));
+app.use(express.json({ limit: '15mb' }));
 app.use(express.static(publicDir));
 
-/* ─────────── Health check ─────────── */
 app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, service: 'numination', motors: ['gemini', 'mistral', 'groq'] });
+  res.json({ ok: true, service: 'numination', motors: PROVIDERS, order: PROVIDERS });
 });
 
-/* ─────────── Chat con reintentos y 3 motores ─────────── */
 app.post('/api/chat', async (req, res) => {
   try {
-    const { message, provider = 'gemini', role = 'student' } = req.body ?? {};
+    const { message, provider = 'gemini', role = 'student', file = null } = req.body ?? {};
 
-    if (!message || !message.trim()) {
-      return res.status(400).json({ error: 'Falta el mensaje' });
+    const hasText = message && message.trim();
+    const hasFile = file && file.data;
+
+    if (!hasText && !hasFile) {
+      return res.status(400).json({ error: 'Falta el mensaje o archivo' });
     }
 
     const systemPrompt = buildSystemPrompt(role);
-    const primary = ['gemini', 'mistral', 'groq'].includes(provider) ? provider : 'gemini';
+    const primary = PROVIDERS.includes(provider) ? provider : 'gemini';
+    const ordered = [primary, ...PROVIDERS.filter((p) => p !== primary)];
 
-    const callers = {
-      gemini: callGemini,
-      mistral: callMistral,
-      groq: callGroq,
-    };
-
-    const allProviders = ['gemini', 'mistral', 'groq'];
-    const others = allProviders.filter((p) => p !== primary);
-
+    // Cadena: elegido → elegido → 2do → 3ro → 2do → 3ro
     const attempts = [
-      { provider: primary,   delay: 0 },
-      { provider: primary,   delay: 1000 },
-      { provider: others[0], delay: 1000 },
-      { provider: others[1], delay: 1500 },
-      { provider: others[0], delay: 2000 },
-      { provider: others[1], delay: 3000 },
+      { provider: ordered[0], delay: 0 },
+      { provider: ordered[0], delay: 1000 },
+      { provider: ordered[1], delay: 1000 },
+      { provider: ordered[2], delay: 1000 },
+      { provider: ordered[1], delay: 2000 },
+      { provider: ordered[2], delay: 2500 },
     ];
 
     let lastError = null;
@@ -195,17 +237,17 @@ app.post('/api/chat', async (req, res) => {
       if (delay > 0) await sleep(delay);
 
       try {
-        console.log(`[chat] Intento ${i + 1}/${attempts.length} con ${prov}...`);
-        const reply = await callers[prov](systemPrompt, message);
+        console.log(`[chat] Intento ${i + 1}/${attempts.length} con ${PROVIDER_NAMES[prov]}${hasFile ? ' + archivo' : ''}...`);
+        const reply = await callers[prov](systemPrompt, message || '', file);
 
         if (reply && reply.trim()) {
-          console.log(`[chat] ✅ Respondió ${prov}`);
+          console.log(`[chat] ✅ Respondió ${PROVIDER_NAMES[prov]}`);
           return res.json({ reply, provider: prov });
         }
         throw new Error('Respuesta vacía');
       } catch (err) {
         const msg = String(err?.message ?? '').slice(0, 120);
-        console.warn(`[chat] ${prov} falló: ${msg}`);
+        console.warn(`[chat] ${PROVIDER_NAMES[prov]} falló: ${msg}`);
         lastError = err;
         if (!isRetryable(err)) break;
       }
@@ -222,14 +264,12 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
-/* ─────────── SPA fallback ─────────── */
 app.get('*', (_req, res) => {
   res.sendFile(path.join(publicDir, 'index.html'));
 });
 
-/* ─────────── Arranque ─────────── */
 const PORT = process.env.PORT ?? 8080;
 app.listen(PORT, () => {
   console.log(`🇨🇴 Numination escuchando en http://localhost:${PORT}`);
-  console.log(`🤖 Motores: Gemini + Mistral + Groq`);
+  console.log(`🤖 Motores: 1) Gemini · 2) Kimi K3 · 3) Groq`);
 });

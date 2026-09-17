@@ -1,7 +1,11 @@
-/* NUMINATION — Lógica del cliente v2 */
+/* NUMINATION — Lógica del cliente v1.2 */
 
 const STORAGE_KEY = 'numination_state_v2';
 const THEME_KEY = 'numination_theme';
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
+const PROVIDERS = ['gemini', 'nvidia', 'groq'];
+const PROVIDER_NAMES = { gemini: 'Gemini', nvidia: 'Kimi K3', groq: 'Groq' };
 
 const SUGGESTIONS = {
   student: [
@@ -19,67 +23,12 @@ const SUGGESTIONS = {
 };
 
 const ICFES_PROMPTS = {
-  matematicas: `Genera un simulacro de 5 preguntas tipo ICFES de MATEMÁTICAS para grado 11.
-
-Formato para cada pregunta:
-- Enunciado claro
-- 4 opciones (A, B, C, D)
-
-Al final de las 5, dame el solucionario explicando paso a paso por qué cada respuesta correcta lo es y por qué las otras no.
-
-Contextualiza con ejemplos colombianos cuando sea posible. Empieza ya con la pregunta 1.`,
-  lectura: `Genera un simulacro de 5 preguntas tipo ICFES de LECTURA CRÍTICA para grado 11.
-
-Incluye:
-- 1 texto corto (puede ser sobre cultura o historia colombiana)
-- 5 preguntas de comprensión: 2 literales, 2 inferenciales, 1 crítica
-- Opciones A, B, C, D
-- Al final, el solucionario explicando cada respuesta.
-
-Empieza ya con el texto.`,
-  naturales: `Genera un simulacro de 5 preguntas tipo ICFES de CIENCIAS NATURALES para grado 11.
-
-Mezcla:
-- 2 de biología
-- 2 de química
-- 1 de física
-
-Formato: enunciado, 4 opciones (A, B, C, D), y al final el solucionario paso a paso. Usa ejemplos colombianos (biodiversidad, ríos, café, etc.). Empieza ya.`,
-  sociales: `Genera un simulacro de 5 preguntas tipo ICFES de CIENCIAS SOCIALES para grado 11.
-
-Incluye preguntas sobre:
-- Historia de Colombia (Independencia, siglo XX)
-- Geografía colombiana
-- Constitución de 1991
-- Economía básica
-- Actualidad
-
-Formato ICFES: enunciado, 4 opciones (A, B, C, D), y solucionario al final. Empieza ya.`,
-  ingles: `Generate a 5-question ICFES-style ENGLISH practice test for 11th grade.
-
-Include:
-- 1 short reading passage in English
-- 5 multiple-choice questions (A, B, C, D) about the passage
-- After the 5 questions, explain each correct answer in Spanish.
-
-Start with the reading passage.`,
-  completo: `Vamos a hacer un simulacro COMPLETO tipo ICFES para grado 11.
-
-Vas a darme 10 preguntas en total:
-- 2 de Matemáticas
-- 2 de Lectura Crítica
-- 2 de Ciencias Naturales
-- 2 de Ciencias Sociales
-- 2 de Inglés
-
-Formato por pregunta:
-- Área
-- Enunciado
-- 4 opciones (A, B, C, D)
-
-Al final, el solucionario completo explicando cada respuesta correcta y por qué las incorrectas no lo son.
-
-Empieza ya con la primera pregunta de Matemáticas.`,
+  matematicas: `Genera un simulacro de 5 preguntas tipo ICFES de MATEMÁTICAS para grado 11.\n\nFormato: enunciado claro, 4 opciones (A, B, C, D).\nAl final, solucionario paso a paso.\nContextualiza con ejemplos colombianos. Empieza con la pregunta 1.`,
+  lectura: `Genera un simulacro de 5 preguntas tipo ICFES de LECTURA CRÍTICA para grado 11.\n\nIncluye: 1 texto corto, 5 preguntas (2 literales, 2 inferenciales, 1 crítica), opciones A/B/C/D, y solucionario al final. Empieza con el texto.`,
+  naturales: `Genera un simulacro de 5 preguntas tipo ICFES de CIENCIAS NATURALES para grado 11.\n\nMezcla: 2 biología, 2 química, 1 física. Formato ICFES + solucionario. Usa ejemplos colombianos. Empieza ya.`,
+  sociales: `Genera un simulacro de 5 preguntas tipo ICFES de CIENCIAS SOCIALES para grado 11.\n\nIncluye: historia de Colombia, geografía, Constitución de 1991, economía, actualidad. Formato ICFES + solucionario. Empieza ya.`,
+  ingles: `Generate a 5-question ICFES-style ENGLISH practice test for 11th grade.\n\nInclude a short reading passage in English, 5 multiple-choice questions (A/B/C/D), and explain each answer in Spanish at the end. Start with the passage.`,
+  completo: `Vamos a hacer un simulacro COMPLETO tipo ICFES para grado 11.\n\n10 preguntas: 2 Matemáticas, 2 Lectura Crítica, 2 Ciencias Naturales, 2 Ciencias Sociales, 2 Inglés.\nFormato: Área, enunciado, 4 opciones.\nAl final, solucionario completo.\nEmpieza con Matemáticas.`,
 };
 
 const state = {
@@ -90,6 +39,7 @@ const state = {
   conversations: [],
   currentConvId: null,
   busy: false,
+  attachedFile: null,
 };
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -102,7 +52,7 @@ function toast(msg, kind = 'info', ttl = 3200) {
   const ico = kind === 'ok' ? '✅' : kind === 'err' ? '⚠️' : 'ℹ️';
   el.innerHTML = '<span>' + ico + '</span><span>' + escapeHtml(msg) + '</span>';
   $('#toasts').appendChild(el);
-  setTimeout(() => { el.remove(); }, ttl);
+  setTimeout(() => el.remove(), ttl);
 }
 
 function escapeHtml(s) {
@@ -111,6 +61,12 @@ function escapeHtml(s) {
 
 function fmtTime(ts) {
   return new Date(ts).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+}
+
+function fmtSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 }
 
 function save() {
@@ -128,7 +84,7 @@ function load() {
     if (!raw) return;
     const d = JSON.parse(raw);
     state.role = d.role || 'student';
-    state.provider = d.provider || 'gemini';
+    state.provider = PROVIDERS.includes(d.provider) ? d.provider : 'gemini';
     state.conversations = Array.isArray(d.conversations) ? d.conversations : [];
     state.currentConvId = d.currentConvId || null;
   } catch {}
@@ -160,6 +116,76 @@ function go(screen) {
     });
   }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   ADJUNTAR ARCHIVOS
+   ══════════════════════════════════════════════════════════════ */
+
+function iconForFile(mimeType, name) {
+  if (mimeType?.startsWith('image/')) return '🖼️';
+  if (mimeType === 'application/pdf' || name?.endsWith('.pdf')) return '📕';
+  if (mimeType?.startsWith('text/')) return '📄';
+  if (mimeType?.includes('json')) return '🧾';
+  if (mimeType?.includes('csv')) return '📊';
+  return '📎';
+}
+
+function handleFileSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  if (file.size > MAX_FILE_SIZE) {
+    toast('El archivo es muy grande (máx 10 MB)', 'err');
+    e.target.value = '';
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    const base64 = reader.result.split(',')[1];
+    state.attachedFile = {
+      name: file.name,
+      mimeType: file.type || 'application/octet-stream',
+      size: file.size,
+      data: base64,
+    };
+    renderAttachPreview();
+    toast('📎 ' + file.name + ' adjuntado', 'ok', 2000);
+  };
+  reader.onerror = () => toast('No se pudo leer el archivo', 'err');
+  reader.readAsDataURL(file);
+}
+
+function clearAttachedFile() {
+  state.attachedFile = null;
+  const input = $('#file-input');
+  if (input) input.value = '';
+  renderAttachPreview();
+}
+
+function renderAttachPreview() {
+  const preview = $('#attach-preview');
+  const btn = $('#attach-btn');
+  const f = state.attachedFile;
+
+  if (!preview || !btn) return;
+
+  if (!f) {
+    preview.classList.remove('active');
+    btn.classList.remove('has-file');
+    return;
+  }
+
+  preview.classList.add('active');
+  btn.classList.add('has-file');
+  $('#attach-preview-icon').textContent = iconForFile(f.mimeType, f.name);
+  $('#attach-preview-name').textContent = f.name;
+  $('#attach-preview-size').textContent = fmtSize(f.size);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CONVERSACIONES
+   ══════════════════════════════════════════════════════════════ */
 
 function newConversation() {
   const id = uid();
@@ -256,7 +282,7 @@ function renderMessages() {
     return;
   }
   empty.style.display = 'none';
-  conv.messages.forEach((m) => { wrap.appendChild(buildMessageEl(m)); });
+  conv.messages.forEach((m) => wrap.appendChild(buildMessageEl(m)));
   scrollBottom();
 }
 
@@ -264,17 +290,37 @@ function buildMessageEl(m) {
   const isUser = m.role === 'user';
   const el = document.createElement('div');
   el.className = 'msg ' + (isUser ? 'user' : 'bot');
+
   const avatar = document.createElement('div');
   avatar.className = 'msg-avatar';
   avatar.textContent = isUser ? '👤' : '🇨🇴';
+
   const content = document.createElement('div');
   content.className = 'msg-content';
+
   const head = document.createElement('div');
   head.className = 'msg-head';
-  head.innerHTML = '<span>' + (isUser ? 'Tú' : 'Numination') + '</span><span>·</span><span>' + fmtTime(m.ts) + '</span>' + (m.provider ? '<span>·</span><span>' + m.provider + '</span>' : '');
+  head.innerHTML = '<span>' + (isUser ? 'Tú' : 'Numination') + '</span><span>·</span><span>' + fmtTime(m.ts) + '</span>' + (m.provider ? '<span>·</span><span>' + (PROVIDER_NAMES[m.provider] || m.provider) + '</span>' : '');
+
   const bubble = document.createElement('div');
   bubble.className = 'bubble';
   bubble.innerHTML = renderMarkdown(m.content);
+
+  // Adjunto (si existe)
+  if (m.attachment) {
+    if (m.attachment.mimeType?.startsWith('image/') && m.attachment.data) {
+      const img = document.createElement('img');
+      img.src = 'data:' + m.attachment.mimeType + ';base64,' + m.attachment.data;
+      img.alt = m.attachment.name;
+      bubble.appendChild(img);
+    } else {
+      const att = document.createElement('div');
+      att.className = 'msg-attachment';
+      att.innerHTML = '<span class="msg-attachment-icon">' + iconForFile(m.attachment.mimeType, m.attachment.name) + '</span><span class="msg-attachment-name">' + escapeHtml(m.attachment.name) + '</span>';
+      bubble.appendChild(att);
+    }
+  }
+
   const actions = document.createElement('div');
   actions.className = 'msg-actions';
 
@@ -332,32 +378,54 @@ function renderSuggestions() {
   });
 }
 
+/* ══════════════════════════════════════════════════════════════
+   ENVIAR MENSAJE
+   ══════════════════════════════════════════════════════════════ */
+
 async function send() {
   if (state.busy) return;
   const input = $('#input');
   const text = input.value.trim();
-  if (!text) return;
+  const file = state.attachedFile;
+
+  if (!text && !file) return;
 
   let conv = getCurrent();
   if (!conv) conv = newConversation();
 
-  conv.messages.push({ role: 'user', content: text, ts: Date.now() });
+  // Guardar referencia del adjunto ANTES de limpiar
+  const attachmentSnapshot = file ? {
+    name: file.name,
+    mimeType: file.mimeType,
+    size: file.size,
+    data: file.data,
+  } : null;
+
+  conv.messages.push({
+    role: 'user',
+    content: text || '(archivo adjunto)',
+    ts: Date.now(),
+    attachment: attachmentSnapshot,
+  });
+
   if (conv.messages.length === 1) {
-    conv.title = text.slice(0, 40) + (text.length > 40 ? '…' : '');
+    conv.title = (text || file.name).slice(0, 40) + ((text || file.name).length > 40 ? '…' : '');
   }
 
+  // Limpiar input y adjunto
   input.value = '';
   input.style.height = 'auto';
+  clearAttachedFile();
   updateCharCount();
   renderMessages();
   renderConversations();
   save();
 
+  // Typing
   const wrap = $('#messages');
   const typingEl = document.createElement('div');
   typingEl.className = 'msg bot';
-  typingEl.id = 'typing-indicator';
-  typingEl.innerHTML = '<div class="msg-avatar">🇨🇴</div><div class="msg-content"><div class="msg-head"><span>Numination</span><span>·</span><span>escribiendo</span></div><div class="bubble"><span class="typing"><span></span><span></span><span></span></span></div></div>';
+  typingEl.innerHTML = '<div class="msg-avatar">🇨🇴</div><div class="msg-content"><div class="msg-head"><span>Numination</span><span>·</span><span>analizando...</span></div><div class="bubble"><span class="typing"><span></span><span></span><span></span></span></div></div>';
   wrap.appendChild(typingEl);
   scrollBottom();
 
@@ -365,11 +433,19 @@ async function send() {
   setComposerBusy(true);
 
   try {
+    const body = {
+      message: text,
+      provider: state.provider,
+      role: state.role,
+    };
+    if (attachmentSnapshot) body.file = attachmentSnapshot;
+
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: text, provider: state.provider, role: state.role }),
+      body: JSON.stringify(body),
     });
+
     typingEl.remove();
 
     if (!res.ok) {
@@ -383,7 +459,12 @@ async function send() {
 
     const data = await res.json();
     const reply = data.reply || '(sin respuesta)';
-    conv.messages.push({ role: 'assistant', content: reply, ts: Date.now(), provider: data.provider || state.provider });
+    conv.messages.push({
+      role: 'assistant',
+      content: reply,
+      ts: Date.now(),
+      provider: data.provider || state.provider,
+    });
     save();
     renderMessages();
   } catch (err) {
@@ -407,6 +488,8 @@ async function send() {
 function setComposerBusy(busy) {
   const s = $('#send-btn'); if (s) s.disabled = busy;
   const i = $('#input'); if (i) i.disabled = busy;
+  const a = $('#attach-btn'); if (a) a.disabled = busy;
+  const m = $('#mic-btn'); if (m) m.disabled = busy;
 }
 
 function updateCharCount() {
@@ -424,7 +507,8 @@ function exportConversation() {
   const lines = conv.messages.map((m) => {
     const who = m.role === 'user' ? 'TÚ' : 'NUMINATION';
     const time = new Date(m.ts).toLocaleString('es-CO');
-    return '[' + time + '] ' + who + ':\n' + m.content + '\n';
+    const att = m.attachment ? '\n[Archivo: ' + m.attachment.name + ']' : '';
+    return '[' + time + '] ' + who + ':' + att + '\n' + m.content + '\n';
   });
   const blob = new Blob(['Conversación: ' + conv.title + '\n\n' + lines.join('\n---\n\n')], { type: 'text/plain;charset=utf-8' });
   const url = URL.createObjectURL(blob);
@@ -463,6 +547,10 @@ function animateCounters() {
   });
 }
 
+/* ══════════════════════════════════════════════════════════════
+   BINDINGS
+   ══════════════════════════════════════════════════════════════ */
+
 function bindNav() {
   window.addEventListener('scroll', () => {
     const nav = $('.nav');
@@ -470,9 +558,11 @@ function bindNav() {
   });
   const t1 = $('#nav-theme'); if (t1) t1.addEventListener('click', toggleTheme);
   const t2 = $('#btn-theme-chat'); if (t2) t2.addEventListener('click', toggleTheme);
+
   $$('[data-nav="landing"]').forEach((a) => {
     a.addEventListener('click', (e) => { e.preventDefault(); go('landing'); });
   });
+
   $$('[data-action="open-chat-guest"]').forEach((b) => {
     b.addEventListener('click', () => {
       if (!state.conversations.length) newConversation();
@@ -482,12 +572,14 @@ function bindNav() {
       renderMessages();
     });
   });
+
   $$('[data-action="scroll-features"]').forEach((b) => {
     b.addEventListener('click', () => {
       const el = $('#features');
       if (el) el.scrollIntoView({ behavior: 'smooth' });
     });
   });
+
   $$('[data-role-start]').forEach((b) => {
     b.addEventListener('click', () => {
       state.role = b.dataset.roleStart;
@@ -500,6 +592,7 @@ function bindNav() {
       toast('Modo ' + (state.role === 'teacher' ? 'profesor' : 'estudiante') + ' activado', 'ok');
     });
   });
+
   $$('[data-icfes-start]').forEach((b) => {
     b.addEventListener('click', () => {
       const tipo = b.dataset.icfesStart;
@@ -535,6 +628,7 @@ function bindChat() {
       toast('Modo ' + (state.role === 'teacher' ? 'profesor' : 'estudiante'), 'info', 1800);
     });
   });
+
   $$('.provider-tabs .ptab').forEach((p) => {
     p.addEventListener('click', () => {
       state.provider = p.dataset.provider;
@@ -542,6 +636,7 @@ function bindChat() {
       syncProviderTabs();
     });
   });
+
   const input = $('#input');
   if (input) {
     input.addEventListener('input', () => {
@@ -553,8 +648,37 @@ function bindChat() {
       if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
     });
   }
+
   const sendBtn = $('#send-btn'); if (sendBtn) sendBtn.addEventListener('click', send);
   const micBtn = $('#mic-btn'); if (micBtn) micBtn.addEventListener('click', toggleMic);
+
+  // ─── Adjuntar archivos ───
+  const attachBtn = $('#attach-btn');
+  const fileInput = $('#file-input');
+  if (attachBtn && fileInput) {
+    attachBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', handleFileSelect);
+  }
+  const attachRemove = $('#attach-remove');
+  if (attachRemove) attachRemove.addEventListener('click', clearAttachedFile);
+
+  // Pegar imágenes con Ctrl+V
+  document.addEventListener('paste', (e) => {
+    if (state.screen !== 'chat') return;
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        const file = item.getAsFile();
+        if (file) {
+          handleFileSelect({ target: { files: [file], value: '' } });
+          e.preventDefault();
+          break;
+        }
+      }
+    }
+  });
+
   const newBtn = $('#btn-new-chat'); if (newBtn) newBtn.addEventListener('click', () => { newConversation(); toast('Nueva conversación', 'ok', 1600); });
   const clr = $('#btn-clear'); if (clr) clr.addEventListener('click', clearAll);
   const set = $('#btn-settings'); if (set) set.addEventListener('click', openSettings);
@@ -563,23 +687,22 @@ function bindChat() {
 }
 
 function syncRoleTabs() {
-  $$('.header-tabs .tab').forEach((t) => { t.classList.toggle('active', t.dataset.role === state.role); });
-  $$('[data-role-set]').forEach((b) => { b.classList.toggle('active', b.dataset.roleSet === state.role); });
+  $$('.header-tabs .tab').forEach((t) => t.classList.toggle('active', t.dataset.role === state.role));
+  $$('[data-role-set]').forEach((b) => b.classList.toggle('active', b.dataset.roleSet === state.role));
 }
 
 function syncProviderTabs() {
-  $$('.provider-tabs .ptab').forEach((p) => { p.classList.toggle('active', p.dataset.provider === state.provider); });
-  $$('[data-prov]').forEach((b) => { b.classList.toggle('active', b.dataset.prov === state.provider); });
-  const name = state.provider === 'gemini' ? 'Gemini' : 'Mistral';
+  $$('.provider-tabs .ptab').forEach((p) => p.classList.toggle('active', p.dataset.provider === state.provider));
+  $$('[data-prov]').forEach((b) => b.classList.toggle('active', b.dataset.prov === state.provider));
   const h = $('#provider-hint');
-  if (h) h.textContent = 'Respondiendo con ' + name;
+  if (h) h.textContent = 'Respondiendo con ' + (PROVIDER_NAMES[state.provider] || 'Gemini');
 }
 
 function openSettings() {
   const m = $('#modal-settings'); if (m) m.classList.add('active');
   syncRoleTabs();
   syncProviderTabs();
-  $$('[data-theme]').forEach((b) => { b.classList.toggle('active', b.dataset.theme === state.theme); });
+  $$('[data-theme]').forEach((b) => b.classList.toggle('active', b.dataset.theme === state.theme));
 }
 function closeSettings() {
   const m = $('#modal-settings'); if (m) m.classList.remove('active');
@@ -589,6 +712,7 @@ function bindSettings() {
   const x = $('#modal-settings-close'); if (x) x.addEventListener('click', closeSettings);
   const m = $('#modal-settings');
   if (m) m.addEventListener('click', (e) => { if (e.target.id === 'modal-settings') closeSettings(); });
+
   $$('[data-theme]').forEach((b) => {
     b.addEventListener('click', () => {
       state.theme = b.dataset.theme;
@@ -619,7 +743,10 @@ function bindKeyboard() {
   });
 }
 
-/* WEB SPEECH API */
+/* ══════════════════════════════════════════════════════════════
+   WEB SPEECH API
+   ══════════════════════════════════════════════════════════════ */
+
 const speech = {
   supported: 'speechSynthesis' in window,
   voices: [],
@@ -662,7 +789,6 @@ function initSpeech() {
     const mic = document.getElementById('mic-btn');
     if (mic) mic.classList.add('listening');
   };
-
   rec.onresult = (e) => {
     let finalTxt = '';
     let interimTxt = '';
@@ -679,28 +805,24 @@ function initSpeech() {
       updateCharCount();
     }
   };
-
   rec.onerror = (e) => {
     speech.listening = false;
     const mic = document.getElementById('mic-btn');
     if (mic) mic.classList.remove('listening');
-    if (e.error === 'not-allowed') toast('Permite el micrófono en tu navegador', 'err', 4000);
+    if (e.error === 'not-allowed') toast('Permite el micrófono', 'err', 4000);
     else if (e.error === 'no-speech') toast('No se detectó voz', 'info', 2200);
-    else if (e.error === 'network') toast('Error de red', 'err');
   };
-
   rec.onend = () => {
     speech.listening = false;
     const mic = document.getElementById('mic-btn');
     if (mic) mic.classList.remove('listening');
   };
-
   speech.recognition = rec;
 }
 
 function toggleMic() {
   if (!speech.recognition) {
-    toast('Tu navegador no soporta dictado. Prueba con Chrome.', 'err', 4000);
+    toast('Tu navegador no soporta dictado. Usa Chrome.', 'err', 4000);
     return;
   }
   if (speech.listening) { speech.recognition.stop(); return; }
@@ -745,6 +867,10 @@ function speak(text, msgEl) {
   }
   window.speechSynthesis.speak(u);
 }
+
+/* ══════════════════════════════════════════════════════════════
+   INIT
+   ══════════════════════════════════════════════════════════════ */
 
 function init() {
   load();

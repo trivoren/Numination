@@ -1,4 +1,4 @@
-/* NUMINATION — Lógica del cliente v1.3 */
+/* NUMINATION — Lógica del cliente v1.4 */
 
 const STORAGE_KEY = 'numination_state_v2';
 const THEME_KEY = 'numination_theme';
@@ -7,14 +7,14 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const SUGGESTIONS = {
   student: [
     'Explícame la fotosíntesis con un ejemplo del café colombiano',
+    'Genera una imagen de un cóndor volando sobre el Cocuy',
     'Ayúdame a prepararme para el Saber 11 de matemáticas',
-    'No entiendo las fracciones, ¿me ayudas paso a paso?',
     'Dame una técnica de estudio para no distraerme',
   ],
   teacher: [
     'Plan de clase de 45 min sobre el Río Magdalena para 5°',
+    'Genera una imagen del Carnaval de Barranquilla',
     'Rúbrica para evaluar una exposición oral en 9°',
-    'Adaptación DUA para un estudiante con dislexia',
     'Preguntas tipo Saber 11 sobre la Independencia',
   ],
 };
@@ -113,10 +113,7 @@ function go(screen) {
   }
 }
 
-/* ══════════════════════════════════════════════════════════════
-   ADJUNTAR ARCHIVOS
-   ══════════════════════════════════════════════════════════════ */
-
+/* ADJUNTAR ARCHIVOS */
 function iconForFile(mimeType, name) {
   if (mimeType?.startsWith('image/')) return '🖼️';
   if (mimeType === 'application/pdf' || name?.endsWith('.pdf')) return '📕';
@@ -129,13 +126,11 @@ function iconForFile(mimeType, name) {
 function handleFileSelect(e) {
   const file = e.target.files[0];
   if (!file) return;
-
   if (file.size > MAX_FILE_SIZE) {
     toast('El archivo es muy grande (máx 10 MB)', 'err');
     e.target.value = '';
     return;
   }
-
   const reader = new FileReader();
   reader.onload = () => {
     const base64 = reader.result.split(',')[1];
@@ -164,7 +159,6 @@ function renderAttachPreview() {
   const btn = $('#attach-btn');
   const f = state.attachedFile;
   if (!preview || !btn) return;
-
   if (!f) {
     preview.classList.remove('active');
     btn.classList.remove('has-file');
@@ -177,10 +171,7 @@ function renderAttachPreview() {
   $('#attach-preview-size').textContent = fmtSize(f.size);
 }
 
-/* ══════════════════════════════════════════════════════════════
-   CONVERSACIONES
-   ══════════════════════════════════════════════════════════════ */
-
+/* CONVERSACIONES */
 function newConversation() {
   const id = uid();
   state.conversations.unshift({ id, title: 'Nueva conversación', messages: [], created: Date.now() });
@@ -300,6 +291,33 @@ function buildMessageEl(m) {
   bubble.className = 'bubble';
   bubble.innerHTML = renderMarkdown(m.content);
 
+  // Imagen generada por IA
+  if (m.imageUrl) {
+    const imgWrap = document.createElement('div');
+    imgWrap.className = 'generated-image-wrap';
+
+    const img = document.createElement('img');
+    img.src = m.imageUrl;
+    img.alt = m.imagePrompt || 'Imagen generada';
+    img.className = 'generated-image';
+    img.loading = 'lazy';
+    img.onerror = () => {
+      imgWrap.innerHTML = '<div class="image-error">⚠️ No se pudo cargar la imagen. Intenta de nuevo.</div>';
+    };
+    imgWrap.appendChild(img);
+
+    const dl = document.createElement('a');
+    dl.href = m.imageUrl;
+    dl.download = 'numination-' + Date.now() + '.jpg';
+    dl.target = '_blank';
+    dl.className = 'image-download';
+    dl.textContent = '⬇️ Descargar';
+    imgWrap.appendChild(dl);
+
+    bubble.appendChild(imgWrap);
+  }
+
+  // Adjunto del usuario
   if (m.attachment) {
     if (m.attachment.mimeType?.startsWith('image/') && m.attachment.data) {
       const img = document.createElement('img');
@@ -371,10 +389,7 @@ function renderSuggestions() {
   });
 }
 
-/* ══════════════════════════════════════════════════════════════
-   ENVIAR
-   ══════════════════════════════════════════════════════════════ */
-
+/* ENVIAR */
 async function send() {
   if (state.busy) return;
   const input = $('#input');
@@ -424,10 +439,7 @@ async function send() {
   setComposerBusy(true);
 
   try {
-    const body = {
-      message: text,
-      role: state.role,
-    };
+    const body = { message: text, role: state.role };
     if (attachmentSnapshot) body.file = attachmentSnapshot;
 
     const res = await fetch('/api/chat', {
@@ -453,6 +465,8 @@ async function send() {
       role: 'assistant',
       content: reply,
       ts: Date.now(),
+      imageUrl: data.imageUrl || null,
+      imagePrompt: data.imagePrompt || null,
     });
     save();
     renderMessages();
@@ -496,7 +510,8 @@ function exportConversation() {
     const who = m.role === 'user' ? 'TÚ' : 'NUMINATION';
     const time = new Date(m.ts).toLocaleString('es-CO');
     const att = m.attachment ? '\n[Archivo: ' + m.attachment.name + ']' : '';
-    return '[' + time + '] ' + who + ':' + att + '\n' + m.content + '\n';
+    const img = m.imageUrl ? '\n[Imagen: ' + m.imageUrl + ']' : '';
+    return '[' + time + '] ' + who + ':' + att + img + '\n' + m.content + '\n';
   });
   const blob = new Blob(['Conversación: ' + conv.title + '\n\n' + lines.join('\n---\n\n')], { type: 'text/plain;charset=utf-8' });
   const url = URL.createObjectURL(blob);
@@ -535,10 +550,7 @@ function animateCounters() {
   });
 }
 
-/* ══════════════════════════════════════════════════════════════
-   BINDINGS
-   ══════════════════════════════════════════════════════════════ */
-
+/* BINDINGS */
 function bindNav() {
   window.addEventListener('scroll', () => {
     const nav = $('.nav');
@@ -710,10 +722,7 @@ function bindKeyboard() {
   });
 }
 
-/* ══════════════════════════════════════════════════════════════
-   WEB SPEECH API
-   ══════════════════════════════════════════════════════════════ */
-
+/* WEB SPEECH API */
 const speech = {
   supported: 'speechSynthesis' in window,
   voices: [],
@@ -834,10 +843,6 @@ function speak(text, msgEl) {
   }
   window.speechSynthesis.speak(u);
 }
-
-/* ══════════════════════════════════════════════════════════════
-   INIT
-   ══════════════════════════════════════════════════════════════ */
 
 function init() {
   load();

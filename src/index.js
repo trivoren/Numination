@@ -1,6 +1,7 @@
 /* ══════════════════════════════════════════════════════════════
-   NUMINATION — Backend v1.3
-   Motores automáticos: Gemini → Kimi K3 → Groq
+   NUMINATION — Backend v1.4
+   Motores: Gemini → Kimi K3 → Groq
+   Imágenes: Pollinations (sin API key)
    ══════════════════════════════════════════════════════════════ */
 
 import express from 'express';
@@ -13,7 +14,7 @@ import OpenAI from 'openai';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, '..', 'public');
 
-/* ─────────── API Keys (local → env.local.js | Vercel → process.env) ─────────── */
+/* ─────────── API Keys ─────────── */
 let TEST_KEYS = {};
 try {
   const mod = await import('../env.local.js');
@@ -133,12 +134,12 @@ async function callNvidia(systemPrompt, message, file) {
     messages.push({
       role: 'user',
       content: [
-        { type: 'text', text: message || 'Analiza esta imagen y descríbela o resuelve lo que pida.' },
+        { type: 'text', text: message || 'Analiza esta imagen y descríbela.' },
         { type: 'image_url', image_url: { url: `data:${file.mimeType};base64,${file.data}` } },
       ],
     });
   } else {
-    const note = file && file.data ? '\n\n[El usuario adjuntó un archivo que no puedo procesar. Menciónalo brevemente y responde al texto.]' : '';
+    const note = file && file.data ? '\n\n[El usuario adjuntó un archivo que no puedo procesar.]' : '';
     messages.push({ role: 'user', content: (message || '(sin texto)') + note });
   }
 
@@ -153,7 +154,7 @@ async function callNvidia(systemPrompt, message, file) {
 
 async function callGroq(systemPrompt, message, file) {
   const note = file && file.data
-    ? '\n\n[El usuario adjuntó un archivo, pero mi motor actual solo procesa texto. Menciónalo brevemente y responde con la información disponible.]'
+    ? '\n\n[El usuario adjuntó un archivo. Responde con la información disponible.]'
     : '';
 
   const response = await groq.chat.completions.create({
@@ -167,10 +168,6 @@ async function callGroq(systemPrompt, message, file) {
   });
   return response.choices?.[0]?.message?.content ?? '';
 }
-
-/* ══════════════════════════════════════════════════════════════
-   ORDEN DE PRIORIDAD
-   ══════════════════════════════════════════════════════════════ */
 
 const PROVIDERS = ['gemini', 'nvidia', 'groq'];
 const PROVIDER_NAMES = { gemini: 'Gemini', nvidia: 'Kimi K3', groq: 'Groq' };
@@ -199,6 +196,52 @@ function isRetryable(err) {
 }
 
 /* ══════════════════════════════════════════════════════════════
+   GENERACIÓN DE IMÁGENES CON POLLINATIONS
+   ══════════════════════════════════════════════════════════════ */
+
+function buildImageUrl(prompt, options = {}) {
+  const {
+    width = 1024,
+    height = 1024,
+    model = 'flux',
+    seed = Math.floor(Math.random() * 1000000),
+    nologo = true,
+    enhance = true,
+  } = options;
+
+  const encoded = encodeURIComponent(prompt.trim().slice(0, 500));
+  return `https://image.pollinations.ai/prompt/${encoded}?width=${width}&height=${height}&model=${model}&seed=${seed}&nologo=${nologo}&enhance=${enhance}`;
+}
+
+function detectImageIntent(message) {
+  const triggers = [
+    /^genera(me)?\s+(una\s+)?imagen\s+(de|sobre|con)\s+/i,
+    /^crea(me)?\s+(una\s+)?imagen\s+(de|sobre|con)\s+/i,
+    /^haz(me)?\s+(una\s+)?imagen\s+(de|sobre|con)\s+/i,
+    /^dibuja(me)?\s+/i,
+    /^ilustra(me)?\s+/i,
+    /^imagina\s+que\s+ves\s+/i,
+  ];
+  return triggers.some((r) => r.test(message.trim()));
+}
+
+function extractImagePrompt(message) {
+  return message
+    .replace(/^(genera(me)?|crea(me)?|haz(me)?)\s+(una\s+)?imagen\s+(de|sobre|con)\s+/i, '')
+    .replace(/^dibuja(me)?\s+/i, '')
+    .replace(/^ilustra(me)?\s+/i, '')
+    .replace(/^imagina\s+que\s+ves\s+/i, '')
+    .trim();
+}
+
+function enrichPromptWithColombia(prompt) {
+  if (/colombia|colombiano|colombiana|café|cumbia|vallenato|magdalena|amazonas|cóndor/i.test(prompt)) {
+    return prompt + ', Colombia, vibrant colors, warm golden hour lighting, highly detailed, cinematic';
+  }
+  return prompt + ', warm colors, artistic style, high quality, detailed';
+}
+
+/* ══════════════════════════════════════════════════════════════
    SERVIDOR
    ══════════════════════════════════════════════════════════════ */
 
@@ -211,6 +254,7 @@ app.get('/api/health', (_req, res) => {
     ok: true,
     service: 'numination',
     motors: PROVIDERS,
+    images: 'pollinations',
     keys: {
       gemini: !!KEYS.GEMINI_API_KEY,
       nvidia: !!KEYS.NVIDIA_API_KEY,
@@ -227,6 +271,29 @@ app.post('/api/chat', async (req, res) => {
 
     if (!hasText && !hasFile) {
       return res.status(400).json({ error: 'Falta el mensaje o archivo' });
+    }
+
+    // ─── Detección de generación de imágenes ───
+    if (hasText && detectImageIntent(message)) {
+      const imagePrompt = extractImagePrompt(message);
+
+      if (imagePrompt.length > 3) {
+        console.log(`[chat] 🎨 Generando imagen: "${imagePrompt}"`);
+        const imageUrl = buildImageUrl(enrichPromptWithColombia(imagePrompt), {
+          width: 1024,
+          height: 1024,
+          model: 'flux',
+          enhance: true,
+          nologo: true,
+        });
+
+        return res.json({
+          reply: `🎨 Listo, aquí está tu imagen de: **${imagePrompt}**\n\nGenerada con inteligencia artificial. Si quieres otra versión, pídeme "otra imagen de..." y crearé una variación.`,
+          imageUrl,
+          imagePrompt,
+          type: 'image',
+        });
+      }
     }
 
     const systemPrompt = buildSystemPrompt(role);
@@ -278,12 +345,12 @@ app.get('*', (_req, res) => {
   res.sendFile(path.join(publicDir, 'index.html'));
 });
 
-/* ─────────── Arranque local vs Vercel ─────────── */
 if (process.env.VERCEL !== '1') {
   const PORT = process.env.PORT ?? 8080;
   app.listen(PORT, () => {
     console.log(`🇨🇴 Numination escuchando en http://localhost:${PORT}`);
-    console.log(`🤖 Motores automáticos: Gemini → Kimi K3 → Groq`);
+    console.log(`🤖 Motores: Gemini → Kimi K3 → Groq`);
+    console.log(`🎨 Imágenes: Pollinations (sin API key)`);
   });
 }
 

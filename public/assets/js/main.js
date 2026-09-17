@@ -9,6 +9,7 @@ import { initCounters }     from './modules/counters.js';
 import { initScrollReveal } from './modules/scroll-reveal.js';
 import { initChatPreview }  from './modules/chat-preview.js';
 import { initContactForm }  from './modules/contact-form.js';
+import { initChat }         from './modules/chat.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
@@ -18,4 +19,5 @@ document.addEventListener('DOMContentLoaded', () => {
   initScrollReveal();
   initChatPreview();
   initContactForm();
+  initChat();
 });

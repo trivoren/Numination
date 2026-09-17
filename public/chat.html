@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es-CO" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat — Numination</title>
+  <meta name="description" content="Pregúntale lo que quieras a Numination. Tu tutor personal para el Saber 11." />
+  <meta name="theme-color" content="#003893" />
+  <link rel="icon" href="favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/main.css" />
+  <link rel="stylesheet" href="assets/css/pages/chat.css" />
+</head>
+<body class="chat-body">
+
+<header class="site-header">
+  <div class="container site-header__inner">
+    <a href="index.html" class="site-header__brand">
+      <span class="site-header__brand-mark">
+        <svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1M5.6 18.4l2.1-2.1m8.6-8.6 2.1-2.1"/></svg>
+      </span>
+      Numination
+    </a>
+
+    <nav class="site-header__nav">
+      <a href="index.html" class="site-header__link">Inicio</a>
+      <a href="quienes-somos.html" class="site-header__link">Quiénes somos</a>
+      <a href="como-ayudamos.html" class="site-header__link">Cómo ayudamos</a>
+      <a href="fundadores.html" class="site-header__link">Fundadores</a>
+      <a href="contacto.html" class="site-header__link">Contacto</a>
+      <a href="chat.html" class="site-header__link is-active">Chat</a>
+    </nav>
+
+    <div class="site-header__actions">
+      <button class="site-header__toggle" data-theme-toggle type="button" aria-label="Cambiar tema">
+        <svg class="icon" data-icon="moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+        <svg class="icon" data-icon="sun" viewBox="0 0 24 24" style="display:none"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32 1.41-1.41"/></svg>
+      </button>
+      <a href="#" class="btn btn--ghost btn--sm">Iniciar sesión</a>
+      <a href="#" class="btn btn--primary btn--sm">Comenzar gratis</a>
+    </div>
+
+    <button class="site-header__toggle" data-menu-toggle type="button" aria-label="Abrir menú" aria-expanded="false">
+      <svg class="icon" viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+    </button>
+  </div>
+
+  <div class="container site-header__mobile" data-menu>
+    <nav>
+      <a href="index.html">Inicio</a>
+      <a href="quienes-somos.html">Quiénes somos</a>
+      <a href="como-ayudamos.html">Cómo ayudamos</a>
+      <a href="fundadores.html">Fundadores</a>
+      <a href="contacto.html">Contacto</a>
+      <a href="chat.html">Chat</a>
+    </nav>
+  </div>
+</header>
+
+<main class="chat-main">
+
+  <div class="chat-shell" data-chat-shell>
+
+    <!-- Mensajes -->
+    <div class="chat-messages" data-chat-messages>
+      <div class="chat-empty" data-chat-empty>
+        <div class="chat-empty__icon">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1M5.6 18.4l2.1-2.1m8.6-8.6 2.1-2.1"/></svg>
+        </div>
+        <h1 class="chat-empty__title">¿Sobre qué quieres practicar hoy?</h1>
+        <p class="chat-empty__subtitle">
+          Pídele a Numination una explicación, un ejercicio, o un plan de estudio.
+        </p>
+
+        <div class="chat-suggestions">
+          <button type="button" class="chat-suggestion" data-suggestion="Explícame cómo resolver una ecuación cuadrática por factorización">
+            <span class="chat-suggestion__icon">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>
+            </span>
+            Explícame ecuaciones cuadráticas
+          </button>
+          <button type="button" class="chat-suggestion" data-suggestion="Hazme un plan de estudio de 30 días para el Saber 11">
+            <span class="chat-suggestion__icon">
+              <svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+            </span>
+            Plan de estudio 30 días
+          </button>
+          <button type="button" class="chat-suggestion" data-suggestion="Dame 5 preguntas de práctica de lectura crítica con su explicación">
+            <span class="chat-suggestion__icon">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            </span>
+            5 preguntas de lectura crítica
+          </button>
+          <button type="button" class="chat-suggestion" data-suggestion="Estoy flojo en matemáticas, ¿por dónde empiezo?">
+            <span class="chat-suggestion__icon">
+              <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+            </span>
+            Estoy flojo en matemáticas
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input -->
+    <form class="chat-input-shell" data-chat-form>
+      <div class="chat-input-row">
+        <button type="button" class="chat-input-icon" aria-label="Adjuntar archivo">
+          <svg class="icon" viewBox="0 0 24 24"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+        </button>
+
+        <textarea
+          class="chat-input-field"
+          data-chat-field
+          rows="1"
+          maxlength="4000"
+          placeholder="Pregúntale algo a Numination…"
+          aria-label="Mensaje"
+        ></textarea>
+
+        <span class="chat-input-count" data-chat-counter>0 / 4000</span>
+
+        <button type="submit" class="chat-input-send" data-chat-send disabled aria-label="Enviar">
+          <svg class="icon" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+        </button>
+      </div>
+      <p class="chat-input-hint">
+        Numination puede cometer errores. Verifica siempre las respuestas importantes.
+      </p>
+    </form>
+
+  </div>
+
+</main>
+
+<script type="module" src="assets/js/main.js"></script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 /* ══════════════════════════════════════════════════════════════
-   NUMINATION — Backend v1.3 (compatible Vercel + local)
-   Motores: Gemini (1) + NVIDIA Kimi K3 (2) + Groq (3)
+   NUMINATION — Backend v1.3
+   Motores automáticos: Gemini → Kimi K3 → Groq
    ══════════════════════════════════════════════════════════════ */
 
 import express from 'express';
@@ -18,9 +18,7 @@ let TEST_KEYS = {};
 try {
   const mod = await import('../env.local.js');
   TEST_KEYS = mod.TEST_KEYS ?? {};
-} catch {
-  // En Vercel no existe env.local.js — usamos process.env
-}
+} catch {}
 
 const KEYS = {
   GEMINI_API_KEY: process.env.GEMINI_API_KEY ?? TEST_KEYS.GEMINI_API_KEY,
@@ -116,16 +114,9 @@ function buildSystemPrompt(role = 'student') {
 
 async function callGemini(systemPrompt, message, file) {
   const parts = [{ text: message || '(analiza el archivo adjunto)' }];
-
   if (file && file.data) {
-    parts.push({
-      inlineData: {
-        mimeType: file.mimeType,
-        data: file.data,
-      },
-    });
+    parts.push({ inlineData: { mimeType: file.mimeType, data: file.data } });
   }
-
   const response = await gemini.models.generateContent({
     model: 'gemini-3.6-flash',
     contents: [{ role: 'user', parts }],
@@ -143,10 +134,7 @@ async function callNvidia(systemPrompt, message, file) {
       role: 'user',
       content: [
         { type: 'text', text: message || 'Analiza esta imagen y descríbela o resuelve lo que pida.' },
-        {
-          type: 'image_url',
-          image_url: { url: `data:${file.mimeType};base64,${file.data}` },
-        },
+        { type: 'image_url', image_url: { url: `data:${file.mimeType};base64,${file.data}` } },
       ],
     });
   } else {
@@ -233,8 +221,7 @@ app.get('/api/health', (_req, res) => {
 
 app.post('/api/chat', async (req, res) => {
   try {
-    const { message, provider = 'gemini', role = 'student', file = null } = req.body ?? {};
-
+    const { message, role = 'student', file = null } = req.body ?? {};
     const hasText = message && message.trim();
     const hasFile = file && file.data;
 
@@ -243,8 +230,7 @@ app.post('/api/chat', async (req, res) => {
     }
 
     const systemPrompt = buildSystemPrompt(role);
-    const primary = PROVIDERS.includes(provider) ? provider : 'gemini';
-    const ordered = [primary, ...PROVIDERS.filter((p) => p !== primary)];
+    const ordered = PROVIDERS;
 
     const attempts = [
       { provider: ordered[0], delay: 0 },
@@ -267,7 +253,7 @@ app.post('/api/chat', async (req, res) => {
 
         if (reply && reply.trim()) {
           console.log(`[chat] ✅ Respondió ${PROVIDER_NAMES[prov]}`);
-          return res.json({ reply, provider: prov });
+          return res.json({ reply });
         }
         throw new Error('Respuesta vacía');
       } catch (err) {
@@ -281,7 +267,6 @@ app.post('/api/chat', async (req, res) => {
     console.error('[chat] Todos los intentos fallaron');
     return res.status(503).json({
       error: 'Los motores de IA están saturados. Espera unos segundos e intenta de nuevo.',
-      detail: String(lastError?.message ?? '').slice(0, 200),
     });
   } catch (err) {
     console.error('[chat] error inesperado:', err);
@@ -293,12 +278,12 @@ app.get('*', (_req, res) => {
   res.sendFile(path.join(publicDir, 'index.html'));
 });
 
-/* ─────────── Arranque (local) vs export (Vercel) ─────────── */
+/* ─────────── Arranque local vs Vercel ─────────── */
 if (process.env.VERCEL !== '1') {
   const PORT = process.env.PORT ?? 8080;
   app.listen(PORT, () => {
     console.log(`🇨🇴 Numination escuchando en http://localhost:${PORT}`);
-    console.log(`🤖 Motores: 1) Gemini · 2) Kimi K3 · 3) Groq`);
+    console.log(`🤖 Motores automáticos: Gemini → Kimi K3 → Groq`);
   });
 }
 

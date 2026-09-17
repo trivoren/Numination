@@ -13,6 +13,7 @@
 </head>
 <body>
 
+  <!-- ═══════════ LANDING ═══════════ -->
   <div id="screen-landing" class="screen active">
     <nav class="nav">
       <div class="nav-inner">
@@ -80,7 +81,7 @@
           <article class="feat"><div class="feat-icon i-red">📎</div><h3>Adjunta archivos</h3><p>Sube imágenes, PDFs o textos y Numination los analiza.</p></article>
           <article class="feat"><div class="feat-icon i-green">🎯</div><h3>Adaptación DUA</h3><p>Versiones diferenciadas para distintos ritmos de aprendizaje.</p></article>
           <article class="feat"><div class="feat-icon i-purple">🎤</div><h3>Voz integrada</h3><p>Dicta tus preguntas y escucha las respuestas en voz alta.</p></article>
-          <article class="feat"><div class="feat-icon i-cyan">⚡</div><h3>Triple motor IA</h3><p>Gemini, Kimi K3 y Groq con fallback automático.</p></article>
+          <article class="feat"><div class="feat-icon i-cyan">⚡</div><h3>Triple motor IA</h3><p>Respuestas rápidas y confiables con redundancia automática.</p></article>
         </div>
       </div>
     </section>
@@ -172,6 +173,7 @@
     </footer>
   </div>
 
+  <!-- ═══════════ CHAT ═══════════ -->
   <div id="screen-chat" class="screen">
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-head">
@@ -203,11 +205,6 @@
           <button class="tab" data-role="teacher">👨‍🏫 Profesor</button>
         </div>
         <div class="header-right">
-          <div class="provider-tabs">
-            <button class="ptab active" data-provider="gemini">✨ Gemini</button>
-            <button class="ptab" data-provider="nvidia">🌙 Kimi K3</button>
-            <button class="ptab" data-provider="groq">⚡ Groq</button>
-          </div>
           <button class="icon-btn" id="btn-theme-chat" title="Modo oscuro">🌙</button>
         </div>
       </header>
@@ -223,7 +220,6 @@
       </div>
 
       <footer class="composer">
-        <!-- Vista previa del archivo adjunto -->
         <div class="attach-preview" id="attach-preview">
           <div class="attach-preview-inner">
             <span class="attach-preview-icon" id="attach-preview-icon">📎</span>
@@ -244,8 +240,6 @@
         </div>
         <div class="composer-hint">
           <span id="char-count">0 / 4000</span>
-          <span>·</span>
-          <span id="provider-hint">Respondiendo con Gemini</span>
         </div>
       </footer>
     </main>
@@ -253,15 +247,15 @@
     <div class="overlay" id="overlay"></div>
   </div>
 
+  <!-- ═══════════ MODAL AJUSTES ═══════════ -->
   <div class="modal" id="modal-settings">
     <div class="modal-box">
       <button class="modal-x" id="modal-settings-close">×</button>
       <h2 class="modal-title">Ajustes</h2>
       <div class="set-row"><label>Tema</label><div class="seg"><button data-theme="light">☀️ Claro</button><button data-theme="dark">🌙 Oscuro</button></div></div>
-      <div class="set-row"><label>Motor preferido</label><div class="seg"><button data-prov="gemini">✨ Gemini</button><button data-prov="nvidia">🌙 Kimi K3</button><button data-prov="groq">⚡ Groq</button></div></div>
       <div class="set-row"><label>Rol actual</label><div class="seg"><button data-role-set="student">🎓 Estudiante</button><button data-role-set="teacher">👨‍🏫 Profesor</button></div></div>
       <div class="set-row"><label>Exportar</label><button class="btn btn-outline" id="btn-export">📥 Descargar conversación</button></div>
-      <div class="set-row"><label>Acerca de</label><p class="set-note">Numination v1.2 · Creada por Álvaro García Gómez y Robinson Rodríguez Gómez. Hecha con 💛💙❤️ en Colombia.</p></div>
+      <div class="set-row"><label>Acerca de</label><p class="set-note">Numination v1.3 · Creada por Álvaro García Gómez y Robinson Rodríguez Gómez. Hecha con 💛💙❤️ en Colombia.</p></div>
     </div>
   </div>
 

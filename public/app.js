@@ -1,11 +1,8 @@
-/* NUMINATION — Lógica del cliente v1.2 */
+/* NUMINATION — Lógica del cliente v1.3 */
 
 const STORAGE_KEY = 'numination_state_v2';
 const THEME_KEY = 'numination_theme';
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
-
-const PROVIDERS = ['gemini', 'nvidia', 'groq'];
-const PROVIDER_NAMES = { gemini: 'Gemini', nvidia: 'Kimi K3', groq: 'Groq' };
 
 const SUGGESTIONS = {
   student: [
@@ -35,7 +32,6 @@ const state = {
   screen: 'landing',
   theme: localStorage.getItem(THEME_KEY) || 'light',
   role: 'student',
-  provider: 'gemini',
   conversations: [],
   currentConvId: null,
   busy: false,
@@ -72,8 +68,9 @@ function fmtSize(bytes) {
 function save() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      role: state.role, provider: state.provider,
-      conversations: state.conversations, currentConvId: state.currentConvId,
+      role: state.role,
+      conversations: state.conversations,
+      currentConvId: state.currentConvId,
     }));
   } catch {}
 }
@@ -84,7 +81,6 @@ function load() {
     if (!raw) return;
     const d = JSON.parse(raw);
     state.role = d.role || 'student';
-    state.provider = PROVIDERS.includes(d.provider) ? d.provider : 'gemini';
     state.conversations = Array.isArray(d.conversations) ? d.conversations : [];
     state.currentConvId = d.currentConvId || null;
   } catch {}
@@ -167,7 +163,6 @@ function renderAttachPreview() {
   const preview = $('#attach-preview');
   const btn = $('#attach-btn');
   const f = state.attachedFile;
-
   if (!preview || !btn) return;
 
   if (!f) {
@@ -175,7 +170,6 @@ function renderAttachPreview() {
     btn.classList.remove('has-file');
     return;
   }
-
   preview.classList.add('active');
   btn.classList.add('has-file');
   $('#attach-preview-icon').textContent = iconForFile(f.mimeType, f.name);
@@ -300,13 +294,12 @@ function buildMessageEl(m) {
 
   const head = document.createElement('div');
   head.className = 'msg-head';
-  head.innerHTML = '<span>' + (isUser ? 'Tú' : 'Numination') + '</span><span>·</span><span>' + fmtTime(m.ts) + '</span>' + (m.provider ? '<span>·</span><span>' + (PROVIDER_NAMES[m.provider] || m.provider) + '</span>' : '');
+  head.innerHTML = '<span>' + (isUser ? 'Tú' : 'Numination') + '</span><span>·</span><span>' + fmtTime(m.ts) + '</span>';
 
   const bubble = document.createElement('div');
   bubble.className = 'bubble';
   bubble.innerHTML = renderMarkdown(m.content);
 
-  // Adjunto (si existe)
   if (m.attachment) {
     if (m.attachment.mimeType?.startsWith('image/') && m.attachment.data) {
       const img = document.createElement('img');
@@ -379,7 +372,7 @@ function renderSuggestions() {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   ENVIAR MENSAJE
+   ENVIAR
    ══════════════════════════════════════════════════════════════ */
 
 async function send() {
@@ -393,7 +386,6 @@ async function send() {
   let conv = getCurrent();
   if (!conv) conv = newConversation();
 
-  // Guardar referencia del adjunto ANTES de limpiar
   const attachmentSnapshot = file ? {
     name: file.name,
     mimeType: file.mimeType,
@@ -409,10 +401,10 @@ async function send() {
   });
 
   if (conv.messages.length === 1) {
-    conv.title = (text || file.name).slice(0, 40) + ((text || file.name).length > 40 ? '…' : '');
+    const base = text || file.name;
+    conv.title = base.slice(0, 40) + (base.length > 40 ? '…' : '');
   }
 
-  // Limpiar input y adjunto
   input.value = '';
   input.style.height = 'auto';
   clearAttachedFile();
@@ -421,7 +413,6 @@ async function send() {
   renderConversations();
   save();
 
-  // Typing
   const wrap = $('#messages');
   const typingEl = document.createElement('div');
   typingEl.className = 'msg bot';
@@ -435,7 +426,6 @@ async function send() {
   try {
     const body = {
       message: text,
-      provider: state.provider,
       role: state.role,
     };
     if (attachmentSnapshot) body.file = attachmentSnapshot;
@@ -463,7 +453,6 @@ async function send() {
       role: 'assistant',
       content: reply,
       ts: Date.now(),
-      provider: data.provider || state.provider,
     });
     save();
     renderMessages();
@@ -471,9 +460,8 @@ async function send() {
     typingEl.remove();
     conv.messages.push({
       role: 'assistant',
-      content: '❌ **Error:** ' + err.message + '\n\nIntenta de nuevo o cambia de motor arriba a la derecha.',
+      content: '❌ **Error:** ' + err.message + '\n\nIntenta de nuevo en unos segundos.',
       ts: Date.now(),
-      provider: state.provider,
     });
     save();
     renderMessages();
@@ -629,14 +617,6 @@ function bindChat() {
     });
   });
 
-  $$('.provider-tabs .ptab').forEach((p) => {
-    p.addEventListener('click', () => {
-      state.provider = p.dataset.provider;
-      save();
-      syncProviderTabs();
-    });
-  });
-
   const input = $('#input');
   if (input) {
     input.addEventListener('input', () => {
@@ -652,7 +632,6 @@ function bindChat() {
   const sendBtn = $('#send-btn'); if (sendBtn) sendBtn.addEventListener('click', send);
   const micBtn = $('#mic-btn'); if (micBtn) micBtn.addEventListener('click', toggleMic);
 
-  // ─── Adjuntar archivos ───
   const attachBtn = $('#attach-btn');
   const fileInput = $('#file-input');
   if (attachBtn && fileInput) {
@@ -662,7 +641,6 @@ function bindChat() {
   const attachRemove = $('#attach-remove');
   if (attachRemove) attachRemove.addEventListener('click', clearAttachedFile);
 
-  // Pegar imágenes con Ctrl+V
   document.addEventListener('paste', (e) => {
     if (state.screen !== 'chat') return;
     const items = e.clipboardData?.items;
@@ -691,17 +669,9 @@ function syncRoleTabs() {
   $$('[data-role-set]').forEach((b) => b.classList.toggle('active', b.dataset.roleSet === state.role));
 }
 
-function syncProviderTabs() {
-  $$('.provider-tabs .ptab').forEach((p) => p.classList.toggle('active', p.dataset.provider === state.provider));
-  $$('[data-prov]').forEach((b) => b.classList.toggle('active', b.dataset.prov === state.provider));
-  const h = $('#provider-hint');
-  if (h) h.textContent = 'Respondiendo con ' + (PROVIDER_NAMES[state.provider] || 'Gemini');
-}
-
 function openSettings() {
   const m = $('#modal-settings'); if (m) m.classList.add('active');
   syncRoleTabs();
-  syncProviderTabs();
   $$('[data-theme]').forEach((b) => b.classList.toggle('active', b.dataset.theme === state.theme));
 }
 function closeSettings() {
@@ -719,9 +689,6 @@ function bindSettings() {
       applyTheme();
       $$('[data-theme]').forEach((x) => x.classList.toggle('active', x === b));
     });
-  });
-  $$('[data-prov]').forEach((b) => {
-    b.addEventListener('click', () => { state.provider = b.dataset.prov; save(); syncProviderTabs(); });
   });
   $$('[data-role-set]').forEach((b) => {
     b.addEventListener('click', () => { state.role = b.dataset.roleSet; save(); syncRoleTabs(); renderSuggestions(); });
@@ -876,7 +843,6 @@ function init() {
   load();
   applyTheme();
   syncRoleTabs();
-  syncProviderTabs();
   updateCharCount();
   bindNav();
   bindChat();

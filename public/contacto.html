@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es-CO" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contacto — Numination</title>
+  <meta name="description" content="Escríbenos para coordinar una demo, resolver dudas o conocer cómo implementar Numination en tu colegio." />
+  <meta name="theme-color" content="#003893" />
+  <link rel="icon" href="favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/main.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container site-header__inner">
+    <a href="index.html" class="site-header__brand">
+      <span class="site-header__brand-mark">
+        <svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1M5.6 18.4l2.1-2.1m8.6-8.6 2.1-2.1"/></svg>
+      </span>
+      Numination
+    </a>
+
+    <nav class="site-header__nav">
+      <a href="index.html" class="site-header__link">Inicio</a>
+      <a href="quienes-somos.html" class="site-header__link">Quiénes somos</a>
+      <a href="como-ayudamos.html" class="site-header__link">Cómo ayudamos</a>
+      <a href="fundadores.html" class="site-header__link">Fundadores</a>
+      <a href="contacto.html" class="site-header__link is-active">Contacto</a>
+    </nav>
+
+    <div class="site-header__actions">
+      <button class="site-header__toggle" data-theme-toggle type="button">
+        <svg class="icon" data-icon="moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+        <svg class="icon" data-icon="sun" viewBox="0 0 24 24" style="display:none"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32 1.41-1.41"/></svg>
+      </button>
+      <a href="#" class="btn btn--ghost btn--sm">Iniciar sesión</a>
+      <a href="#" class="btn btn--primary btn--sm">Comenzar gratis</a>
+    </div>
+
+    <button class="site-header__toggle" data-menu-toggle type="button" aria-label="Abrir menú" aria-expanded="false">
+      <svg class="icon" viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+    </button>
+  </div>
+
+  <div class="container site-header__mobile" data-menu>
+    <nav>
+      <a href="index.html">Inicio</a>
+      <a href="quienes-somos.html">Quiénes somos</a>
+      <a href="como-ayudamos.html">Cómo ayudamos</a>
+      <a href="fundadores.html">Fundadores</a>
+      <a href="contacto.html">Contacto</a>
+      <a href="#" class="btn btn--secondary">Iniciar sesión</a>
+      <a href="#" class="btn btn--primary">Comenzar gratis</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <section class="hero">
+    <div class="container hero__inner">
+      <span class="hero__badge">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        Contacto
+      </span>
+      <h1 class="hero__title">Hablemos.</h1>
+      <p class="hero__subtitle">
+        Respondemos en menos de 24 horas hábiles. Si prefieres una llamada,
+        déjanos tu número y coordinamos.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="contact-layout">
+
+        <!-- FORM -->
+        <form class="contact-form" data-contact-form novalidate>
+          <h2>Escríbenos</h2>
+          <p class="text-muted" style="margin-top:var(--space-2)">
+            Cuéntanos quién eres para darte la respuesta correcta.
+          </p>
+
+          <div class="form-row">
+            <label for="nombre">Nombre completo</label>
+            <input id="nombre" name="nombre" type="text" required
+                   placeholder="Ej. Ana Rodríguez" autocomplete="name" />
+          </div>
+
+          <div class="form-row">
+            <label for="email">Correo electrónico</label>
+            <input id="email" name="email" type="email" required
+                   placeholder="tu@correo.com" autocomplete="email" />
+          </div>
+
+          <div class="form-row">
+            <label for="rol">¿Con qué perfil nos escribes?</label>
+            <select id="rol" name="rol" required>
+              <option value="">Selecciona una opción…</option>
+              <option value="estudiante">Soy estudiante</option>
+              <option value="docente">Soy docente</option>
+              <option value="colegio">Represento a un colegio</option>
+              <option value="familia">Soy acudiente o familiar</option>
+              <option value="otro">Otro</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <label for="institucion">Institución (opcional)</label>
+            <input id="institucion" name="institucion" type="text"
+                   placeholder="Nombre del colegio o universidad" />
+          </div>
+
+          <div class="form-row">
+            <label for="mensaje">Mensaje</label>
+            <textarea id="mensaje" name="mensaje" rows="5" required
+                      maxlength="1200"
+                      placeholder="Cuéntanos brevemente qué necesitas."></textarea>
+            <span class="form-help" data-counter>0 / 1200</span>
+          </div>
+
+          <label class="form-check">
+            <input type="checkbox" name="acepto" required />
+            <span>Acepto la política de tratamiento de datos personales.</span>
+          </label>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn--primary btn--lg">Enviar mensaje</button>
+            <button type="reset" class="btn btn--ghost">Limpiar</button>
+          </div>
+
+          <p class="form-status" data-form-status hidden></p>
+        </form>
+
+        <!-- INFO -->
+        <aside class="contact-info">
+          <h2>Información directa</h2>
+
+          <div class="contact-block">
+            <div class="contact-block__icon">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            </div>
+            <div>
+              <h4>Correo general</h4>
+              <p>hola@numination.app</p>
+            </div>
+          </div>
+
+          <div class="contact-block">
+            <div class="contact-block__icon">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M12 2 4 7v6c0 5 3.5 8.5 8 9 4.5-.5 8-4 8-9V7l-8-5z"/></svg>
+            </div>
+            <div>
+              <h4>Colegios e instituciones</h4>
+              <p>colegios@numination.app</p>
+            </div>
+          </div>
+
+          <div class="contact-block">
+            <div class="contact-block__icon">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            </div>
+            <div>
+              <h4>Prensa y alianzas</h4>
+              <p>prensa@numination.app</p>
+            </div>
+          </div>
+
+          <div class="contact-block">
+            <div class="contact-block__icon">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            </div>
+            <div>
+              <h4>Oficina</h4>
+              <p>Bogotá D.C., Colombia</p>
+            </div>
+          </div>
+
+          <div class="contact-block">
+            <div class="contact-block__icon">
+              <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <div>
+              <h4>Horario de respuesta</h4>
+              <p>Lunes a viernes · 8 a.m. a 6 p.m.</p>
+            </div>
+          </div>
+        </aside>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section" style="background:var(--bg-elev)">
+    <div class="container">
+      <header class="section-header">
+        <p class="eyebrow">Preguntas frecuentes</p>
+        <h2>Antes de escribir, mira esto</h2>
+      </header>
+
+      <div class="faq">
+        <details>
+          <summary>¿Numination tiene costo para estudiantes?</summary>
+          <p>Hay un plan gratuito con acceso a práctica diaria y simulacros cortos. El plan completo, con simulacros de tiempo real y reportes avanzados, es por suscripción. Los colegios aliados cubren el acceso para sus estudiantes.</p>
+        </details>
+
+        <details>
+          <summary>¿Funciona sin conexión a internet?</summary>
+          <p>La práctica offline está en desarrollo. Hoy necesitas conexión, pero el consumo de datos es bajo porque las preguntas se cachean después de la primera carga.</p>
+        </details>
+
+        <details>
+          <summary>¿Necesito instalar algo?</summary>
+          <p>No. Numination corre en el navegador. También puedes agregarla a la pantalla de inicio del celular como si fuera una app.</p>
+        </details>
+
+        <details>
+          <summary>¿Los datos de mi hijo están seguros?</summary>
+          <p>Sí. Cumplimos con la Ley 1581 de protección de datos personales en Colombia. No vendemos información a terceros ni mostramos publicidad a menores.</p>
+        </details>
+
+        <details>
+          <summary>¿Cómo implementan Numination en un colegio?</summary>
+          <p>Hacemos una llamada inicial, definimos el alcance, capacitamos a los docentes en una sesión de 90 minutos y damos acompañamiento durante las primeras cuatro semanas.</p>
+        </details>
+
+        <details>
+          <summary>¿Quién revisa las preguntas?</summary>
+          <p>Un consejo asesor de docentes con al menos 8 años de experiencia en aula. Cada pregunta pasa por al menos una revisión antes de publicarse.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container text-center">
+      <h2>¿Prefieres que te llamemos?</h2>
+      <p class="text-muted mx-auto" style="max-width:42rem;margin-top:var(--space-4)">
+        Agenda una demo de 20 minutos con nuestro equipo. Sin presentaciones
+        corporativas, sin compromiso.
+      </p>
+      <div style="display:flex;justify-content:center;gap:var(--space-3);margin-top:var(--space-8);flex-wrap:wrap">
+        <a href="#" class="btn btn--primary btn--lg">Agendar demo</a>
+        <a href="como-ayudamos.html" class="btn btn--secondary btn--lg">Ver cómo ayudamos</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="site-footer__row">
+      <a href="index.html" class="site-footer__brand">
+        <span class="site-footer__brand-mark">
+          <svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1M5.6 18.4l2.1-2.1m8.6-8.6 2.1-2.1"/></svg>
+        </span>
+        Numination
+      </a>
+      <nav class="site-footer__nav">
+        <a href="quienes-somos.html">Quiénes somos</a>
+        <a href="como-ayudamos.html">Cómo ayudamos</a>
+        <a href="fundadores.html">Fundadores</a>
+        <a href="contacto.html">Contacto</a>
+      </nav>
+    </div>
+    <p class="site-footer__copy">© 2026 Numination. Hecho en Colombia.</p>
+  </div>
+</footer>
+
+<script type="module" src="assets/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+/* ============================================================
+   Tarjetas
+   Con hover consistente: se elevan y cambian borde/sombra.
+   ============================================================ */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: var(--space-6);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--dur) var(--ease),
+              box-shadow var(--dur) var(--ease),
+              border-color var(--dur) var(--ease);
+}
+
+.card--interactive { cursor: pointer; }
+
+.card--interactive:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  border-color: rgba(0, 56, 147, .35);
+}
+
+[data-theme="dark"] .card--interactive:hover {
+  border-color: rgba(126, 166, 224, .5);
+}
+
+.card--interactive:focus-within {
+  box-shadow: var(--shadow-md), var(--focus-ring);
+}
+
+.card__title {
+  margin-top: var(--space-5);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.card__role {
+  margin-top: var(--space-1);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--brand-blue);
+}
+
+.card__body {
+  margin-top: var(--space-2);
+  font-size: var(--text-base);
+  line-height: 1.6;
+  color: var(--fg-muted);
+}
+
+.card__cta {
+  margin-top: auto;
+  padding-top: var(--space-6);
+}

@@ -1,0 +1,123 @@
+/* ============================================================
+   Header (barra superior)
+   Sticky, con backdrop blur y menú móvil desplegable.
+   ============================================================ */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+
+.site-header__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 4rem;
+}
+
+.site-header__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.site-header__brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius);
+  background: var(--brand-blue-md);
+  color: #fff;
+}
+
+.site-header__nav {
+  display: none;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+@media (min-width: 900px) {
+  .site-header__nav { display: flex; }
+}
+
+.site-header__link {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius);
+  font-size: var(--text-sm);
+  color: var(--fg-muted);
+  transition: background var(--dur-fast) var(--ease),
+              color var(--dur-fast) var(--ease);
+}
+
+.site-header__link:hover {
+  background: var(--bg-muted);
+  color: var(--fg);
+}
+
+.site-header__link.is-active {
+  color: var(--brand-blue);
+  font-weight: 600;
+}
+
+.site-header__actions {
+  display: none;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+@media (min-width: 900px) {
+  .site-header__actions { display: flex; }
+}
+
+.site-header__toggle {
+  display: inline-flex;
+  padding: var(--space-2);
+  border-radius: var(--radius);
+  color: var(--fg-muted);
+}
+
+.site-header__toggle:hover { background: var(--bg-muted); }
+
+@media (min-width: 900px) {
+  .site-header__toggle[data-menu-toggle] { display: none; }
+}
+
+.site-header__mobile {
+  display: none;
+  border-top: 1px solid var(--border);
+  padding: var(--space-4) 0;
+}
+
+.site-header__mobile.is-open { display: block; }
+
+.site-header__mobile nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.site-header__mobile a {
+  padding: var(--space-3);
+  border-radius: var(--radius);
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+}
+
+.site-header__mobile a:hover {
+  background: var(--bg-muted);
+  color: var(--fg);
+}
+
+.site-header__mobile .btn {
+  margin-top: var(--space-3);
+  width: 100%;
+}

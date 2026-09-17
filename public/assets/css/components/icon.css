@@ -1,0 +1,42 @@
+/* ============================================================
+   Iconos SVG
+   Regla global: mismo grosor de línea, mismo tamaño base
+   ============================================================ */
+
+.icon {
+  width: 1.25em;
+  height: 1.25em;
+  flex-shrink: 0;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vertical-align: -0.125em;
+}
+
+/* Tamaños */
+.icon--xs { width: 1em;    height: 1em; }
+.icon--sm { width: 1.1em;  height: 1.1em; }
+.icon--md { width: 1.25em; height: 1.25em; }
+.icon--lg { width: 1.5em;  height: 1.5em; }
+.icon--xl { width: 1.75em; height: 1.75em; }
+
+/* Contenedor tipo "badge" para iconos de tarjetas */
+.icon-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--radius-lg);
+  background: rgba(0, 56, 147, .07);
+  color: var(--brand-blue);
+  font-size: 1.25rem;
+  transition: background var(--dur) var(--ease),
+              color var(--dur) var(--ease);
+}
+
+[data-theme="dark"] .icon-badge {
+  background: rgba(126, 166, 224, .12);
+}

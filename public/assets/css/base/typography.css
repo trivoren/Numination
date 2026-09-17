@@ -1,0 +1,57 @@
+/* ============================================================
+   Tipografía base
+   Headings, párrafos, código, links
+   ============================================================ */
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--fg);
+}
+
+h1 { font-size: clamp(2.25rem, 5vw, 3.5rem); }
+h2 { font-size: clamp(1.875rem, 3.5vw, 2.5rem); }
+h3 { font-size: var(--text-xl); }
+h4 { font-size: var(--text-lg); }
+h5 { font-size: var(--text-base); }
+h6 { font-size: var(--text-sm); }
+
+p {
+  line-height: 1.6;
+  color: var(--fg);
+}
+
+strong, b {
+  font-weight: 600;
+}
+
+small {
+  font-size: var(--text-sm);
+  color: var(--fg-muted);
+}
+
+code {
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  font-size: 0.9em;
+  padding: 0.15em 0.4em;
+  background: var(--bg-muted);
+  border-radius: var(--radius-sm);
+}
+
+a {
+  transition: color var(--dur-fast) var(--ease);
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin-block: var(--space-8);
+}
+
+blockquote {
+  border-left: 3px solid var(--brand-yellow);
+  padding-left: var(--space-4);
+  color: var(--fg-muted);
+  font-style: italic;
+}

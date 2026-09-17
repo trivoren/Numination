@@ -1,0 +1,25 @@
+/* ============================================================
+   Numination — hoja principal
+   Único <link> en el HTML. Importa todo en orden.
+   ============================================================ */
+
+/* Base */
+@import url('./base/variables.css');
+@import url('./base/reset.css');
+@import url('./base/typography.css');
+@import url('./base/utilities.css');
+
+/* Layout */
+@import url('./layout/header.css');
+@import url('./layout/footer.css');
+@import url('./layout/sections.css');
+
+/* Componentes */
+@import url('./components/icon.css');
+@import url('./components/button.css');
+@import url('./components/card.css');
+
+/* Vacíos por ahora (se llenarán después) */
+@import url('./components/badge.css');
+@import url('./components/input.css');
+@import url('./components/counter.css');

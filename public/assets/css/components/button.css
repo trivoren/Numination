@@ -1,0 +1,89 @@
+/* ============================================================
+   Botones
+   Regla: solo UN .btn--primary visible por pantalla.
+   El resto son secondary, ghost o links.
+   ============================================================ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 0.75rem 1.35rem;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  line-height: 1;
+  border-radius: var(--radius);
+  border: 2px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+  transition: all var(--dur) var(--ease);
+}
+
+.btn:active { transform: scale(0.98); }
+.btn:disabled { opacity: 0.5; pointer-events: none; }
+
+/* Tamaños */
+.btn--sm { padding: 0.5rem 0.9rem; font-size: var(--text-xs); }
+.btn--lg { padding: 1rem 1.9rem; font-size: var(--text-base); }
+
+/* ---- CTA PRIMARIO (único por vista) ---- */
+.btn--primary {
+  background: var(--brand-yellow);
+  color: #0B1220;
+  box-shadow: var(--shadow-cta);
+}
+.btn--primary:hover {
+  background: #FFD733;
+  box-shadow: var(--shadow-cta-h);
+  transform: translateY(-2px);
+}
+.btn--primary:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* ---- Secundario (outline) ---- */
+.btn--secondary {
+  background: transparent;
+  color: var(--fg);
+  border-color: var(--border-strong);
+}
+.btn--secondary:hover {
+  background: var(--bg-muted);
+  border-color: var(--fg-subtle);
+}
+
+/* ---- Ghost (texto) ---- */
+.btn--ghost {
+  background: transparent;
+  color: var(--fg-muted);
+  padding-inline: var(--space-4);
+}
+.btn--ghost:hover {
+  color: var(--brand-blue);
+  background: var(--bg-muted);
+}
+
+/* ---- Solid (azul, uso puntual) ---- */
+.btn--solid {
+  background: var(--brand-blue-md);
+  color: #ffffff;
+}
+.btn--solid:hover { opacity: 0.92; }
+
+/* ---- Link textual ---- */
+.link-text {
+  display: inline-block;
+  margin-top: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--fg-subtle);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-color: transparent;
+  transition: all var(--dur-fast) var(--ease);
+}
+.link-text:hover {
+  color: var(--brand-blue);
+  text-decoration-color: currentColor;
+}

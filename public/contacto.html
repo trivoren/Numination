@@ -4,272 +4,692 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Contacto — Numination</title>
-  <meta name="description" content="Escríbenos para coordinar una demo, resolver dudas o conocer cómo implementar Numination en tu colegio." />
+  <meta name="description" content="Escríbenos para coordinar una demo, resolver dudas o conocer cómo implementar Numination en tu colegio. Respondemos en menos de 24 horas." />
+  <meta name="keywords" content="contacto Numination, soporte, demo, colegios, docentes" />
   <meta name="theme-color" content="#003893" />
+
+  <meta property="og:title" content="Contacto — Numination" />
+  <meta property="og:description" content="Hablemos. Respondemos personalmente." />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="es_CO" />
+
   <link rel="icon" href="favicon.ico" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="assets/css/main.css" />
 </head>
 <body>
 
+<!-- ═══════════════════════════════════════════════════════════
+     HEADER
+     ═══════════════════════════════════════════════════════════ -->
 <header class="site-header">
   <div class="container site-header__inner">
+
     <a href="index.html" class="site-header__brand">
       <span class="site-header__brand-mark">
-        <svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1M5.6 18.4l2.1-2.1m8.6-8.6 2.1-2.1"/></svg>
+        <svg class="icon icon--sm" viewBox="0 0 24 24">
+          <path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1M5.6 18.4l2.1-2.1m8.6-8.6 2.1-2.1"/>
+        </svg>
       </span>
       Numination
     </a>
 
     <nav class="site-header__nav">
       <a href="index.html" class="site-header__link">Inicio</a>
-      <a href="quienes-somos.html" class="site-header__link">Quiénes somos</a>
-      <a href="como-ayudamos.html" class="site-header__link">Cómo ayudamos</a>
-      <a href="fundadores.html" class="site-header__link">Fundadores</a>
+      <a href="nosotros.html" class="site-header__link">Nosotros</a>
+      <a href="chat.html" class="site-header__link">Chat IA</a>
+      <a href="precio.html" class="site-header__link">Precios</a>
       <a href="contacto.html" class="site-header__link is-active">Contacto</a>
     </nav>
 
     <div class="site-header__actions">
-      <button class="site-header__toggle" data-theme-toggle type="button">
-        <svg class="icon" data-icon="moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
-        <svg class="icon" data-icon="sun" viewBox="0 0 24 24" style="display:none"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32 1.41-1.41"/></svg>
+      <button class="site-header__toggle" data-theme-toggle type="button" aria-label="Cambiar tema">
+        <svg class="icon" data-icon="moon" viewBox="0 0 24 24">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/>
+        </svg>
+        <svg class="icon" data-icon="sun" viewBox="0 0 24 24" style="display:none">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32 1.41-1.41"/>
+        </svg>
       </button>
-      <a href="#" class="btn btn--ghost btn--sm">Iniciar sesión</a>
-      <a href="#" class="btn btn--primary btn--sm">Comenzar gratis</a>
+      <a href="chat.html" class="btn btn--ghost btn--sm">Iniciar sesión</a>
+      <a href="chat.html" class="btn btn--primary btn--sm">Comenzar gratis</a>
     </div>
 
     <button class="site-header__toggle" data-menu-toggle type="button" aria-label="Abrir menú" aria-expanded="false">
-      <svg class="icon" viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+      <svg class="icon" viewBox="0 0 24 24">
+        <line x1="4" y1="6" x2="20" y2="6"/>
+        <line x1="4" y1="12" x2="20" y2="12"/>
+        <line x1="4" y1="18" x2="20" y2="18"/>
+      </svg>
     </button>
   </div>
 
   <div class="container site-header__mobile" data-menu>
     <nav>
       <a href="index.html">Inicio</a>
-      <a href="quienes-somos.html">Quiénes somos</a>
-      <a href="como-ayudamos.html">Cómo ayudamos</a>
-      <a href="fundadores.html">Fundadores</a>
+      <a href="nosotros.html">Nosotros</a>
+      <a href="chat.html">Chat IA</a>
+      <a href="precio.html">Precios</a>
       <a href="contacto.html">Contacto</a>
-      <a href="#" class="btn btn--secondary">Iniciar sesión</a>
-      <a href="#" class="btn btn--primary">Comenzar gratis</a>
+      <a href="chat.html" class="btn btn--secondary">Iniciar sesión</a>
+      <a href="chat.html" class="btn btn--primary">Comenzar gratis</a>
     </nav>
   </div>
 </header>
 
 <main>
 
-  <section class="hero">
-    <div class="container hero__inner">
-      <span class="hero__badge">
-        <svg class="icon" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-        Contacto
-      </span>
-      <h1 class="hero__title">Hablemos.</h1>
-      <p class="hero__subtitle">
-        Respondemos en menos de 24 horas hábiles. Si prefieres una llamada,
-        déjanos tu número y coordinamos.
-      </p>
-    </div>
-  </section>
+<!-- ═══════════════════════════════════════════════════════════
+     HERO
+     ═══════════════════════════════════════════════════════════ -->
+<section class="hero">
+  <div class="container hero__inner">
 
-  <section class="section">
-    <div class="container">
-      <div class="contact-layout">
+    <span class="hero__badge">
+      <svg class="icon" viewBox="0 0 24 24">
+        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+        <polyline points="22,6 12,13 2,6"/>
+      </svg>
+      Contacto
+    </span>
 
-        <!-- FORM -->
-        <form class="contact-form" data-contact-form novalidate>
-          <h2>Escríbenos</h2>
-          <p class="text-muted" style="margin-top:var(--space-2)">
-            Cuéntanos quién eres para darte la respuesta correcta.
+    <h1 class="hero__title">Hablemos.</h1>
+
+    <p class="hero__subtitle">
+      Respondemos personalmente en menos de 24 horas hábiles.
+      Si prefieres una llamada, déjanos tu número y coordinamos.
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     FORMULARIO + INFO
+     ═══════════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="container">
+    <div class="contact-layout">
+
+      <!-- FORMULARIO -->
+      <form class="contact-form" data-contact-form novalidate>
+        <h2>Escríbenos</h2>
+        <p class="text-muted" style="margin-top:var(--space-2)">
+          Cuéntanos quién eres para darte la respuesta correcta.
+        </p>
+
+        <div class="form-row">
+          <label for="nombre">Nombre completo</label>
+          <input
+            id="nombre"
+            name="nombre"
+            type="text"
+            required
+            placeholder="Ej. Ana Rodríguez"
+            autocomplete="name"
+          />
+        </div>
+
+        <div class="form-row">
+          <label for="email">Correo electrónico</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            required
+            placeholder="tu@correo.com"
+            autocomplete="email"
+          />
+        </div>
+
+        <div class="form-row">
+          <label for="telefono">Teléfono (opcional)</label>
+          <input
+            id="telefono"
+            name="telefono"
+            type="tel"
+            placeholder="+57 300 000 0000"
+            autocomplete="tel"
+          />
+        </div>
+
+        <div class="form-row">
+          <label for="rol">¿Con qué perfil nos escribes?</label>
+          <select id="rol" name="rol" required>
+            <option value="">Selecciona una opción…</option>
+            <option value="estudiante">Soy estudiante</option>
+            <option value="docente">Soy docente</option>
+            <option value="colegio">Represento a un colegio</option>
+            <option value="familia">Soy acudiente o familiar</option>
+            <option value="prensa">Soy periodista o investigador</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label for="institucion">Institución (opcional)</label>
+          <input
+            id="institucion"
+            name="institucion"
+            type="text"
+            placeholder="Nombre del colegio o universidad"
+          />
+        </div>
+
+        <div class="form-row">
+          <label for="mensaje">Mensaje</label>
+          <textarea
+            id="mensaje"
+            name="mensaje"
+            rows="6"
+            required
+            maxlength="1200"
+            placeholder="Cuéntanos brevemente qué necesitas."
+          ></textarea>
+          <span class="form-help" data-counter>0 / 1200</span>
+        </div>
+
+        <label class="form-check">
+          <input type="checkbox" name="acepto" required />
+          <span>
+            Acepto la política de tratamiento de datos personales
+            (Ley 1581 de 2012).
+          </span>
+        </label>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn--primary btn--lg">
+            Enviar mensaje
+          </button>
+          <button type="reset" class="btn btn--ghost">
+            Limpiar
+          </button>
+        </div>
+
+        <p class="form-status" data-form-status hidden></p>
+      </form>
+
+      <!-- INFO DIRECTA -->
+      <aside class="contact-info">
+        <h2>Información directa</h2>
+
+        <div class="contact-block">
+          <div class="contact-block__icon">
+            <svg class="icon" viewBox="0 0 24 24">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+          </div>
+          <div>
+            <h4>Correo general</h4>
+            <p>hola@numination.app</p>
+          </div>
+        </div>
+
+        <div class="contact-block">
+          <div class="contact-block__icon">
+            <svg class="icon" viewBox="0 0 24 24">
+              <path d="M12 2 4 7v6c0 5 3.5 8.5 8 9 4.5-.5 8-4 8-9V7l-8-5z"/>
+            </svg>
+          </div>
+          <div>
+            <h4>Colegios e instituciones</h4>
+            <p>colegios@numination.app</p>
+          </div>
+        </div>
+
+        <div class="contact-block">
+          <div class="contact-block__icon">
+            <svg class="icon" viewBox="0 0 24 24">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+            </svg>
+          </div>
+          <div>
+            <h4>Prensa y alianzas</h4>
+            <p>prensa@numination.app</p>
+          </div>
+        </div>
+
+        <div class="contact-block">
+          <div class="contact-block__icon">
+            <svg class="icon" viewBox="0 0 24 24">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+          </div>
+          <div>
+            <h4>Oficina</h4>
+            <p>Bogotá D.C., Colombia</p>
+          </div>
+        </div>
+
+        <div class="contact-block">
+          <div class="contact-block__icon">
+            <svg class="icon" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+          </div>
+          <div>
+            <h4>Horario de respuesta</h4>
+            <p>Lunes a viernes · 8 a.m. a 6 p.m.</p>
+          </div>
+        </div>
+
+        <div style="margin-top:var(--space-8);padding-top:var(--space-6);border-top:1px solid var(--border)">
+          <p style="font-size:var(--text-sm);color:var(--fg-muted);line-height:1.6">
+            Somos dos estudiantes y un equipo pequeño. Cada mensaje llega
+            directo a nosotros, no a un buzón automático. Escríbenos con
+            confianza.
           </p>
+        </div>
+      </aside>
 
-          <div class="form-row">
-            <label for="nombre">Nombre completo</label>
-            <input id="nombre" name="nombre" type="text" required
-                   placeholder="Ej. Ana Rodríguez" autocomplete="name" />
-          </div>
+    </div>
+  </div>
+</section>
 
-          <div class="form-row">
-            <label for="email">Correo electrónico</label>
-            <input id="email" name="email" type="email" required
-                   placeholder="tu@correo.com" autocomplete="email" />
-          </div>
+<!-- ═══════════════════════════════════════════════════════════
+     CÓMO TRABAJAMOS
+     ═══════════════════════════════════════════════════════════ -->
+<section class="section" style="background:var(--bg-elev)">
+  <div class="container">
 
-          <div class="form-row">
-            <label for="rol">¿Con qué perfil nos escribes?</label>
-            <select id="rol" name="rol" required>
-              <option value="">Selecciona una opción…</option>
-              <option value="estudiante">Soy estudiante</option>
-              <option value="docente">Soy docente</option>
-              <option value="colegio">Represento a un colegio</option>
-              <option value="familia">Soy acudiente o familiar</option>
-              <option value="otro">Otro</option>
-            </select>
-          </div>
+    <header class="section-header" data-reveal>
+      <p class="eyebrow">Cómo trabajamos</p>
+      <h2>Qué esperar cuando nos escribes</h2>
+      <p>Tres cosas simples que aplican a todos los mensajes.</p>
+    </header>
 
-          <div class="form-row">
-            <label for="institucion">Institución (opcional)</label>
-            <input id="institucion" name="institucion" type="text"
-                   placeholder="Nombre del colegio o universidad" />
-          </div>
+    <div class="steps" data-reveal-stagger>
 
-          <div class="form-row">
-            <label for="mensaje">Mensaje</label>
-            <textarea id="mensaje" name="mensaje" rows="5" required
-                      maxlength="1200"
-                      placeholder="Cuéntanos brevemente qué necesitas."></textarea>
-            <span class="form-help" data-counter>0 / 1200</span>
-          </div>
+      <article class="step">
+        <div class="step__number">1</div>
+        <h3>Recibimos tu mensaje</h3>
+        <p>Confirmamos la recepción con un correo automático en menos de 5 minutos.</p>
+      </article>
 
-          <label class="form-check">
-            <input type="checkbox" name="acepto" required />
-            <span>Acepto la política de tratamiento de datos personales.</span>
-          </label>
+      <article class="step">
+        <div class="step__number">2</div>
+        <h3>Leemos y respondemos</h3>
+        <p>En menos de 24 horas hábiles, un miembro del equipo te responde personalmente.</p>
+      </article>
 
-          <div class="form-actions">
-            <button type="submit" class="btn btn--primary btn--lg">Enviar mensaje</button>
-            <button type="reset" class="btn btn--ghost">Limpiar</button>
-          </div>
+      <article class="step">
+        <div class="step__number">3</div>
+        <h3>Coordinamos</h3>
+        <p>Si hace falta una llamada o demo, agendamos una reunión de 20 minutos.</p>
+      </article>
 
-          <p class="form-status" data-form-status hidden></p>
-        </form>
+      <article class="step">
+        <div class="step__number">4</div>
+        <h3>Damos seguimiento</h3>
+        <p>Si quedas con dudas después de la respuesta, seguimos el hilo hasta resolver todo.</p>
+      </article>
 
-        <!-- INFO -->
-        <aside class="contact-info">
-          <h2>Información directa</h2>
+    </div>
+  </div>
+</section>
 
-          <div class="contact-block">
-            <div class="contact-block__icon">
-              <svg class="icon" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-            </div>
+<!-- ═══════════════════════════════════════════════════════════
+     FAQ
+     ═══════════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="container">
+
+    <header class="section-header" data-reveal>
+      <p class="eyebrow">Preguntas frecuentes</p>
+      <h2>Antes de escribir, mira esto</h2>
+      <p>Quizá tu duda ya está respondida acá.</p>
+    </header>
+
+    <div class="faq" data-reveal>
+
+      <details>
+        <summary>¿Numination tiene costo para estudiantes?</summary>
+        <p>Hay un plan gratuito permanente con acceso a chat IA, banco ICFES, explicaciones y generación de imágenes. El plan Premium agrega simulacros cronometrados y reportes avanzados. Los colegios aliados cubren el acceso para sus estudiantes.</p>
+      </details>
+
+      <details>
+        <summary>¿Funciona sin conexión a internet?</summary>
+        <p>La práctica offline está en desarrollo. Hoy necesitas conexión, pero el consumo de datos es bajo porque las respuestas se transmiten en streaming.</p>
+      </details>
+
+      <details>
+        <summary>¿Necesito instalar algo?</summary>
+        <p>No. Numination corre en el navegador. También puedes agregarla a la pantalla de inicio del celular como si fuera una app.</p>
+      </details>
+
+      <details>
+        <summary>¿Los datos de mi hijo están seguros?</summary>
+        <p>Sí. Cumplimos con la Ley 1581 de protección de datos personales en Colombia. No vendemos información a terceros ni mostramos publicidad a menores.</p>
+      </details>
+
+      <details>
+        <summary>¿Cómo implementan Numination en un colegio?</summary>
+        <p>Hacemos una llamada inicial, definimos el alcance, capacitamos a los docentes en una sesión de 90 minutos y damos acompañamiento durante las primeras cuatro semanas.</p>
+      </details>
+
+      <details>
+        <summary>¿Quién revisa las preguntas?</summary>
+        <p>Un consejo asesor de docentes con al menos 8 años de experiencia en aula. Cada pregunta pasa por al menos una revisión antes de publicarse.</p>
+      </details>
+
+      <details>
+        <summary>¿Puedo hacer una práctica con mi grupo?</summary>
+        <p>Sí. Los docentes pueden asignar práctica específica a estudiantes o al grupo completo desde el panel institucional. No hace falta preparar material extra.</p>
+      </details>
+
+      <details>
+        <summary>¿Ofrecen facturación electrónica?</summary>
+        <p>Sí. Todos los pagos generan factura electrónica válida en Colombia, con NIT y toda la información requerida por la DIAN.</p>
+      </details>
+
+      <details>
+        <summary>¿Cómo reporto un error en una pregunta?</summary>
+        <p>Puedes escribirnos desde este formulario seleccionando "Soy estudiante" y describiendo el error. Lo revisamos en menos de 48 horas y corregimos si aplica.</p>
+      </details>
+
+      <details>
+        <summary>¿Dan charlas o talleres en colegios?</summary>
+        <p>Sí. Si eres coordinador académico o rector y quieres una charla sobre IA educativa para tus docentes, escríbenos. Las damos gratuitamente a colegios públicos.</p>
+      </details>
+
+      <details>
+        <summary>¿Puedo colaborar con Numination?</summary>
+        <p>Sí. Buscamos docentes que quieran revisar preguntas, estudiantes que quieran probar nuevas funciones y developers que quieran sumar al proyecto. Escríbenos con tu perfil.</p>
+      </details>
+
+      <details>
+        <summary>¿Cuánto tardan en responder en época de exámenes?</summary>
+        <p>En las semanas previas al Saber 11 recibimos muchos mensajes. Puede tardar hasta 48 horas hábiles. Si es urgente, escríbenos por correo directo a hola@numination.app.</p>
+      </details>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PARA COLEGIOS
+     ═══════════════════════════════════════════════════════════ -->
+<section class="section" style="background:var(--bg-elev)">
+  <div class="container">
+    <div class="split">
+
+      <div class="split__text" data-reveal>
+        <p class="eyebrow">Para colegios</p>
+        <h2>¿Coordinador académico o rector?</h2>
+        <p class="text-muted" style="margin-top:var(--space-4)">
+          Si representas a una institución educativa, tenemos un proceso
+          distinto para ti. No es lo mismo que un estudiante individual:
+          hacemos una implementación acompañada, con capacitación docente
+          y seguimiento.
+        </p>
+
+        <ul class="feature-list">
+          <li>
+            <span class="feature-list__icon">
+              <svg class="icon" viewBox="0 0 24 24">
+                <rect x="3" y="4" width="18" height="18" rx="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+            </span>
             <div>
-              <h4>Correo general</h4>
-              <p>hola@numination.app</p>
+              <h4>Llamada inicial de 30 minutos</h4>
+              <p>Conocemos tu colegio, tu calendario y tus prioridades. Sin presentaciones corporativas.</p>
             </div>
-          </div>
-
-          <div class="contact-block">
-            <div class="contact-block__icon">
-              <svg class="icon" viewBox="0 0 24 24"><path d="M12 2 4 7v6c0 5 3.5 8.5 8 9 4.5-.5 8-4 8-9V7l-8-5z"/></svg>
-            </div>
+          </li>
+          <li>
+            <span class="feature-list__icon">
+              <svg class="icon" viewBox="0 0 24 24">
+                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+              </svg>
+            </span>
             <div>
-              <h4>Colegios e instituciones</h4>
-              <p>colegios@numination.app</p>
+              <h4>Capacitación docente</h4>
+              <p>Sesión de 90 minutos para que tus profesores sepan usar la plataforma desde el día uno.</p>
             </div>
-          </div>
-
-          <div class="contact-block">
-            <div class="contact-block__icon">
-              <svg class="icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-            </div>
+          </li>
+          <li>
+            <span class="feature-list__icon">
+              <svg class="icon" viewBox="0 0 24 24">
+                <path d="M12 2 4 7v6c0 5 3.5 8.5 8 9 4.5-.5 8-4 8-9V7l-8-5z"/>
+                <path d="m9 12 2 2 4-4"/>
+              </svg>
+            </span>
             <div>
-              <h4>Prensa y alianzas</h4>
-              <p>prensa@numination.app</p>
+              <h4>Acompañamiento inicial</h4>
+              <p>Acompañamos las primeras cuatro semanas. Después, soporte continuo cuando lo necesiten.</p>
             </div>
-          </div>
-
-          <div class="contact-block">
-            <div class="contact-block__icon">
-              <svg class="icon" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            </div>
+          </li>
+          <li>
+            <span class="feature-list__icon">
+              <svg class="icon" viewBox="0 0 24 24">
+                <line x1="12" y1="20" x2="12" y2="10"/>
+                <line x1="18" y1="20" x2="18" y2="4"/>
+                <line x1="6" y1="20" x2="6" y2="16"/>
+              </svg>
+            </span>
             <div>
-              <h4>Oficina</h4>
-              <p>Bogotá D.C., Colombia</p>
+              <h4>Reportes institucionales</h4>
+              <p>Reportes exportables en PDF para consejos académicos, actas o socialización con familias.</p>
+            </div>
+          </li>
+        </ul>
+
+        <div style="margin-top:var(--space-8)">
+          <a href="precio.html" class="btn btn--primary">
+            Ver precios institucionales
+            <svg class="icon icon--sm" viewBox="0 0 24 24">
+              <line x1="5" y1="12" x2="19" y2="12"/>
+              <polyline points="12 5 19 12 12 19"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+
+      <div class="split__visual">
+        <div class="visual-card" data-reveal>
+          <div class="visual-card__head">
+            <span class="visual-card__dot"></span>
+            <span class="visual-card__dot"></span>
+            <span class="visual-card__dot"></span>
+          </div>
+          <div class="visual-card__body">
+            <p style="font-size:var(--text-xs);color:var(--fg-subtle);margin-bottom:var(--space-3)">
+              Proceso de implementación
+            </p>
+            <div class="mini-practice">
+              <div class="mini-practice__tag">Semana 1</div>
+              <h4>Diagnóstico y setup</h4>
+              <p class="text-muted" style="font-size:var(--text-sm);margin-top:var(--space-2)">
+                Llamada inicial + creación de cuentas institucionales + capacitación docente.
+              </p>
+            </div>
+            <div class="mini-practice" style="margin-top:var(--space-3)">
+              <div class="mini-practice__tag">Semana 2-4</div>
+              <h4>Acompañamiento</h4>
+              <p class="text-muted" style="font-size:var(--text-sm);margin-top:var(--space-2)">
+                Seguimiento semanal, soporte a docentes y ajustes según feedback.
+              </p>
             </div>
           </div>
+        </div>
+      </div>
 
-          <div class="contact-block">
-            <div class="contact-block__icon">
-              <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            </div>
-            <div>
-              <h4>Horario de respuesta</h4>
-              <p>Lunes a viernes · 8 a.m. a 6 p.m.</p>
-            </div>
-          </div>
-        </aside>
+    </div>
+  </div>
+</section>
 
+<!-- ═══════════════════════════════════════════════════════════
+     COMUNIDAD
+     ═══════════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="container">
+
+    <header class="section-header" data-reveal>
+      <p class="eyebrow">Comunidad</p>
+      <h2>Otras formas de estar en contacto</h2>
+      <p>Si prefieres un canal más informal, aquí estamos.</p>
+    </header>
+
+    <div class="card-grid" data-reveal-stagger>
+
+      <article class="card card--interactive">
+        <div class="icon-badge">
+          <svg class="icon" viewBox="0 0 24 24">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
+          </svg>
+        </div>
+        <h3 class="card__title">Correo</h3>
+        <p class="card__body">
+          La vía más directa. Escribimos la respuesta completa por escrito
+          para que puedas releerla cuando quieras.
+        </p>
+      </article>
+
+      <article class="card card--interactive">
+        <div class="icon-badge">
+          <svg class="icon" viewBox="0 0 24 24">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+        </div>
+        <h3 class="card__title">Chat IA</h3>
+        <p class="card__body">
+          Si tu duda no es personal sino sobre un tema académico, pregúntale
+          directo a Numination. Está disponible 24/7.
+        </p>
+      </article>
+
+      <article class="card card--interactive">
+        <div class="icon-badge">
+          <svg class="icon" viewBox="0 0 24 24">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </div>
+        <h3 class="card__title">Comunidad de docentes</h3>
+        <p class="card__body">
+          Próximamente abriremos un espacio para que docentes compartan
+          estrategias, dudas y buenas prácticas con Numination.
+        </p>
+      </article>
+
+      <article class="card card--interactive">
+        <div class="icon-badge">
+          <svg class="icon" viewBox="0 0 24 24">
+            <path d="M12 2 4 7v6c0 5 3.5 8.5 8 9 4.5-.5 8-4 8-9V7l-8-5z"/>
+            <path d="m9 12 2 2 4-4"/>
+          </svg>
+        </div>
+        <h3 class="card__title">Colaboraciones</h3>
+        <p class="card__body">
+          Buscamos docentes revisores, desarrolladores y diseñadores que
+          quieran sumar al proyecto. Escríbenos con tu perfil.
+        </p>
+      </article>
+
+      <article class="card card--interactive">
+        <div class="icon-badge">
+          <svg class="icon" viewBox="0 0 24 24">
+            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </div>
+        <h3 class="card__title">Prensa</h3>
+        <p class="card__body">
+          Si eres periodista o investigador y quieres entrevistar al equipo
+          fundador, escríbenos y coordinamos.
+        </p>
+      </article>
+
+      <article class="card card--interactive">
+        <div class="icon-badge">
+          <svg class="icon" viewBox="0 0 24 24">
+            <path d="M9 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2z"/>
+            <path d="M19 3h-4a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"/>
+          </svg>
+        </div>
+        <h3 class="card__title">Reportar errores</h3>
+        <p class="card__body">
+          Si encuentras un bug en la plataforma o un error en una pregunta,
+          avísanos. Lo revisamos en menos de 48 horas.
+        </p>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     CTA FINAL
+     ═══════════════════════════════════════════════════════════ -->
+<section class="section" style="background:var(--bg-elev)">
+  <div class="container">
+    <div class="cta-final" data-reveal>
+      <div class="cta-final__inner">
+        <p class="eyebrow">Mientras esperas</p>
+        <h2 class="cta-final__title">
+          Puedes empezar a usar Numination ya.
+        </h2>
+        <p class="cta-final__subtitle">
+          No necesitas esperar respuesta. El chat está abierto y disponible
+          las 24 horas. Pregúntale lo que quieras.
+        </p>
+        <div class="cta-final__actions">
+          <a href="chat.html" class="btn btn--primary btn--lg">
+            Abrir el chat ahora
+            <svg class="icon icon--sm" viewBox="0 0 24 24">
+              <line x1="5" y1="12" x2="19" y2="12"/>
+              <polyline points="12 5 19 12 12 19"/>
+            </svg>
+          </a>
+          <a href="nosotros.html" class="btn btn--secondary btn--lg">
+            Conocer al equipo
+          </a>
+        </div>
+        <p class="cta-final__meta">
+          Hecho en Colombia · Servido desde Vercel · Respondemos en menos de 24 horas
+        </p>
       </div>
     </div>
-  </section>
-
-  <!-- FAQ -->
-  <section class="section" style="background:var(--bg-elev)">
-    <div class="container">
-      <header class="section-header">
-        <p class="eyebrow">Preguntas frecuentes</p>
-        <h2>Antes de escribir, mira esto</h2>
-      </header>
-
-      <div class="faq">
-        <details>
-          <summary>¿Numination tiene costo para estudiantes?</summary>
-          <p>Hay un plan gratuito con acceso a práctica diaria y simulacros cortos. El plan completo, con simulacros de tiempo real y reportes avanzados, es por suscripción. Los colegios aliados cubren el acceso para sus estudiantes.</p>
-        </details>
-
-        <details>
-          <summary>¿Funciona sin conexión a internet?</summary>
-          <p>La práctica offline está en desarrollo. Hoy necesitas conexión, pero el consumo de datos es bajo porque las preguntas se cachean después de la primera carga.</p>
-        </details>
-
-        <details>
-          <summary>¿Necesito instalar algo?</summary>
-          <p>No. Numination corre en el navegador. También puedes agregarla a la pantalla de inicio del celular como si fuera una app.</p>
-        </details>
-
-        <details>
-          <summary>¿Los datos de mi hijo están seguros?</summary>
-          <p>Sí. Cumplimos con la Ley 1581 de protección de datos personales en Colombia. No vendemos información a terceros ni mostramos publicidad a menores.</p>
-        </details>
-
-        <details>
-          <summary>¿Cómo implementan Numination en un colegio?</summary>
-          <p>Hacemos una llamada inicial, definimos el alcance, capacitamos a los docentes en una sesión de 90 minutos y damos acompañamiento durante las primeras cuatro semanas.</p>
-        </details>
-
-        <details>
-          <summary>¿Quién revisa las preguntas?</summary>
-          <p>Un consejo asesor de docentes con al menos 8 años de experiencia en aula. Cada pregunta pasa por al menos una revisión antes de publicarse.</p>
-        </details>
-      </div>
-    </div>
-  </section>
-
-  <section class="section">
-    <div class="container text-center">
-      <h2>¿Prefieres que te llamemos?</h2>
-      <p class="text-muted mx-auto" style="max-width:42rem;margin-top:var(--space-4)">
-        Agenda una demo de 20 minutos con nuestro equipo. Sin presentaciones
-        corporativas, sin compromiso.
-      </p>
-      <div style="display:flex;justify-content:center;gap:var(--space-3);margin-top:var(--space-8);flex-wrap:wrap">
-        <a href="#" class="btn btn--primary btn--lg">Agendar demo</a>
-        <a href="como-ayudamos.html" class="btn btn--secondary btn--lg">Ver cómo ayudamos</a>
-      </div>
-    </div>
-  </section>
+  </div>
+</section>
 
 </main>
 
+<!-- ═══════════════════════════════════════════════════════════
+     FOOTER
+     ═══════════════════════════════════════════════════════════ -->
 <footer class="site-footer">
   <div class="container">
     <div class="site-footer__row">
       <a href="index.html" class="site-footer__brand">
         <span class="site-footer__brand-mark">
-          <svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1M5.6 18.4l2.1-2.1m8.6-8.6 2.1-2.1"/></svg>
+          <svg class="icon icon--sm" viewBox="0 0 24 24">
+            <path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1M5.6 18.4l2.1-2.1m8.6-8.6 2.1-2.1"/>
+          </svg>
         </span>
         Numination
       </a>
       <nav class="site-footer__nav">
-        <a href="quienes-somos.html">Quiénes somos</a>
-        <a href="como-ayudamos.html">Cómo ayudamos</a>
-        <a href="fundadores.html">Fundadores</a>
+        <a href="nosotros.html">Nosotros</a>
+        <a href="chat.html">Chat IA</a>
+        <a href="precio.html">Precios</a>
         <a href="contacto.html">Contacto</a>
       </nav>
     </div>
-    <p class="site-footer__copy">© 2026 Numination. Hecho en Colombia.</p>
+    <p class="site-footer__copy">
+      © 2026 Numination · Hecho en Colombia · "La IA que habla el idioma de nuestra educación"
+    </p>
   </div>
 </footer>
 

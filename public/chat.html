@@ -4,38 +4,64 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Numination — Chat con la IA colombiana</title>
-  <meta name="description" content="Habla con Numination, la primera IA educativa 100% colombiana." />
+  <meta name="description" content="Habla con Numination, la primera IA educativa 100% colombiana. Pregunta sobre cualquier tema del Saber 11 y recibe explicaciones paso a paso con contexto de Colombia." />
+  <meta name="keywords" content="chat IA, ICFES, Saber 11, Colombia, tutor, educativo" />
   <meta name="theme-color" content="#003893" />
+
+  <meta property="og:title" content="Numination — Chat IA" />
+  <meta property="og:description" content="Habla con la primera IA que entiende Colombia." />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="es_CO" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Numination — Chat IA" />
+  <meta name="twitter:description" content="Habla con la primera IA que entiende Colombia." />
+
   <link rel="icon" href="favicon.ico" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="assets/css/main.css" />
-  <link rel="stylesheet" href="assets/css/pages/chat.css" />
+  <link rel="stylesheet" href="assets/css/chat.css" />
 </head>
 <body class="chat-body">
 
 <div class="chat-app">
 
+  <!-- ══════════════════════════════════════════════════════════════
+       SIDEBAR
+       ══════════════════════════════════════════════════════════════ -->
   <aside class="chat-sidebar" data-chat-sidebar aria-label="Navegación del chat">
+
+    <!-- Cabecera -->
     <div class="chat-sidebar__top">
       <a href="index.html" class="chat-sidebar__brand">
         <span class="chat-sidebar__brand-mark">
-          <svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1M5.6 18.4l2.1-2.1m8.6-8.6 2.1-2.1"/></svg>
+          <svg class="icon icon--sm" viewBox="0 0 24 24">
+            <path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1M5.6 18.4l2.1-2.1m8.6-8.6 2.1-2.1"/>
+          </svg>
         </span>
         <span>Numination</span>
       </a>
       <button type="button" class="chat-sidebar__close" data-chat-sidebar-close aria-label="Cerrar menú">
-        <svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        <svg class="icon" viewBox="0 0 24 24">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
       </button>
     </div>
 
+    <!-- Nuevo chat -->
     <button type="button" class="chat-new" data-chat-new>
-      <svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <svg class="icon" viewBox="0 0 24 24">
+        <line x1="12" y1="5" x2="12" y2="19"/>
+        <line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
       <span>Nuevo chat</span>
       <kbd class="chat-new__kbd">Ctrl K</kbd>
     </button>
 
+    <!-- Historial -->
     <div class="chat-sidebar__section">
       <p class="chat-sidebar__label">Conversaciones</p>
       <div class="chat-sidebar__empty" data-chat-history-empty>
@@ -45,52 +71,94 @@
       <ul class="chat-history" data-chat-history></ul>
     </div>
 
+    <!-- Pie del sidebar -->
     <div class="chat-sidebar__bottom">
+
       <button type="button" class="chat-sidebar__link" data-theme-toggle>
-        <svg class="icon" data-icon="moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
-        <svg class="icon" data-icon="sun" viewBox="0 0 24 24" style="display:none"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32 1.41-1.41"/></svg>
+        <svg class="icon" data-icon="moon" viewBox="0 0 24 24">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/>
+        </svg>
+        <svg class="icon" data-icon="sun" viewBox="0 0 24 24" style="display:none">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32 1.41-1.41"/>
+        </svg>
         <span>Cambiar tema</span>
       </button>
-      <a href="quienes-somos.html" class="chat-sidebar__link">
-        <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-        <span>Sobre Numination</span>
+
+      <a href="index.html" class="chat-sidebar__link">
+        <svg class="icon" viewBox="0 0 24 24">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        <span>Inicio</span>
       </a>
-      <a href="como-ayudamos.html" class="chat-sidebar__link">
-        <svg class="icon" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
-        <span>Cómo ayudamos</span>
+
+      <a href="nosotros.html" class="chat-sidebar__link">
+        <svg class="icon" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="16" x2="12" y2="12"/>
+          <line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+        <span>Nosotros</span>
       </a>
+
+      <a href="precio.html" class="chat-sidebar__link">
+        <svg class="icon" viewBox="0 0 24 24">
+          <line x1="12" y1="1" x2="12" y2="23"/>
+          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+        </svg>
+        <span>Precios</span>
+      </a>
+
       <a href="contacto.html" class="chat-sidebar__link">
-        <svg class="icon" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        <svg class="icon" viewBox="0 0 24 24">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+          <polyline points="22,6 12,13 2,6"/>
+        </svg>
         <span>Contacto</span>
       </a>
-      <a href="index.html" class="chat-sidebar__link">
-        <svg class="icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-        <span>Volver al inicio</span>
-      </a>
+
       <p class="chat-sidebar__version">v2.0 · Colombia</p>
     </div>
   </aside>
 
+  <!-- Overlay para móvil -->
   <div class="chat-sidebar-overlay" data-chat-sidebar-overlay></div>
 
+  <!-- ══════════════════════════════════════════════════════════════
+       MAIN
+       ══════════════════════════════════════════════════════════════ -->
   <main class="chat-main">
 
+    <!-- ────── TOPBAR (móvil) ────── -->
     <header class="chat-topbar">
       <button type="button" class="chat-topbar__menu" data-chat-sidebar-open aria-label="Abrir menú">
-        <svg class="icon" viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+        <svg class="icon" viewBox="0 0 24 24">
+          <line x1="4" y1="6" x2="20" y2="6"/>
+          <line x1="4" y1="12" x2="20" y2="12"/>
+          <line x1="4" y1="18" x2="20" y2="18"/>
+        </svg>
       </button>
       <span class="chat-topbar__title">Numination</span>
       <span class="chat-topbar__badge">IA Colombia</span>
       <button type="button" class="chat-topbar__new" data-chat-new aria-label="Nuevo chat">
-        <svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <svg class="icon" viewBox="0 0 24 24">
+          <line x1="12" y1="5" x2="12" y2="19"/>
+          <line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
       </button>
     </header>
 
+    <!-- ────── ZONA DE SCROLL ────── -->
     <div class="chat-scroll" data-chat-messages>
 
+      <!-- ══════════ WELCOME ══════════ -->
       <div class="chat-welcome" data-chat-empty>
+
         <div class="chat-welcome__logo">
-          <svg class="icon" viewBox="0 0 24 24"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1M5.6 18.4l2.1-2.1m8.6-8.6 2.1-2.1"/></svg>
+          <svg class="icon" viewBox="0 0 24 24">
+            <path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1M5.6 18.4l2.1-2.1m8.6-8.6 2.1-2.1"/>
+          </svg>
         </div>
 
         <h1 class="chat-welcome__title">¿En qué te ayudo hoy?</h1>
@@ -102,97 +170,228 @@
         </p>
 
         <div class="chat-welcome__tags">
-          <span class="chat-tag"><svg class="icon icon--xs" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Contexto Colombia</span>
-          <span class="chat-tag"><svg class="icon icon--xs" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>3 motores IA</span>
-          <span class="chat-tag"><svg class="icon icon--xs" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>500 preguntas ICFES</span>
-          <span class="chat-tag"><svg class="icon icon--xs" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Sin registro</span>
+          <span class="chat-tag">
+            <svg class="icon icon--xs" viewBox="0 0 24 24">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Contexto Colombia
+          </span>
+          <span class="chat-tag">
+            <svg class="icon icon--xs" viewBox="0 0 24 24">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            3 motores IA
+          </span>
+          <span class="chat-tag">
+            <svg class="icon icon--xs" viewBox="0 0 24 24">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            500 preguntas ICFES
+          </span>
+          <span class="chat-tag">
+            <svg class="icon icon--xs" viewBox="0 0 24 24">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Sin registro
+          </span>
         </div>
 
+        <!-- ══════════ SUGERENCIAS ══════════ -->
         <div class="chat-cards">
+
           <button type="button" class="chat-card" data-suggestion="Explícame cómo resolver una ecuación cuadrática por factorización, con un ejemplo paso a paso y un ejercicio final para practicar">
-            <span class="chat-card__icon"><svg class="icon" viewBox="0 0 24 24"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg></span>
+            <span class="chat-card__icon">
+              <svg class="icon" viewBox="0 0 24 24">
+                <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/>
+                <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/>
+              </svg>
+            </span>
             <span class="chat-card__title">Ecuaciones cuadráticas</span>
             <span class="chat-card__sub">Ejemplo paso a paso</span>
           </button>
 
           <button type="button" class="chat-card" data-suggestion="Hazme un plan de estudio de 30 días para preparar el Saber 11, con horas diarias, temas por semana y días de repaso">
-            <span class="chat-card__icon"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
+            <span class="chat-card__icon">
+              <svg class="icon" viewBox="0 0 24 24">
+                <rect x="3" y="4" width="18" height="18" rx="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+            </span>
             <span class="chat-card__title">Plan de 30 días</span>
             <span class="chat-card__sub">Para el Saber 11</span>
           </button>
 
           <button type="button" class="chat-card" data-suggestion="Dame 5 preguntas de lectura crítica tipo ICFES con su explicación de por qué cada respuesta es correcta y por qué las otras no">
-            <span class="chat-card__icon"><svg class="icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
+            <span class="chat-card__icon">
+              <svg class="icon" viewBox="0 0 24 24">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+              </svg>
+            </span>
             <span class="chat-card__title">Preguntas ICFES</span>
             <span class="chat-card__sub">Lectura crítica</span>
           </button>
 
           <button type="button" class="chat-card" data-suggestion="Genera una imagen educativa de un cóndor sobre los Andes colombianos para usar en una clase de ciencias naturales">
-            <span class="chat-card__icon"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></span>
+            <span class="chat-card__icon">
+              <svg class="icon" viewBox="0 0 24 24">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+              </svg>
+            </span>
             <span class="chat-card__title">Generar imagen</span>
             <span class="chat-card__sub">Con IA</span>
           </button>
 
           <button type="button" class="chat-card" data-suggestion="Explícame la independencia de Colombia como si fuera una historia de aventuras, con personajes y momentos clave">
-            <span class="chat-card__icon"><svg class="icon" viewBox="0 0 24 24"><path d="M12 2 4 7v6c0 5 3.5 8.5 8 9 4.5-.5 8-4 8-9V7l-8-5z"/></svg></span>
+            <span class="chat-card__icon">
+              <svg class="icon" viewBox="0 0 24 24">
+                <path d="M12 2 4 7v6c0 5 3.5 8.5 8 9 4.5-.5 8-4 8-9V7l-8-5z"/>
+              </svg>
+            </span>
             <span class="chat-card__title">Independencia</span>
             <span class="chat-card__sub">Como una historia</span>
           </button>
 
           <button type="button" class="chat-card" data-suggestion="Ayúdame a preparar una exposición oral de 5 minutos sobre el café colombiano para mi clase de sociales">
-            <span class="chat-card__icon"><svg class="icon" viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg></span>
+            <span class="chat-card__icon">
+              <svg class="icon" viewBox="0 0 24 24">
+                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                <line x1="12" y1="19" x2="12" y2="22"/>
+              </svg>
+            </span>
             <span class="chat-card__title">Exposición oral</span>
             <span class="chat-card__sub">En 5 minutos</span>
           </button>
+
         </div>
 
         <p class="chat-welcome__note">
-          <svg class="icon icon--xs" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <svg class="icon icon--xs" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="16" x2="12" y2="12"/>
+            <line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
           Tus conversaciones viven solo en esta pestaña. Al cerrarla, se borran.
         </p>
       </div>
 
+      <!-- ══════════ THREAD ══════════ -->
       <div class="chat-thread" data-chat-thread aria-live="polite"></div>
     </div>
 
+    <!-- ────── COMPOSER ────── -->
     <div class="chat-composer">
 
+      <!-- Chips de acciones rápidas -->
       <div class="chat-composer__chips">
-        <button type="button" class="chat-chip" data-suggestion="Explícame esto de forma más simple">Más simple</button>
-        <button type="button" class="chat-chip" data-suggestion="Dame un ejemplo con contexto colombiano">Ejemplo de Colombia</button>
-        <button type="button" class="chat-chip" data-suggestion="Hazme 3 preguntas para practicar sobre esto">Practicar</button>
+        <button type="button" class="chat-chip" data-suggestion="Explícame esto de forma más simple">
+          Más simple
+        </button>
+        <button type="button" class="chat-chip" data-suggestion="Dame un ejemplo con contexto colombiano">
+          Ejemplo de Colombia
+        </button>
+        <button type="button" class="chat-chip" data-suggestion="Hazme 3 preguntas para practicar sobre esto">
+          Practicar
+        </button>
+        <button type="button" class="chat-chip" data-suggestion="Dame un plan de estudio para este tema">
+          Plan de estudio
+        </button>
+        <button type="button" class="chat-chip" data-suggestion="Explícame con una analogía de la vida cotidiana">
+          Analogía simple
+        </button>
       </div>
 
+      <!-- Formulario principal -->
       <form class="chat-composer__inner" data-chat-form>
 
+        <!-- Adjuntar -->
         <div class="chat-composer__attach-wrap">
-          <input type="file" id="file-input" class="sr-only" accept="image/*,application/pdf,text/plain" />
-          <button type="button" class="chat-composer__btn" id="attach-btn" aria-label="Adjuntar archivo" title="Adjuntar archivo">
-            <svg class="icon" viewBox="0 0 24 24"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+          <input
+            type="file"
+            id="file-input"
+            class="sr-only"
+            accept="image/*,application/pdf,text/plain"
+          />
+          <button
+            type="button"
+            class="chat-composer__btn"
+            id="attach-btn"
+            aria-label="Adjuntar archivo"
+            title="Adjuntar archivo"
+          >
+            <svg class="icon" viewBox="0 0 24 24">
+              <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+            </svg>
           </button>
         </div>
 
-        <button type="button" class="chat-composer__btn" id="mic-btn" aria-label="Dictar por voz" title="Dictar por voz">
-          <svg class="icon" viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+        <!-- Micrófono -->
+        <button
+          type="button"
+          class="chat-composer__btn"
+          id="mic-btn"
+          aria-label="Dictar por voz"
+          title="Dictar por voz"
+        >
+          <svg class="icon" viewBox="0 0 24 24">
+            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" y1="19" x2="12" y2="22"/>
+          </svg>
         </button>
 
-        <textarea class="chat-composer__field" data-chat-field rows="1" maxlength="4000" placeholder="Pregúntale algo a Numination…" aria-label="Mensaje para Numination" autocomplete="off" spellcheck="true"></textarea>
+        <!-- Textarea -->
+        <textarea
+          class="chat-composer__field"
+          data-chat-field
+          rows="1"
+          maxlength="4000"
+          placeholder="Pregúntale algo a Numination…"
+          aria-label="Mensaje para Numination"
+          autocomplete="off"
+          spellcheck="true"
+        ></textarea>
 
-        <button type="submit" class="chat-composer__send" data-chat-send disabled aria-label="Enviar mensaje" title="Enviar (Enter)">
-          <svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+        <!-- Enviar -->
+        <button
+          type="submit"
+          class="chat-composer__send"
+          data-chat-send
+          aria-label="Enviar mensaje"
+          title="Enviar (Enter)"
+        >
+          <svg class="icon" viewBox="0 0 24 24">
+            <line x1="12" y1="19" x2="12" y2="5"/>
+            <polyline points="5 12 12 5 19 12"/>
+          </svg>
         </button>
 
       </form>
 
+      <!-- Preview del adjunto -->
       <div class="attach-preview" id="attach-preview" hidden>
         <span class="attach-preview__icon" id="attach-preview-icon">📄</span>
         <span class="attach-preview__name" id="attach-preview-name"></span>
         <span class="attach-preview__size" id="attach-preview-size"></span>
-        <button type="button" class="attach-preview__remove" id="attach-preview-remove" aria-label="Quitar archivo">
-          <svg class="icon icon--sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        <button
+          type="button"
+          class="attach-preview__remove"
+          id="attach-preview-remove"
+          aria-label="Quitar archivo"
+        >
+          <svg class="icon icon--sm" viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
         </button>
       </div>
 
+      <!-- Hint -->
       <p class="chat-composer__hint">
         Numination puede cometer errores. Verifica la información importante.
         <span class="chat-composer__separator">·</span>
@@ -205,6 +404,6 @@
 
 </div>
 
-<script type="module" src="assets/js/main.js"></script>
+<script type="module" src="assets/js/chat.js"></script>
 </body>
 </html>

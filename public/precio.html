@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="es-CO" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Precios — Numination</title>
+  <meta name="description" content="Planes de Numination para estudiantes, docentes y colegios. Empieza gratis, sin tarjeta. Precios en pesos colombianos." />
+  <meta name="keywords" content="Numination precios, plan gratis, ICFES, Colombia, suscripción" />
+  <meta name="theme-color" content="#003893" />
+
+  <meta property="og:title" content="Precios — Numination" />
+  <meta property="og:description" content="Empieza gratis. Paga solo si necesitas más." />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="es_CO" />
+
+  <link rel="icon" href="favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/main.css" />
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+     HEADER
+     ═══════════════════════════════════════════════════════════ -->
+<header class="site-header">
+  <div class="container site-header__inner">
+
+    <a href="index.html" class="site-header__brand">
+      <span class="site-header__brand-mark">
+        <svg class="icon icon--sm" viewBox="0 0 24 24">
+          <path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1M5.6 18.4l2.1-2.1m8.6-8.6 2.1-2.1"/>
+        </svg>
+      </span>
+      Numination
+    </a>
+
+    <nav class="site-header__nav">
+      <a href="index.html" class="site-header__link">Inicio</a>
+      <a href="nosotros.html" class="site-header__link">Nosotros</a>
+      <a href="chat.html" class="site-header__link">Chat IA</a>
+      <a href="precio.html" class="site-header__link is-active">Precios</a>
+      <a href="contacto.html" class="site-header__link">Contacto</a>
+    </nav>
+
+    <div class="site-header__actions">
+      <button class="site-header__toggle" data-theme-toggle type="button" aria-label="Cambiar tema">
+        <svg class="icon" data-icon="moon" viewBox="0 0 24 24">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/>
+        </svg>
+        <svg class="icon" data-icon="sun" viewBox="0 0 24 24" style="display:none">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32 1.41-1.41"/>
+        </svg>
+      </button>
+      <a href="chat.html" class="btn btn--ghost btn--sm">Iniciar sesión</a>
+      <a href="chat.html" class="btn btn--primary btn--sm">Comenzar gratis</a>
+    </div>
+
+    <button class="site-header__toggle" data-menu-toggle type="button" aria-label="Abrir menú" aria-expanded="false">
+      <svg class="icon" viewBox="0 0 24 24">
+        <line x1="4" y1="6" x2="20" y2="6"/>
+        <line x1="4" y1="12" x2="20" y2="12"/>
+        <line x1="4" y1="18" x2="20" y2="18"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="container site-header__mobile" data-menu>
+    <nav>
+      <a href="index.html">Inicio</a>
+      <a href="nosotros.html">Nosotros</a>
+      <a href="chat.html">Chat IA</a>
+      <a href="precio.html">Precios</a>
+      <a href="contacto.html">Contacto</a>
+      <a href="chat.html" class="btn btn--secondary">Iniciar sesión</a>
+      <a href="chat.html" class="btn btn--primary">Comenzar gratis</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<!-- ═══════════════════════════════════════════════════════════
+     HERO
+     ═══════════════════════════════════════════════════════════ -->
+<section class="hero">
+  <div class="container hero__inner">
+
+    <span class="hero__badge">
+      <svg class="icon" viewBox="0 0 24 24">
+        <line x1="12" y1="1" x2="12" y2="23"/>
+        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+      </svg>
+      Precios simples, sin sorpresas
+    </span>
+
+    <h1 class="hero__title">
+      Empieza gratis.<br class="hide-mobile" />
+      Paga solo si necesitas más.
+    </h1>
+
+    <p class="hero__subtitle">
+      El chat, el banco ICFES y la generación de imágenes están disponibles
+      sin costo. Los planes pagos son para quienes quieren funciones
+      adicionales o acceso institucional.
+    </p>
+
+    <p class="hero__meta">
+      Precios en pesos colombianos · Sin contratos · Cancela cuando quieras
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     GRID DE PLANES
+     ═══════════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="container">
+
+    <header class="section-header" data-reveal>
+      <p class="eyebrow">Planes</p>
+      <h2>Elige el que se ajuste a ti</h2>
+      <p>Todos los planes incluyen acceso al chat IA con contexto colombiano.</p>
+    </header>
+
+    <div class="pricing-grid" data-reveal-stagger>
+
+      <!-- PLAN GRATIS -->
+      <article class="pricing-card">
+        <h3 class="pricing-card__name">Estudiante</h3>
+        <div class="pricing-card__price">
+          $0 <small>/ siempre</small>
+        </div>
+        <p class="pricing-card__desc">
+          Para estudiantes que quieren prepararse sin pagar nada. Todo lo esencial, disponible desde el primer día.
+        </p>
+
+        <ul class="pricing-card__features">
+          <li>
+            <svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Chat IA ilimitado con contexto colombiano
+          </li>
+          <li>
+            <svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Acceso al banco ICFES de 500 preguntas
+          </li>
+          <li>
+            <svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Explicaciones paso a paso
+          </li>
+          <li>
+            <svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Generación de imágenes educativas
+          </li>
+          <li>
+            <svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Dictado por voz
+          </li>
+          <li>
+            <svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Lectura en voz alta de respuestas
+          </li>
+          <li>
+            <svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Sin registro obligatorio
+          </li>
+        </ul>
+
+        <a href="chat.html" class="btn btn--secondary">Empezar gratis</a>
+      </article>
+
+      <!-- PLAN PREMIUM -->
+      <article class="pricing-card pricing-card--featured">
+        <span class="pricing-card__badge">Recomendado</span>
+        <h3 class="pricing-card__name">Premium</h3>
+        <div class="pricing-card__price">
+          $19.900 <small>/ mes</small>
+        </div>
+        <p class="pricing-card__desc">
+          Para estudiantes que quieren practicar en serio. Todo lo del plan gratis más funciones avanzadas de estudio.
+        </p>
+
+        <ul class="pricing-card__features">
+          <li>
+            <svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Todo lo del plan Estudiante
+          </li>
+          <li>
+            <svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Simulacros cronometrados
+          </li>
+          <li>
+            <svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Reportes de progreso detallados
+          </li>
+          <li>
+            <svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Historial de conversaciones
+          </li>
+          <li>
+            <svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Plan de estudio personalizado
+          </li>
+          <li>
+            <svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Prioridad en respuestas (motor más rápido)
+          </li>
+          <li>
+            <svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Sin publicidad, sin límites
+          </li>
+        </ul>
+
+        <a href="contacto.html" class="btn btn--primary">
+          Probar 30 días gratis
+        </a>
+      </article>
+
+      <!-- PLAN COLEGIO -->
+      <article class="pricing-card">
+        <h3 class="pricing-card__name">Colegio</h3>
+        <div class="pricing-card__price">
+          Cotizar <small>/ institución</small>
+        </div>
+        <p class="pricing-card__desc">
+          Para colegios que quieren llevar Numination a todos sus estudiantes. Precio por volumen.
+        </p>
+
+        <ul class="pricing-card__features">
+          <li>
+            <svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Todo lo del plan Premium
+          </li>
+          <li>
+            <svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Panel de administración
+          </li>
+          <li>
+            <svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Multi-sede, multi-grado
+          </li>
+          <li>
+            <svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Reportes exportables (PDF)
+          </li>
+          <li>
+            <svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Capacitación docente inicial
+          </li>
+          <li>
+            <svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Soporte prioritario
+          </li>
+          <li>
+            <svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Facturación institucional
+          </li>
+        </ul>
+
+        <a href="contacto.html" class="btn btn--secondary">Solicitar cotización</a>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     COMPARACIÓN DETALLADA
+     ═══════════════════════════════════════════════════════════ -->
+<section class="section" style="background:var(--bg-elev)">
+  <div class="container">
+
+    <header class="section-header" data-reveal>
+      <p class="eyebrow">Comparación detallada</p>
+      <h2>Todo lo que incluye cada plan</h2>
+      <p>Una vista lado a lado para que decidas con calma.</p>
+    </header>
+
+    <div style="overflow-x:auto;margin-top:3.5rem" data-reveal>
+      <table style="width:100%;min-width:640px;border-collapse:collapse;font-size:var(--text-sm)">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border)">
+            <th style="text-align:left;padding:var(--space-4);font-weight:600;color:var(--fg)">Función</th>
+            <th style="text-align:center;padding:var(--space-4);font-weight:600;color:var(--fg)">Estudiante</th>
+            <th style="text-align:center;padding:var(--space-4);font-weight:600;color:var(--brand-blue)">Premium</th>
+            <th style="text-align:center;padding:var(--space-4);font-weight:600;color:var(--fg)">Colegio</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:var(--space-4);color:var(--fg-muted)">Chat IA ilimitado</td>
+            <td style="text-align:center;padding:var(--space-4)">✅</td>
+            <td style="text-align:center;padding:var(--space-4)">✅</td>
+            <td style="text-align:center;padding:var(--space-4)">✅</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:var(--space-4);color:var(--fg-muted)">Banco ICFES (500 preguntas)</td>
+            <td style="text-align:center;padding:var(--space-4)">✅</td>
+            <td style="text-align:center;padding:var(--space-4)">✅</td>
+            <td style="text-align:center;padding:var(--space-4)">✅</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:var(--space-4);color:var(--fg-muted)">Explicaciones paso a paso</td>
+            <td style="text-align:center;padding:var(--space-4)">✅</td>
+            <td style="text-align:center;padding:var(--space-4)">✅</td>
+            <td style="text-align:center;padding:var(--space-4)">✅</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:var(--space-4);color:var(--fg-muted)">Generación de imágenes</td>
+            <td style="text-align:center;padding:var(--space-4)">✅</td>
+            <td style="text-align:center;padding:var(--space-4)">✅</td>
+            <td style="text-align:center;padding:var(--space-4)">✅</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:var(--space-4);color:var(--fg-muted)">Dictado por voz</td>
+            <td style="text-align:center;padding:var(--space-4)">✅</td>
+            <td style="text-align:center;padding:var(--space-4)">✅</td>
+            <td style="text-align:center;padding:var(--space-4)">✅</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:var(--space-4);color:var(--fg-muted)">Simulacros cronometrados</td>
+            <td style="text-align:center;padding:var(--space-4)">—</td>
+            <td style="text-align:center;padding:var(--space-4)">✅</td>
+            <td style="text-align:center;padding:var(--space-4)">✅</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:var(--space-4);color:var(--fg-muted)">Reportes de progreso</td>
+            <td style="text-align:center;padding:var(--space-4)">Básico</td>
+            <td style="text-align:center;padding:var(--space-4)">Detallado</td>
+            <td style="text-align:center;padding:var(--space-4)">Detallado</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:var(--space-4);color:var(--fg-muted)">Historial de conversaciones</td>
+            <td style="text-align:center;padding:var(--space-4)">—</td>
+            <td style="text-align:center;padding:var(--space-4)">✅</td>
+            <td style="text-align:center;padding:var(--space-4)">✅</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:var(--space-4);color:var(--fg-muted)">Panel de administración</td>
+            <td style="text-align:center;padding:var(--space-4)">—</td>
+            <td style="text-align:center;padding:var(--space-4)">—</td>
+            <td style="text-align:center;padding:var(--space-4)">✅</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:var(--space-4);color:var(--fg-muted)">Multi-sede y multi-grado</td>
+            <td style="text-align:center;padding:var(--space-4)">—</td>
+            <td style="text-align:center;padding:var(--space-4)">—</td>
+            <td style="text-align:center;padding:var(--space-4)">✅</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:var(--space-4);color:var(--fg-muted)">Reportes en PDF</td>
+            <td style="text-align:center;padding:var(--space-4)">—</td>
+            <td style="text-align:center;padding:var(--space-4)">—</td>
+            <td style="text-align:center;padding:var(--space-4)">✅</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:var(--space-4);color:var(--fg-muted)">Capacitación docente</td>
+            <td style="text-align:center;padding:var(--space-4)">—</td>
+            <td style="text-align:center;padding:var(--space-4)">—</td>
+            <td style="text-align:center;padding:var(--space-4)">✅</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:var(--space-4);color:var(--fg-muted)">Soporte prioritario</td>
+            <td style="text-align:center;padding:var(--space-4)">—</td>
+            <td style="text-align:center;padding:var(--space-4)">—</td>
+            <td style="text-align:center;padding:var(--space-4)">✅</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:var(--space-4);color:var(--fg-muted)">Facturación institucional</td>
+            <td style="text-align:center;padding:var(--space-4)">—</td>
+            <td style="text-align:center;padding:var(--space-4)">—</td>
+            <td style="text-align:center;padding:var(--space-4)">✅</td>
+          </tr>
+          <tr>
+            <td style="padding:var(--space-4);color:var(--fg-muted)">Precio</td>
+            <td style="text-align:center;padding:var(--space-4);font-weight:700">$0</td>
+            <td style="text-align:center;padding:var(--space-4);font-weight:700;color:var(--brand-blue)">$19.900/mes</td>
+            <td style="text-align:center;padding:var(--space-4);font-weight:700">Cotizar</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PREGUNTAS SOBRE COBROS
+     ═══════════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="container">
+
+    <header class="section-header" data-reveal>
+      <p class="eyebrow">Preguntas sobre pagos</p>
+      <h2>Antes de que preguntes</h2>
+    </header>
+
+    <div class="faq" data-reveal>
+
+      <details>
+        <summary>¿Realmente el plan Estudiante es gratis para siempre?</summary>
+        <p>Sí. El chat IA, el banco ICFES, las explicaciones y la generación de imágenes no tienen costo ni límite de tiempo. No hay "versión de prueba" del plan gratis. Es gratis y punto.</p>
+      </details>
+
+      <details>
+        <summary>¿Necesito tarjeta de crédito para el plan gratis?</summary>
+        <p>No. Nunca. Solo abres el chat y empiezas a usar. No pedimos tarjeta ni método de pago para el plan gratuito.</p>
+      </details>
+
+      <details>
+        <summary>¿Qué diferencia hay entre el plan gratis y el Premium?</summary>
+        <p>El Premium incluye simulacros cronometrados, reportes de progreso avanzados, historial de conversaciones, plan de estudio personalizado y prioridad en respuestas. Es para quien quiere practicar en serio con métricas y seguimiento.</p>
+      </details>
+
+      <details>
+        <summary>¿Puedo cancelar cuando quiera?</summary>
+        <p>Sí. Sin contratos, sin penalizaciones, sin letra pequeña. Cancelas desde tu perfil y no se te cobra el siguiente mes.</p>
+      </details>
+
+      <details>
+        <summary>¿Hay descuentos para estudiantes de colegios públicos?</summary>
+        <p>Sí. Trabajamos con colegios públicos para que el acceso sea gratuito para sus estudiantes. Si eres docente o directivo de un colegio público, contáctanos.</p>
+      </details>
+
+      <details>
+        <summary>¿Qué pasa si estoy en el Premium y se me olvida cancelar?</summary>
+        <p>Te avisamos por correo tres días antes del siguiente cobro. Si no quieres renovar, tienes tiempo de cancelar. Nunca cobramos de sorpresa.</p>
+      </details>
+
+      <details>
+        <summary>¿Aceptan pagos con PSE, Nequi o Daviplata?</summary>
+        <p>Sí. Estamos en proceso de integración con las pasarelas colombianas. Hoy aceptamos tarjetas de crédito y débito. En los próximos meses sumamos PSE, Nequi y Daviplata.</p>
+      </details>
+
+      <details>
+        <summary>¿Los precios suben con el tiempo?</summary>
+        <p>Si sube el precio, los usuarios que ya están pagando mantienen su tarifa actual. Es nuestra política: no castigamos a quien confió primero.</p>
+      </details>
+
+      <details>
+        <summary>¿Emiten factura electrónica?</summary>
+        <p>Sí. Todos los pagos generan factura electrónica válida en Colombia, con NIT y toda la información requerida por la DIAN.</p>
+      </details>
+
+      <details>
+        <summary>¿Puedo pagar por un año completo?</summary>
+        <p>Sí. El plan anual tiene un descuento del 20%. Es decir, pagas 10 meses y usas 12. Disponible próximamente en el panel de cuenta.</p>
+      </details>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     POR QUÉ ES GRATIS
+     ═══════════════════════════════════════════════════════════ -->
+<section class="section" style="background:var(--bg-elev)">
+  <div class="container">
+    <div class="split">
+
+      <div class="split__text" data-reveal>
+        <p class="eyebrow">Por qué es gratis</p>
+        <h2>La educación no debería depender de tu capacidad de pago</h2>
+        <p class="text-muted" style="margin-top:var(--space-4)">
+          Numination nació en un colegio público de Colombia. Sabemos lo que
+          es no tener plata para un tutor privado o una plataforma costosa.
+          Por eso el plan básico es y será siempre gratuito.
+        </p>
+
+        <ul class="feature-list">
+          <li>
+            <span class="feature-list__icon">
+              <svg class="icon" viewBox="0 0 24 24">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+              </svg>
+            </span>
+            <div>
+              <h4>Acceso sin barreras</h4>
+              <p>Cualquier estudiante con un navegador puede usar Numination. No importa el estrato ni la ciudad.</p>
+            </div>
+          </li>
+          <li>
+            <span class="feature-list__icon">
+              <svg class="icon" viewBox="0 0 24 24">
+                <path d="M12 2 4 7v6c0 5 3.5 8.5 8 9 4.5-.5 8-4 8-9V7l-8-5z"/>
+              </svg>
+            </span>
+            <div>
+              <h4>Costos cubiertos por Premium</h4>
+              <p>Los usuarios del plan Premium financian los servidores que hacen posible el plan gratis para todos.</p>
+            </div>
+          </li>
+          <li>
+            <span class="feature-list__icon">
+              <svg class="icon" viewBox="0 0 24 24">
+                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+              </svg>
+            </span>
+            <div>
+              <h4>Alianzas con colegios</h4>
+              <p>Los colegios que pagan licencias institucionales subsidian el acceso para estudiantes de zonas vulnerables.</p>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="split__visual">
+        <div class="visual-card" data-reveal>
+          <div class="visual-card__head">
+            <span class="visual-card__dot"></span>
+            <span class="visual-card__dot"></span>
+            <span class="visual-card__dot"></span>
+          </div>
+          <div class="visual-card__body">
+            <p style="font-size:var(--text-xs);color:var(--fg-subtle);margin-bottom:var(--space-3)">
+              Comparación de costos
+            </p>
+            <div class="mini-chart">
+              <div class="mini-chart__row"><span>Tutor privado</span><div class="mini-chart__bar" style="--w:100%"></div><b>$200K</b></div>
+              <div class="mini-chart__row"><span>Otra plataforma</span><div class="mini-chart__bar" style="--w:60%"></div><b>$120K</b></div>
+              <div class="mini-chart__row"><span>Numination Premium</span><div class="mini-chart__bar" style="--w:10%"></div><b>$19,9K</b></div>
+              <div class="mini-chart__row"><span>Numination Gratis</span><div class="mini-chart__bar" style="--w:0%"></div><b>$0</b></div>
+            </div>
+            <p class="mini-chart__caption">Precio mensual aproximado por estudiante en Colombia.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     CTA FINAL
+     ═══════════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="container">
+    <div class="cta-final" data-reveal>
+      <div class="cta-final__inner">
+        <p class="eyebrow">Sin excusas</p>
+        <h2 class="cta-final__title">
+          No hay razón para no empezar hoy.
+        </h2>
+        <p class="cta-final__subtitle">
+          El plan gratis es permanente. Sin tarjeta, sin registro, sin límites.
+          Abre el chat y hazle una pregunta a Numination.
+        </p>
+        <div class="cta-final__actions">
+          <a href="chat.html" class="btn btn--primary btn--lg">
+            Empezar gratis
+            <svg class="icon icon--sm" viewBox="0 0 24 24">
+              <line x1="5" y1="12" x2="19" y2="12"/>
+              <polyline points="12 5 19 12 12 19"/>
+            </svg>
+          </a>
+          <a href="contacto.html" class="btn btn--secondary btn--lg">
+            Hablar con el equipo
+          </a>
+        </div>
+        <p class="cta-final__meta">
+          Precios en pesos colombianos · Hecho en Colombia · Servido desde Vercel
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ═══════════════════════════════════════════════════════════
+     FOOTER
+     ═══════════════════════════════════════════════════════════ -->
+<footer class="site-footer">
+  <div class="container">
+    <div class="site-footer__row">
+      <a href="index.html" class="site-footer__brand">
+        <span class="site-footer__brand-mark">
+          <svg class="icon icon--sm" viewBox="0 0 24 24">
+            <path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1M5.6 18.4l2.1-2.1m8.6-8.6 2.1-2.1"/>
+          </svg>
+        </span>
+        Numination
+      </a>
+      <nav class="site-footer__nav">
+        <a href="nosotros.html">Nosotros</a>
+        <a href="chat.html">Chat IA</a>
+        <a href="precio.html">Precios</a>
+        <a href="contacto.html">Contacto</a>
+      </nav>
+    </div>
+    <p class="site-footer__copy">
+      © 2026 Numination · Hecho en Colombia · "La IA que habla el idioma de nuestra educación"
+    </p>
+  </div>
+</footer>
+
+<script type="module" src="assets/js/main.js"></script>
+</body>
+</html>

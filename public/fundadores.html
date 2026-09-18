@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Fundadores — Numination</title>
-  <meta name="description" content="Conoce al equipo fundador de Numination y al consejo asesor docente detrás de la plataforma." />
+  <meta name="description" content="Álvaro García Gómez y Robinson Rodríguez Gómez, fundadores de Numination." />
   <meta name="theme-color" content="#003893" />
   <link rel="icon" href="favicon.ico" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -29,15 +29,16 @@
       <a href="como-ayudamos.html" class="site-header__link">Cómo ayudamos</a>
       <a href="fundadores.html" class="site-header__link is-active">Fundadores</a>
       <a href="contacto.html" class="site-header__link">Contacto</a>
+      <a href="chat.html" class="site-header__link">Chat</a>
     </nav>
 
     <div class="site-header__actions">
-      <button class="site-header__toggle" data-theme-toggle type="button">
+      <button class="site-header__toggle" data-theme-toggle type="button" aria-label="Cambiar tema">
         <svg class="icon" data-icon="moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
         <svg class="icon" data-icon="sun" viewBox="0 0 24 24" style="display:none"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32 1.41-1.41"/></svg>
       </button>
-      <a href="#" class="btn btn--ghost btn--sm">Iniciar sesión</a>
-      <a href="#" class="btn btn--primary btn--sm">Comenzar gratis</a>
+      <a href="chat.html" class="btn btn--ghost btn--sm">Iniciar sesión</a>
+      <a href="chat.html" class="btn btn--primary btn--sm">Comenzar gratis</a>
     </div>
 
     <button class="site-header__toggle" data-menu-toggle type="button" aria-label="Abrir menú" aria-expanded="false">
@@ -52,8 +53,7 @@
       <a href="como-ayudamos.html">Cómo ayudamos</a>
       <a href="fundadores.html">Fundadores</a>
       <a href="contacto.html">Contacto</a>
-      <a href="#" class="btn btn--secondary">Iniciar sesión</a>
-      <a href="#" class="btn btn--primary">Comenzar gratis</a>
+      <a href="chat.html">Chat</a>
     </nav>
   </div>
 </header>
@@ -66,97 +66,84 @@
         <svg class="icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         Fundadores
       </span>
-      <h1 class="hero__title">Un equipo pequeño con una idea clara.</h1>
+      <h1 class="hero__title">Dos estudiantes colombianos. Una idea clara.</h1>
       <p class="hero__subtitle">
-        Numination nació de una obsesión simple: que ningún estudiante colombiano
-        llegue al Saber 11 sin saber dónde está parado.
+        Numination nació de una pregunta simple: ¿por qué las IA no entienden
+        a Colombia? Álvaro y Robinson decidieron construir la respuesta.
       </p>
     </div>
   </section>
 
-  <!-- FUNDADORES -->
   <section class="section">
     <div class="container">
-      <header class="section-header">
+      <header class="section-header" data-reveal>
         <p class="eyebrow">Quiénes lideran</p>
         <h2>Los fundadores</h2>
-        <p>Tres perfiles distintos, un mismo problema en la cabeza.</p>
+        <p>Dos estudiantes que se cansaron de traducir su realidad para las IA.</p>
       </header>
 
-      <div class="founder-grid">
+      <div class="founder-grid" data-reveal-stagger>
         <article class="founder">
-          <div class="founder__avatar">JM</div>
-          <h3 class="founder__name">Juan Martínez</h3>
-          <p class="founder__role">Cofundador · Producto</p>
+          <div class="founder__avatar">AG</div>
+          <h3 class="founder__name">Álvaro García Gómez</h3>
+          <p class="founder__role">Cofundador · 14 años</p>
           <p class="founder__bio">
-            Estudió Ingeniería de Sistemas en la Universidad Nacional.
-            Antes de Numination lideró producto en una edtech enfocada en
-            refuerzo escolar. Se obsesiona con que la interfaz no estorbe.
+            Estudiante colombiano. Obsesionado con que la inteligencia artificial
+            deje de hablar como si todos viviéramos en Silicon Valley. Escribió el
+            system prompt original de Numination con toda la información de Colombia
+            que ninguna IA tenía.
           </p>
           <ul class="founder__tags">
+            <li>Prompting</li>
+            <li>Colombia</li>
             <li>Producto</li>
-            <li>UX</li>
-            <li>Data</li>
           </ul>
         </article>
 
         <article class="founder">
-          <div class="founder__avatar">SR</div>
-          <h3 class="founder__name">Sofía Restrepo</h3>
-          <p class="founder__role">Cofundadora · Pedagogía</p>
+          <div class="founder__avatar">RR</div>
+          <h3 class="founder__name">Robinson Rodríguez Gómez</h3>
+          <p class="founder__role">Cofundador · 14 años</p>
           <p class="founder__bio">
-            Licenciada en Educación con maestría en evaluación por
-            competencias. Trabajó seis años como docente de matemáticas en
-            colegios públicos de Antioquia. Dirige el consejo asesor.
+            Estudiante colombiano. Armó la infraestructura que hace que Numination
+            no se caiga cuando un motor falla: tres proveedores de IA en cascada
+            con reintentos automáticos. Le importa que la plataforma funcione
+            incluso cuando todo lo demás falla.
           </p>
           <ul class="founder__tags">
-            <li>Pedagogía</li>
-            <li>Evaluación</li>
-            <li>Docencia</li>
-          </ul>
-        </article>
-
-        <article class="founder">
-          <div class="founder__avatar">DC</div>
-          <h3 class="founder__name">Daniel Cortés</h3>
-          <p class="founder__role">Cofundador · Tecnología</p>
-          <p class="founder__bio">
-            Ingeniero de software con experiencia en sistemas de
-            recomendación. Lidera el motor adaptativo y la infraestructura
-            que sostiene la plataforma.
-          </p>
-          <ul class="founder__tags">
-            <li>IA</li>
             <li>Backend</li>
             <li>Infra</li>
+            <li>Cascada IA</li>
           </ul>
         </article>
       </div>
     </div>
   </section>
 
-  <!-- HISTORIA DE CÓMO SE CONOCIERON -->
   <section class="section" style="background:var(--bg-elev)">
     <div class="container">
       <div class="split">
         <div class="split__text">
           <p class="eyebrow">Cómo empezó</p>
-          <h2>Un grupo de estudio se convirtió en una empresa</h2>
+          <h2>Dos estudiantes se cansaron de traducir su realidad</h2>
           <p class="text-muted" style="margin-top:var(--space-4)">
-            En 2024, Juan, Sofía y Daniel coincidieron en un grupo de estudio
-            sobre educación y tecnología. Los tres venían de contextos
-            distintos pero con la misma frustración: la preparación para el
-            Saber 11 dependía demasiado del colegio y no del estudiante.
+            Todo empezó con una pregunta simple: <strong>¿por qué la IA no sabe
+            qué es un ajiaco?</strong> Álvaro y Robinson, ambos de 14 años,
+            estaban preparando su propio Saber 11 y notaron que las herramientas
+            disponibles respondían con ejemplos que no tenían nada que ver con
+            Colombia.
           </p>
           <p class="text-muted" style="margin-top:var(--space-4)">
-            Empezaron con una hoja de cálculo compartida. Luego un prototipo
-            muy básico. Luego un piloto con cuatro colegios. Hoy Numination
-            se usa en 12 instituciones de cinco departamentos, con un banco
-            de más de 480.000 preguntas verificadas por docentes.
+            En lugar de quejarse, escribieron un system prompt gigante con toda
+            la información del país: regiones, ríos, cultura, historia, sistema
+            educativo, pruebas Saber, DBA, EBC. Lo probaron con sus compañeros y
+            el resultado fue inmediato. Así nació Numination.
           </p>
           <p class="text-muted" style="margin-top:var(--space-4)">
-            Seguimos siendo un equipo pequeño. Preferimos eso: crecer despacio
-            y bien, antes que rápido y mal.
+            Hoy la plataforma tiene dos modos — estudiante y docente — y tres
+            motores de IA trabajando en cascada para que nunca se caiga. Todo
+            construido por dos estudiantes colombianos que decidieron que era
+            hora de tener una IA que hablara el idioma de nuestra educación.
           </p>
         </div>
 
@@ -170,11 +157,11 @@
             <div class="visual-card__body">
               <p style="font-size:var(--text-xs);color:var(--fg-subtle);margin-bottom:var(--space-3)">Línea de tiempo</p>
               <ul class="mini-timeline">
-                <li><b>2024 · Q1</b><span>Primer prototipo en hoja de cálculo</span></li>
-                <li><b>2024 · Q3</b><span>Los primeros 3 docentes asesores se suman</span></li>
-                <li><b>2025 · Q1</b><span>Piloto en 4 colegios</span></li>
-                <li><b>2025 · Q3</b><span>Motor adaptativo en producción</span></li>
-                <li><b>2026 · Q1</b><span>12 instituciones, 5 departamentos</span></li>
+                <li><b>2024 · Q1</b><span>Álvaro y Robinson empiezan a preparar el Saber 11</span></li>
+                <li><b>2024 · Q3</b><span>Primer system prompt con contexto colombiano</span></li>
+                <li><b>2025 · Q1</b><span>Cascada de tres motores: Gemini → Kimi K3 → Groq</span></li>
+                <li><b>2025 · Q3</b><span>Integración de Pollinations para imágenes</span></li>
+                <li><b>2026 · Q1</b><span>Dos modos: estudiante y docente</span></li>
               </ul>
             </div>
           </div>
@@ -183,78 +170,36 @@
     </div>
   </section>
 
-  <!-- CONSEJO ASESOR -->
   <section class="section">
     <div class="container">
-      <header class="section-header">
-        <p class="eyebrow">Consejo asesor</p>
-        <h2>Los docentes que revisan cada pregunta</h2>
-        <p>Ningún contenido sale sin su aprobación. Punto.</p>
-      </header>
-
-      <div class="card-grid">
-        <article class="card">
-          <div class="avatar avatar--sm"><span>MC</span></div>
-          <h3 class="card__title">Marcela Cárdenas</h3>
-          <p class="card__role">Matemáticas · 15 años</p>
-          <p class="card__body">Bogotá. Especialista en didáctica del álgebra y razonamiento cuantitativo.</p>
-        </article>
-
-        <article class="card">
-          <div class="avatar avatar--sm"><span>JR</span></div>
-          <h3 class="card__title">Julián Ramírez</h3>
-          <p class="card__role">Lectura crítica · 12 años</p>
-          <p class="card__body">Medellín. Magíster en lingüística. Diseñó material para tres secretarías de educación.</p>
-        </article>
-
-        <article class="card">
-          <div class="avatar avatar--sm"><span>AV</span></div>
-          <h3 class="card__title">Andrea Villalba</h3>
-          <p class="card__role">Ciencias naturales · 10 años</p>
-          <p class="card__body">Cali. Bióloga y consultora en evaluación por competencias.</p>
-        </article>
-
-        <article class="card">
-          <div class="avatar avatar--sm"><span>DP</span></div>
-          <h3 class="card__title">Diego Pardo</h3>
-          <p class="card__role">Sociales · 12 años</p>
-          <p class="card__body">Barranquilla. Historiador, acompañamiento en colegios públicos.</p>
-        </article>
-      </div>
-    </div>
-  </section>
-
-  <!-- PRINCIPIOS DEL EQUIPO -->
-  <section class="section" style="background:var(--bg-elev)">
-    <div class="container">
-      <header class="section-header">
+      <header class="section-header" data-reveal>
         <p class="eyebrow">Cómo trabajamos</p>
         <h2>Cuatro principios internos</h2>
       </header>
 
-      <div class="card-grid">
+      <div class="card-grid" data-reveal-stagger>
         <article class="card">
           <div class="icon-badge">
             <svg class="icon" viewBox="0 0 24 24"><path d="M12 2 4 7v6c0 5 3.5 8.5 8 9 4.5-.5 8-4 8-9V7l-8-5z"/><path d="m9 12 2 2 4-4"/></svg>
           </div>
-          <h3 class="card__title">Sin atajos</h3>
-          <p class="card__body">Preferimos publicar menos contenido si eso garantiza que todo esté revisado. La calidad no se negocia.</p>
+          <h3 class="card__title">Colombia primero</h3>
+          <p class="card__body">Cada ejemplo, cada moneda, cada río, cada personaje histórico viene de nuestro país. Nada de traducciones raras.</p>
         </article>
 
         <article class="card">
           <div class="icon-badge">
             <svg class="icon" viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
           </div>
-          <h3 class="card__title">Escuchamos al aula</h3>
-          <p class="card__body">Cada decisión de producto pasa por docentes que están dando clase hoy, no por comités teóricos.</p>
+          <h3 class="card__title">Guiar, no resolver</h3>
+          <p class="card__body">Numination nunca hace la tarea por el estudiante. Explica, pregunta, verifica. El aprendizaje lo hace el estudiante.</p>
         </article>
 
         <article class="card">
           <div class="icon-badge">
             <svg class="icon" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
           </div>
-          <h3 class="card__title">Transparencia</h3>
-          <p class="card__body">Publicamos nuestros criterios pedagógicos. Familias y colegios saben exactamente qué reciben.</p>
+          <h3 class="card__title">Sin promesas falsas</h3>
+          <p class="card__body">Nunca garantizamos puntajes en el ICFES. Nunca sustituimos atención médica o psicológica. Somos una herramienta educativa, no un atajo.</p>
         </article>
 
         <article class="card">
@@ -262,20 +207,20 @@
             <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           </div>
           <h3 class="card__title">Respeto por el tiempo</h3>
-          <p class="card__body">El estudiante ya tiene suficiente carga. Numination debe ser clara, rápida y sin ruido.</p>
+          <p class="card__body">Respuestas claras, sin relleno. El estudiante ya tiene suficiente carga. Numination debe ser directa y útil.</p>
         </article>
       </div>
     </div>
   </section>
 
-  <!-- CONTACTO DIRECTO -->
-  <section class="section">
+  <section class="section" style="background:var(--bg-elev)">
     <div class="container text-center">
-      <h2>¿Quieres hablar con alguno de nosotros?</h2>
-      <p class="text-muted mx-auto" style="max-width:42rem;margin-top:var(--space-4)">
-        Respondemos personalmente. Sin formularios que van a un vacío.
+      <h2 data-reveal>¿Quieres hablar con nosotros?</h2>
+      <p class="text-muted mx-auto" style="max-width:42rem;margin-top:var(--space-4)" data-reveal>
+        Somos dos estudiantes, no una corporación. Escríbenos y te respondemos
+        personalmente.
       </p>
-      <div style="display:flex;justify-content:center;gap:var(--space-3);margin-top:var(--space-8);flex-wrap:wrap">
+      <div style="display:flex;justify-content:center;gap:var(--space-3);margin-top:var(--space-8);flex-wrap:wrap" data-reveal>
         <a href="contacto.html" class="btn btn--primary btn--lg">Ir a contacto</a>
         <a href="quienes-somos.html" class="btn btn--secondary btn--lg">Conocer la historia</a>
       </div>

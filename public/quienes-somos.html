@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Quiénes somos — Numination</title>
-  <meta name="description" content="Conoce la historia, la misión y los valores detrás de Numination, la plataforma colombiana de preparación para el ICFES Saber 11." />
+  <meta name="description" content="Conoce la historia de Numination, la primera IA educativa hecha por estudiantes colombianos para estudiantes colombianos." />
   <meta name="theme-color" content="#003893" />
   <link rel="icon" href="favicon.ico" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -29,15 +29,16 @@
       <a href="como-ayudamos.html" class="site-header__link">Cómo ayudamos</a>
       <a href="fundadores.html" class="site-header__link">Fundadores</a>
       <a href="contacto.html" class="site-header__link">Contacto</a>
+      <a href="chat.html" class="site-header__link">Chat</a>
     </nav>
 
     <div class="site-header__actions">
-      <button class="site-header__toggle" data-theme-toggle type="button">
+      <button class="site-header__toggle" data-theme-toggle type="button" aria-label="Cambiar tema">
         <svg class="icon" data-icon="moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
         <svg class="icon" data-icon="sun" viewBox="0 0 24 24" style="display:none"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32 1.41-1.41"/></svg>
       </button>
-      <a href="#" class="btn btn--ghost btn--sm">Iniciar sesión</a>
-      <a href="#" class="btn btn--primary btn--sm">Comenzar gratis</a>
+      <a href="chat.html" class="btn btn--ghost btn--sm">Iniciar sesión</a>
+      <a href="chat.html" class="btn btn--primary btn--sm">Comenzar gratis</a>
     </div>
 
     <button class="site-header__toggle" data-menu-toggle type="button" aria-label="Abrir menú" aria-expanded="false">
@@ -52,15 +53,13 @@
       <a href="como-ayudamos.html">Cómo ayudamos</a>
       <a href="fundadores.html">Fundadores</a>
       <a href="contacto.html">Contacto</a>
-      <a href="#" class="btn btn--secondary">Iniciar sesión</a>
-      <a href="#" class="btn btn--primary">Comenzar gratis</a>
+      <a href="chat.html">Chat</a>
     </nav>
   </div>
 </header>
 
 <main>
 
-  <!-- HERO -->
   <section class="hero">
     <div class="container hero__inner">
       <span class="hero__badge">
@@ -68,85 +67,83 @@
         Nosotros
       </span>
       <h1 class="hero__title">
-        Construimos la herramienta que nos hubiera gustado tener en el colegio.
+        La IA que habla el idioma de nuestra educación.
       </h1>
       <p class="hero__subtitle">
-        Numination es una plataforma colombiana de práctica adaptativa para el
-        ICFES Saber 11, diseñada junto a docentes en ejercicio y validada con
-        estudiantes de todo el país.
+        Numination es la primera IA educativa colombiana, creada por dos
+        estudiantes de 14 años que se cansaron de que las herramientas
+        disponibles no entendieran su país.
       </p>
     </div>
   </section>
 
-  <!-- HISTORIA -->
   <section class="section">
     <div class="container">
-      <header class="section-header">
+      <header class="section-header" data-reveal>
         <p class="eyebrow">Nuestra historia</p>
-        <h2>De una hoja de cálculo a una plataforma nacional</h2>
+        <h2>De una pregunta simple a una plataforma real</h2>
         <p>Cada etapa nos enseñó algo que hoy vive dentro del producto.</p>
       </header>
 
-      <div class="timeline">
+      <div class="timeline" data-reveal>
         <article class="timeline__item">
           <div class="timeline__marker">2024</div>
           <div class="timeline__content">
-            <h3>El punto de partida</h3>
-            <p>Un grupo de estudiantes preparando su propio Saber 11 no encontraba una plataforma que se adaptara a su ritmo. Empezaron a organizarse con una hoja de cálculo compartida y a marcar las preguntas donde fallaban.</p>
+            <h3>Dos estudiantes, un problema real</h3>
+            <p>Álvaro García Gómez y Robinson Rodríguez Gómez, con 14 años, empezaron a preparar su propio Saber 11 y no encontraron ninguna IA que entendiera el contexto colombiano. Las herramientas disponibles respondían con dólares, Halloween y ejemplos que no tenían nada que ver con su realidad.</p>
           </div>
         </article>
 
         <article class="timeline__item">
           <div class="timeline__marker">2024</div>
           <div class="timeline__content">
-            <h3>Primeros docentes aliados</h3>
-            <p>Tres profesores de matemáticas y lenguaje se sumaron al proyecto para revisar cada pregunta y explicación. Sin ese filtro, sabíamos que la plataforma no serviría.</p>
+            <h3>La primera versión</h3>
+            <p>Escribieron un prompt enorme con toda la información de Colombia: regiones, ríos, cultura, historia, comida, sistema educativo. Lo probaron con compañeros y la diferencia fue inmediata. Numination ya tenía nombre: <strong>"La IA que habla el idioma de nuestra educación"</strong>.</p>
           </div>
         </article>
 
         <article class="timeline__item">
           <div class="timeline__marker">2025</div>
           <div class="timeline__content">
-            <h3>Piloto en 4 colegios</h3>
-            <p>Una primera versión de Numination se probó con estudiantes de 10.º y 11.º en cuatro instituciones de Bogotá y Medellín. Medimos mejora real en simulacros después de ocho semanas.</p>
+            <h3>Tres motores en cascada</h3>
+            <p>Para que la plataforma no se cayera cuando un motor está saturado, implementaron un sistema que prueba <strong>Gemini → Kimi K3 → Groq</strong> en orden, con reintentos automáticos. Si uno falla, el siguiente responde sin que el estudiante lo note.</p>
           </div>
         </article>
 
         <article class="timeline__item">
           <div class="timeline__marker">2025</div>
           <div class="timeline__content">
-            <h3>Motor adaptativo</h3>
-            <p>Incorporamos un sistema que ajusta la dificultad de las preguntas según el desempeño del estudiante. Cada sesión personaliza la siguiente.</p>
+            <h3>Generación de imágenes</h3>
+            <p>Integraron Pollinations para que los estudiantes puedan pedir imágenes educativas sin costo adicional y sin API key. "Dibújame el ciclo del agua" o "genera una imagen de un cóndor sobre los Andes" ahora funcionan.</p>
           </div>
         </article>
 
         <article class="timeline__item">
           <div class="timeline__marker">2026</div>
           <div class="timeline__content">
-            <h3>12 instituciones, 5 departamentos</h3>
-            <p>Hoy Numination se usa en colegios públicos y privados de Cundinamarca, Antioquia, Valle, Atlántico y Santander. El banco supera las 480.000 preguntas calibradas.</p>
+            <h3>Numination hoy</h3>
+            <p>Una plataforma con dos modos: estudiante y docente. Cada uno con su propio tono, sus propias prioridades y su propio system prompt. Todo corriendo sobre un backend en Express, servido desde Vercel.</p>
           </div>
         </article>
       </div>
     </div>
   </section>
 
-  <!-- MISIÓN VISIÓN VALORES -->
   <section class="section" style="background:var(--bg-elev)">
     <div class="container">
-      <header class="section-header">
+      <header class="section-header" data-reveal>
         <p class="eyebrow">Lo que nos mueve</p>
         <h2>Misión, visión y valores</h2>
-        <p>Tres ideas simples que guían cada decisión de producto.</p>
+        <p>Tres ideas simples que guían cada decisión.</p>
       </header>
 
-      <div class="card-grid">
+      <div class="card-grid" data-reveal-stagger>
         <article class="card">
           <div class="icon-badge">
             <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
           </div>
           <h3 class="card__title">Misión</h3>
-          <p class="card__body">Que cada estudiante colombiano llegue al Saber 11 sabiendo exactamente en qué está fuerte y en qué necesita trabajar. Sin adivinar, sin ansiedad, con datos.</p>
+          <p class="card__body">Que ningún estudiante colombiano tenga que adaptarse a una IA que no conoce su país. Numination habla de pesos, no de dólares. De los ríos Magdalena y Cauca, no del Misisipi. Del ICFES, no del SAT.</p>
         </article>
 
         <article class="card">
@@ -154,7 +151,7 @@
             <svg class="icon" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
           </div>
           <h3 class="card__title">Visión</h3>
-          <p class="card__body">Ser la plataforma de referencia en preparación para pruebas estandarizadas en Latinoamérica, empezando por Colombia, sin perder el enfoque pedagógico.</p>
+          <p class="card__body">Ser la primera IA educativa hecha por estudiantes colombianos, para estudiantes colombianos. Sin intermediarios, sin corporaciones extranjeras dictando qué es importante aprender.</p>
         </article>
 
         <article class="card">
@@ -162,14 +159,52 @@
             <svg class="icon" viewBox="0 0 24 24"><path d="M12 2 4 7v6c0 5 3.5 8.5 8 9 4.5-.5 8-4 8-9V7l-8-5z"/><path d="m9 12 2 2 4-4"/></svg>
           </div>
           <h3 class="card__title">Valores</h3>
-          <p class="card__body">Rigor pedagógico, transparencia con las familias y respeto por el tiempo del estudiante. Sin atajos, sin promesas vacías.</p>
+          <p class="card__body">Colombia primero. Nunca hacer la tarea por el estudiante. Nunca prometer puntajes del ICFES. Nunca sustituir atención médica o psicológica. Cercanía con el estudiante, respeto con el docente.</p>
         </article>
       </div>
     </div>
   </section>
 
-  <!-- ENFOQUE PEDAGÓGICO -->
   <section class="section">
+    <div class="container">
+      <header class="section-header" data-reveal>
+        <p class="eyebrow">La tecnología</p>
+        <h2>Tres motores, cero caídas</h2>
+        <p>Cuando un modelo de IA se satura, otro toma el relevo sin que el estudiante lo note.</p>
+      </header>
+
+      <div class="card-grid" data-reveal-stagger>
+        <article class="card card--interactive">
+          <div class="icon-badge">
+            <svg class="icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </div>
+          <h3 class="card__title">Gemini</h3>
+          <p class="card__role">Motor principal</p>
+          <p class="card__body">Primera opción por su velocidad y calidad en español colombiano. Si responde, no hay espera.</p>
+        </article>
+
+        <article class="card card--interactive">
+          <div class="icon-badge">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>
+          </div>
+          <h3 class="card__title">Kimi K3</h3>
+          <p class="card__role">Respaldo inteligente</p>
+          <p class="card__body">Si Gemini falla, entra Kimi K3 con capacidad multimodal: analiza imágenes, dibujos y esquemas que subas.</p>
+        </article>
+
+        <article class="card card--interactive">
+          <div class="icon-badge">
+            <svg class="icon" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+          </div>
+          <h3 class="card__title">Groq</h3>
+          <p class="card__role">Último recurso</p>
+          <p class="card__body">Cuando los dos anteriores están saturados, Groq responde en milisegundos. Velocidad pura.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="background:var(--bg-elev)">
     <div class="container">
       <div class="split">
         <div class="split__text">
@@ -186,8 +221,8 @@
                 <svg class="icon" viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
               </span>
               <div>
-                <h4>Aprender practicando</h4>
-                <p>La retención sube cuando el estudiante se equivoca, entiende por qué y vuelve a intentarlo. Numination fuerza ese ciclo.</p>
+                <h4>Contextualizar todo a Colombia</h4>
+                <p>Los ejemplos son de nuestro país. La moneda es el peso. Los ríos son el Magdalena y el Cauca. La historia es la nuestra.</p>
               </div>
             </li>
             <li>
@@ -195,8 +230,8 @@
                 <svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
               </span>
               <div>
-                <h4>Medir antes de enseñar</h4>
-                <p>Cada sesión empieza con una medición corta. El sistema decide qué practicar según esa medición, no según un temario fijo.</p>
+                <h4>Guiar, no resolver</h4>
+                <p>Numination nunca hace la tarea. Explica paso a paso, verifica comprensión y acompaña hasta que el estudiante llega solo a la respuesta.</p>
               </div>
             </li>
             <li>
@@ -204,8 +239,8 @@
                 <svg class="icon" viewBox="0 0 24 24"><path d="M12 2 4 7v6c0 5 3.5 8.5 8 9 4.5-.5 8-4 8-9V7l-8-5z"/></svg>
               </span>
               <div>
-                <h4>Contenido verificado</h4>
-                <p>Ninguna pregunta llega al estudiante sin haber sido revisada por un docente. Sin excepciones, sin importar cuántas tengamos en el banco.</p>
+                <h4>Dos modos, dos tonos</h4>
+                <p>Con estudiantes es cercano y motivador. Con docentes es colegial y práctico, ofreciendo plantillas listas para usar en clase.</p>
               </div>
             </li>
           </ul>
@@ -219,6 +254,7 @@
               <span class="visual-card__dot"></span>
             </div>
             <div class="visual-card__body">
+              <p style="font-size:var(--text-xs);color:var(--fg-subtle);margin-bottom:var(--space-3)">Cobertura temática</p>
               <div class="mini-chart">
                 <div class="mini-chart__row"><span>Matemáticas</span><div class="mini-chart__bar" style="--w:82%"></div><b>82%</b></div>
                 <div class="mini-chart__row"><span>Lectura</span><div class="mini-chart__bar" style="--w:74%"></div><b>74%</b></div>
@@ -226,7 +262,7 @@
                 <div class="mini-chart__row"><span>S. Sociales</span><div class="mini-chart__bar" style="--w:55%"></div><b>55%</b></div>
                 <div class="mini-chart__row"><span>Inglés</span><div class="mini-chart__bar" style="--w:78%"></div><b>78%</b></div>
               </div>
-              <p class="mini-chart__caption">Desempeño relativo por área tras 8 semanas de uso.</p>
+              <p class="mini-chart__caption">Todas las áreas del Saber 11 cubiertas con ejemplos colombianos.</p>
             </div>
           </div>
         </div>
@@ -234,121 +270,16 @@
     </div>
   </section>
 
-  <!-- CIFRAS -->
-  <section class="section" style="background:var(--bg-elev)">
-    <div class="container">
-      <header class="section-header">
-        <p class="eyebrow">Numination en números</p>
-        <h2>Cifras que nos comprometen</h2>
-      </header>
-
-      <div class="stats-grid">
-        <div class="stat">
-          <span class="counter">12</span>
-          <span class="counter__label">Instituciones aliadas</span>
-        </div>
-        <div class="stat">
-          <span class="counter">480K+</span>
-          <span class="counter__label">Preguntas verificadas</span>
-        </div>
-        <div class="stat">
-          <span class="counter">+2,4</span>
-          <span class="counter__label">Puntos promedio de mejora</span>
-        </div>
-        <div class="stat">
-          <span class="counter">5</span>
-          <span class="counter__label">Departamentos activos</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- CONSEJO ASESOR -->
-  <section class="section">
-    <div class="container">
-      <header class="section-header">
-        <p class="eyebrow">Consejo asesor</p>
-        <h2>Docentes que revisan lo que construimos</h2>
-        <p>Ningún contenido se publica sin pasar por el consejo. Cada integrante tiene al menos 8 años de experiencia en aula.</p>
-      </header>
-
-      <div class="card-grid">
-        <article class="card card--interactive">
-          <div class="avatar">
-            <span>MC</span>
-          </div>
-          <h3 class="card__title">Marcela Cárdenas</h3>
-          <p class="card__role">Matemáticas · Bogotá</p>
-          <p class="card__body">15 años preparando estudiantes para Saber 11. Especialista en didáctica del álgebra.</p>
-        </article>
-
-        <article class="card card--interactive">
-          <div class="avatar">
-            <span>JR</span>
-          </div>
-          <h3 class="card__title">Julián Ramírez</h3>
-          <p class="card__role">Lectura crítica · Medellín</p>
-          <p class="card__body">Magíster en lingüística. Ha diseñado material para tres secretarías de educación departamentales.</p>
-        </article>
-
-        <article class="card card--interactive">
-          <div class="avatar">
-            <span>AV</span>
-          </div>
-          <h3 class="card__title">Andrea Villalba</h3>
-          <p class="card__role">Ciencias naturales · Cali</p>
-          <p class="card__body">Bióloga y docente. Consultora en evaluación por competencias para el ICFES.</p>
-        </article>
-
-        <article class="card card--interactive">
-          <div class="avatar">
-            <span>DP</span>
-          </div>
-          <h3 class="card__title">Diego Pardo</h3>
-          <p class="card__role">Sociales · Barranquilla</p>
-          <p class="card__body">Historiador. Lleva 12 años acompañando procesos de refuerzo escolar en colegios públicos.</p>
-        </article>
-      </div>
-    </div>
-  </section>
-
-  <!-- TESTIMONIOS -->
-  <section class="section" style="background:var(--bg-elev)">
-    <div class="container">
-      <header class="section-header">
-        <p class="eyebrow">Voces reales</p>
-        <h2>Lo que dicen quienes ya usan Numination</h2>
-      </header>
-
-      <div class="card-grid">
-        <blockquote class="quote">
-          <p>"Antes estudiaba a ciegas. Con Numination supe en qué fallaba y dejé de perder tiempo repasando lo que ya sabía."</p>
-          <footer><strong>Sara M.</strong> · Estudiante, 11.º · Bogotá</footer>
-        </blockquote>
-
-        <blockquote class="quote">
-          <p>"Lo uso como refuerzo en clase. Los reportes por competencia son lo que más me sirve para saber a quién ayudar."</p>
-          <footer><strong>Prof. Camilo R.</strong> · Colegio público · Medellín</footer>
-        </blockquote>
-
-        <blockquote class="quote">
-          <p>"Lo que más valoro es que ninguna pregunta está sin revisar. Eso se nota cuando un estudiante pregunta el por qué."</p>
-          <footer><strong>Coordinadora Ana L.</strong> · Colegio privado · Cali</footer>
-        </blockquote>
-      </div>
-    </div>
-  </section>
-
-  <!-- CTA FINAL -->
   <section class="section">
     <div class="container text-center">
-      <h2>¿Quieres conocer la plataforma por dentro?</h2>
-      <p class="text-muted mx-auto" style="max-width:42rem;margin-top:var(--space-4)">
-        Escríbenos y coordinamos una demo con tu equipo docente. Sin costo, sin compromiso.
+      <h2 data-reveal>¿Quieres probarlo ahora mismo?</h2>
+      <p class="text-muted mx-auto" style="max-width:42rem;margin-top:var(--space-4)" data-reveal>
+        No necesitas registrarte para hablar con Numination. Abre el chat y
+        hazle una pregunta.
       </p>
-      <div style="display:flex;justify-content:center;gap:var(--space-3);margin-top:var(--space-8);flex-wrap:wrap">
-        <a href="contacto.html" class="btn btn--primary btn--lg">Solicitar demo</a>
-        <a href="como-ayudamos.html" class="btn btn--secondary btn--lg">Ver cómo ayudamos</a>
+      <div style="display:flex;justify-content:center;gap:var(--space-3);margin-top:var(--space-8);flex-wrap:wrap" data-reveal>
+        <a href="chat.html" class="btn btn--primary btn--lg">Abrir el chat</a>
+        <a href="fundadores.html" class="btn btn--secondary btn--lg">Conocer a los fundadores</a>
       </div>
     </div>
   </section>

@@ -785,3 +785,8 @@
   white-space: pre-wrap;
   word-wrap: break-word;
 }
+
+/* ══════════ Fix: preview oculto cuando no hay archivo ══════════ */
+.attach-preview[hidden] {
+  display: none !important;
+}

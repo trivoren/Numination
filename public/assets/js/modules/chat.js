@@ -1,12 +1,14 @@
 /* ============================================================
-   Chat Numination - Conecta con POST /api/chat
-   Incluye adjuntos, dictado por voz y lectura en voz alta.
+   Chat Numination
+   - Streaming SSE con efecto máquina de escribir
+   - Adjuntar archivos (imágenes, PDF)
+   - Lectura en voz alta de respuestas IA
    ============================================================ */
 
 import { consumeAttachedFile } from './chat-media.js';
 import { attachSpeakButton } from './chat-audio.js';
 
-const API_URL = '/api/chat';
+const API_URL = '/api/chat/stream';
 const MAX = 4000;
 const ROLE = 'student';
 
@@ -34,6 +36,7 @@ export function initChat() {
 
   let busy = false;
 
+  /* ─── Sidebar móvil ─── */
   if (sidebarOpen) sidebarOpen.addEventListener('click', () => {
     if (sidebarEl) sidebarEl.classList.add('is-open');
     if (sidebarOverlay) sidebarOverlay.classList.add('is-open');
@@ -46,6 +49,7 @@ export function initChat() {
   if (sidebarClose) sidebarClose.addEventListener('click', closeSidebar);
   if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeSidebar);
 
+  /* ─── Nuevo chat ─── */
   if (newBtn) newBtn.addEventListener('click', () => {
     thread.innerHTML = '';
     if (empty) empty.style.display = '';
@@ -53,13 +57,15 @@ export function initChat() {
     closeSidebar();
   });
 
+  /* ─── Auto-resize ─── */
   const resize = () => {
     field.style.height = 'auto';
     field.style.height = Math.min(field.scrollHeight, 200) + 'px';
   };
 
+  /* ─── Estado del botón: solo depende del texto ─── */
   const updateSend = () => {
-    sendBtn.disabled = busy || field.value.trim().length === 0;
+    sendBtn.disabled = false;
   };
 
   field.addEventListener('input', () => {
@@ -75,21 +81,24 @@ export function initChat() {
     }
   });
 
+  /* ─── Chips y tarjetas de sugerencia ─── */
   document.querySelectorAll('[data-suggestion]').forEach((btn) => {
     btn.addEventListener('click', () => {
       field.value = btn.dataset.suggestion || '';
+      field.dispatchEvent(new Event('input', { bubbles: true }));
       resize();
       updateSend();
       field.focus();
     });
   });
 
+  /* ─── Enviar mensaje ─── */
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (busy) return;
 
     const text = field.value.trim();
-    if (!text) return;
+    if (!text) { field.focus(); return; }
 
     const attached = consumeAttachedFile();
 
@@ -101,7 +110,6 @@ export function initChat() {
 
     addMessage(thread, 'user', text, attached);
     busy = true;
-    updateSend();
 
     const typingEl = addTyping(thread);
     scroll.scrollTop = scroll.scrollHeight;
@@ -116,7 +124,7 @@ export function initChat() {
         };
       }
 
-      const res = await fetch('/api/chat/stream', {
+      const res = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -134,11 +142,13 @@ export function initChat() {
         return;
       }
 
-      const liveBubble = createLiveBubble(thread);
+      /* ─── Streaming SSE ─── */
+      const live = createLiveBubble(thread);
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
       let fullText = '';
+      let finished = false;
 
       while (true) {
         const { value, done } = await reader.read();
@@ -150,35 +160,48 @@ export function initChat() {
 
         for (const part of parts) {
           if (!part.startsWith('data: ')) continue;
-          const json = part.slice(6);
+          const jsonStr = part.slice(6);
           try {
-            const evt = JSON.parse(json);
+            const evt = JSON.parse(jsonStr);
             if (evt.error) {
-              appendToBubble(liveBubble, '\n\n⚠️ ' + evt.error);
+              appendToBubble(live, '\n\n⚠️ ' + evt.error);
             } else if (evt.token) {
-              appendToBubble(liveBubble, evt.token);
+              appendToBubble(live, evt.token);
               fullText += evt.token;
             }
-            if (evt.done) finalizeBubble(liveBubble, fullText);
-          } catch (e) {}
+            if (evt.done && !finished) {
+              finished = true;
+              finalizeBubble(live, fullText);
+            }
+          } catch {}
         }
         scroll.scrollTop = scroll.scrollHeight;
       }
 
-      if (fullText) finalizeBubble(liveBubble, fullText);
+      if (!finished) finalizeBubble(live, fullText);
     } catch (err) {
       typingEl.remove();
       addMessage(thread, 'ai', '⚠️ No se pudo conectar con el servidor.\n\nDetalle: ' + err.message);
       console.error('[chat]', err);
     } finally {
       busy = false;
-      updateSend();
-      field.focus();
+      setTimeout(() => {
+        updateSend();
+        field.focus();
+        const preview = document.getElementById('attach-preview');
+        const name = document.getElementById('attach-preview-name');
+        if (preview && (!name || !name.textContent)) {
+          preview.hidden = true;
+          preview.style.display = 'none';
+        }
+      }, 50);
     }
   });
 
   updateSend();
 }
+
+/* ══════════ Mensajes estándar ══════════ */
 
 function addMessage(container, role, text, attachment = null, imageUrl = null) {
   const wrap = document.createElement('div');
@@ -254,7 +277,8 @@ function addTyping(container) {
   container.appendChild(wrap);
   return wrap;
 }
-/* ══════════ Streaming: burbuja viva ══════════ */
+
+/* ══════════ Burbuja en vivo (streaming) ══════════ */
 
 function createLiveBubble(container) {
   const wrap = document.createElement('div');

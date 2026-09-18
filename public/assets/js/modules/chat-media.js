@@ -75,33 +75,34 @@ function processFile(file) {
   reader.readAsDataURL(file);
 }
 
-function renderPreview() {
-  const f = attachState.file;
-  if (!f) {
-    if (elPreview) elPreview.hidden = true;
-    elBtn.classList.remove('has-file');
-    return;
-  }
-
-  elBtn.classList.add('has-file');
-  if (elPreview) elPreview.hidden = false;
-  if (elIcon)  elIcon.textContent = iconForFile(f.mimeType, f.name);
-  if (elName)  elName.textContent = f.name;
-  if (elSize)  elSize.textContent = formatSize(f.size);
-}
-
-function clearFile() {
-  attachState.file = null;
-  if (elInput) elInput.value = '';
-  renderPreview();
-}
-
 export function consumeAttachedFile() {
   const f = attachState.file;
   attachState.file = null;
   if (elInput) elInput.value = '';
   renderPreview();
   return f;
+}
+
+function renderPreview() {
+  const f = attachState.file;
+
+  if (!f) {
+    if (elPreview) elPreview.hidden = true;
+    if (elBtn) elBtn.classList.remove('has-file');
+    return;
+  }
+
+  if (elBtn) elBtn.classList.add('has-file');
+  if (elPreview) elPreview.hidden = false;
+  if (elIcon) elIcon.textContent = iconForFile(f.mimeType, f.name);
+  if (elName) elName.textContent = f.name;
+  if (elSize) elSize.textContent = formatSize(f.size);
+}
+
+function clearFile() {
+  attachState.file = null;
+  if (elInput) elInput.value = '';
+  renderPreview();
 }
 
 function iconForFile(mime, name) {

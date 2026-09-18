@@ -737,3 +737,27 @@
   color: var(--brand-blue);
   animation: pulse-mic 1.2s infinite;
 }
+
+/* ══════════ Efecto máquina de escribir ══════════ */
+
+.msg__bubble--streaming { min-height: 1.5em; }
+
+.msg__cursor {
+  display: inline-block;
+  width: 0.5ch;
+  height: 1em;
+  margin-left: 2px;
+  background: var(--fg);
+  vertical-align: text-bottom;
+  animation: cursor-blink 1s step-end infinite;
+}
+
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0; }
+}
+
+.msg__stream-text {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}

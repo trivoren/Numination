@@ -116,7 +116,7 @@ export function initChat() {
         };
       }
 
-      const res = await fetch(API_URL, {
+      const res = await fetch('/api/chat/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -124,7 +124,7 @@ export function initChat() {
 
       typingEl.remove();
 
-      if (!res.ok) {
+      if (!res.ok || !res.body) {
         let errMsg = 'HTTP ' + res.status;
         try {
           const data = await res.json();
@@ -134,16 +134,38 @@ export function initChat() {
         return;
       }
 
-      const data = await res.json();
-      const reply = ((data && data.reply) || '').trim();
-      const imageUrl = (data && data.imageUrl) || null;
+      const liveBubble = createLiveBubble(thread);
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let fullText = '';
 
-      if (!reply && !imageUrl) {
-        addMessage(thread, 'ai', '(Respuesta vacía del servidor)');
-        return;
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const parts = buffer.split('\n\n');
+        buffer = parts.pop() || '';
+
+        for (const part of parts) {
+          if (!part.startsWith('data: ')) continue;
+          const json = part.slice(6);
+          try {
+            const evt = JSON.parse(json);
+            if (evt.error) {
+              appendToBubble(liveBubble, '\n\n⚠️ ' + evt.error);
+            } else if (evt.token) {
+              appendToBubble(liveBubble, evt.token);
+              fullText += evt.token;
+            }
+            if (evt.done) finalizeBubble(liveBubble, fullText);
+          } catch (e) {}
+        }
+        scroll.scrollTop = scroll.scrollHeight;
       }
 
-      addMessage(thread, 'ai', reply || 'Aquí está tu imagen:', null, imageUrl);
+      if (fullText) finalizeBubble(liveBubble, fullText);
     } catch (err) {
       typingEl.remove();
       addMessage(thread, 'ai', '⚠️ No se pudo conectar con el servidor.\n\nDetalle: ' + err.message);
@@ -231,4 +253,54 @@ function addTyping(container) {
   wrap.innerHTML = '<div class="msg__avatar">N</div><div class="msg__content"><div class="msg__author">Numination</div><div class="msg__bubble"><span class="msg__typing"><span></span><span></span><span></span></span></div></div>';
   container.appendChild(wrap);
   return wrap;
+}
+/* ══════════ Streaming: burbuja viva ══════════ */
+
+function createLiveBubble(container) {
+  const wrap = document.createElement('div');
+  wrap.className = 'msg msg--ai';
+
+  const avatar = document.createElement('div');
+  avatar.className = 'msg__avatar';
+  avatar.textContent = 'N';
+
+  const content = document.createElement('div');
+  content.className = 'msg__content';
+
+  const author = document.createElement('div');
+  author.className = 'msg__author';
+  author.textContent = 'Numination';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'msg__bubble msg__bubble--streaming';
+
+  const span = document.createElement('span');
+  span.className = 'msg__stream-text';
+  bubble.appendChild(span);
+
+  const cursor = document.createElement('span');
+  cursor.className = 'msg__cursor';
+  bubble.appendChild(cursor);
+
+  content.appendChild(author);
+  content.appendChild(bubble);
+  wrap.appendChild(avatar);
+  wrap.appendChild(content);
+  container.appendChild(wrap);
+
+  return { bubble, span, cursor, fullText: '' };
+}
+
+function appendToBubble(live, token) {
+  live.span.textContent += token;
+  live.fullText += token;
+  const scroller = live.bubble.closest('[data-chat-messages]');
+  if (scroller) scroller.scrollTop = scroller.scrollHeight;
+}
+
+function finalizeBubble(live, finalText) {
+  if (live.cursor) live.cursor.remove();
+  live.bubble.classList.remove('msg__bubble--streaming');
+  const text = finalText || live.fullText;
+  if (text) attachSpeakButton(live.bubble, text);
 }

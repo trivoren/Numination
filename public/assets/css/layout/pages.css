@@ -404,3 +404,61 @@
 .contact-block h4 { font-size: var(--text-sm); font-weight: 600; }
 .contact-block p  { color: var(--fg-muted); font-size: var(--text-sm); margin-top: var(--space-1); }
 
+
+/* ============================================================
+   CTA FINAL
+   ============================================================ */
+
+.cta-final {
+  position: relative;
+  padding: 3rem 1.5rem;
+  border-radius: 28px;
+  background: linear-gradient(135deg,
+    rgba(0, 56, 147, .08),
+    rgba(77, 127, 209, .12));
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+[data-theme="dark"] .cta-final {
+  background: linear-gradient(135deg,
+    rgba(126, 166, 224, .1),
+    rgba(0, 56, 147, .15));
+}
+
+@media (min-width: 768px) {
+  .cta-final { padding: 5rem 3rem; }
+}
+
+.cta-final__inner {
+  max-width: 44rem;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.cta-final__title {
+  margin-top: 0.75rem;
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  letter-spacing: -0.03em;
+}
+
+.cta-final__subtitle {
+  margin-top: 1.25rem;
+  color: var(--fg-muted);
+  font-size: 1.125rem;
+  line-height: 1.55;
+}
+
+.cta-final__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-top: 2.5rem;
+}
+
+.cta-final__meta {
+  margin-top: 1.5rem;
+  font-size: 0.75rem;
+  color: var(--fg-subtle);
+}

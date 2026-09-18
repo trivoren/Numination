@@ -1,7 +1,8 @@
 /* ══════════════════════════════════════════════════════════════
-   NUMINATION — Backend v1.4
+   NUMINATION — Backend v2.0
    Motores: Gemini → Kimi K3 → Groq
    Imágenes: Pollinations (sin API key)
+   Banco ICFES: 500 preguntas reales (5 materias × 100)
    ══════════════════════════════════════════════════════════════ */
 
 import express from 'express';
@@ -10,6 +11,14 @@ import { fileURLToPath } from 'node:url';
 import { GoogleGenAI } from '@google/genai';
 import Groq from 'groq-sdk';
 import OpenAI from 'openai';
+
+import {
+  listarMaterias,
+  preguntaAleatoria,
+  simulacro,
+  verificarRespuesta,
+  formatearParaChat,
+} from './services/questions.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, '..', 'public');
@@ -44,7 +53,7 @@ const nvidia = new OpenAI({
    ══════════════════════════════════════════════════════════════ */
 
 const NUMINATION_BASE = `
-# SYSTEM PROMPT: NUMINATION v1.0
+# SYSTEM PROMPT: NUMINATION v1.1
 
 ## 1. IDENTIDAD
 Eres Numination, la primera IA educativa 100% colombiana, creada por
@@ -169,7 +178,7 @@ async function callGroq(systemPrompt, message, file) {
   return response.choices?.[0]?.message?.content ?? '';
 }
 
-const PROVIDERS = ['gemini', 'nvidia', 'groq'];
+const PROVIDERS = ['groq', 'gemini', 'nvidia'];
 const PROVIDER_NAMES = { gemini: 'Gemini', nvidia: 'Kimi K3', groq: 'Groq' };
 
 const callers = {
@@ -249,12 +258,46 @@ const app = express();
 app.use(express.json({ limit: '15mb' }));
 app.use(express.static(publicDir));
 
+/* ─────────── ENDPOINTS DE PREGUNTAS ─────────── */
+
+app.get('/api/questions/materias', (_req, res) => {
+  res.json({ materias: listarMaterias() });
+});
+
+app.get('/api/questions/random', (req, res) => {
+  const materia = req.query.materia || null;
+  const p = preguntaAleatoria(materia);
+  if (!p) return res.status(404).json({ error: 'No hay preguntas disponibles' });
+  res.json({ pregunta: p });
+});
+
+app.get('/api/questions/simulacro', (req, res) => {
+  const cantidad = Math.min(parseInt(req.query.cantidad, 10) || 10, 40);
+  const areas = req.query.areas ? String(req.query.areas).split(',') : null;
+  const preguntas = simulacro(cantidad, areas);
+  res.json({ cantidad: preguntas.length, preguntas });
+});
+
+app.post('/api/questions/check', (req, res) => {
+  const { id, respuesta } = req.body ?? {};
+  if (!id || !respuesta) {
+    return res.status(400).json({ error: 'Faltan id y respuesta' });
+  }
+  const resultado = verificarRespuesta(id, respuesta);
+  if (!resultado.ok) return res.status(404).json(resultado);
+  res.json(resultado);
+});
+
+/* ─────────── HEALTH ─────────── */
+
 app.get('/api/health', (_req, res) => {
   res.json({
     ok: true,
     service: 'numination',
+    version: '2.0',
     motors: PROVIDERS,
     images: 'pollinations',
+    banco: listarMaterias(),
     keys: {
       gemini: !!KEYS.GEMINI_API_KEY,
       nvidia: !!KEYS.NVIDIA_API_KEY,
@@ -263,17 +306,107 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
+/* ══════════════════════════════════════════════════════════════
+   DETECCIÓN DE INTENCIÓN DE PRÁCTICA
+   ══════════════════════════════════════════════════════════════ */
+
+function detectarPractica(message) {
+  const t = message.trim().toLowerCase();
+
+  // "practicar matematicas", "practicar lectura critica"
+  const materiaMatch = t.match(
+    /^(?:practicar|practica|practícame|quiero practicar|dame practica de|hazme practicar)\s+(?:de\s+)?(.+)$/i
+  );
+  if (materiaMatch) {
+    const raw = materiaMatch[1].trim();
+    const mapa = {
+      matematicas: 'matematicas', matemática: 'matematicas', matemáticas: 'matematicas',
+      'lectura critica': 'lectura-critica', 'lectura crítica': 'lectura-critica',
+      sociales: 'sociales', 'ciencias sociales': 'sociales',
+      'ciencias naturales': 'ciencias-naturales', ciencias: 'ciencias-naturales',
+      ingles: 'ingles', inglés: 'ingles',
+    };
+    const slug = mapa[raw] || (raw.includes('matem') ? 'matematicas'
+                 : raw.includes('lectura') ? 'lectura-critica'
+                 : raw.includes('social') ? 'sociales'
+                 : raw.includes('cienc') ? 'ciencias-naturales'
+                 : raw.includes('ingl') ? 'ingles'
+                 : null);
+    if (slug) return { tipo: 'materia', slug };
+  }
+
+  if (/^(?:simulacro|simulacro completo|hazme un simulacro|quiero un simulacro)/i.test(t)) {
+    return { tipo: 'simulacro' };
+  }
+
+  if (/^(?:practicar|practica|pregunta aleatoria|dame una pregunta)/i.test(t)) {
+    return { tipo: 'aleatoria' };
+  }
+
+  return null;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CHAT
+   ══════════════════════════════════════════════════════════════ */
+
 app.post('/api/chat', async (req, res) => {
   try {
-    const { message, role = 'student', file = null } = req.body ?? {};
+    const { message, role = 'student', file = null, checkId = null, checkRespuesta = null } = req.body ?? {};
     const hasText = message && message.trim();
     const hasFile = file && file.data;
 
-    if (!hasText && !hasFile) {
+    if (!hasText && !hasFile && !checkId) {
       return res.status(400).json({ error: 'Falta el mensaje o archivo' });
     }
 
-    // ─── Detección de generación de imágenes ───
+    /* ─── Verificar respuesta de pregunta ICFES ─── */
+    if (checkId && checkRespuesta) {
+      const r = verificarRespuesta(checkId, checkRespuesta);
+      if (!r.ok) return res.status(404).json(r);
+      const emoji = r.correcta ? '✅' : '❌';
+      const encabezado = r.correcta
+        ? `${emoji} **¡Correcto!** La respuesta era **${r.respuesta_correcta}**.`
+        : `${emoji} **Incorrecto.** La respuesta correcta era **${r.respuesta_correcta}**.`;
+      return res.json({
+        reply: `${encabezado}\n\n**Explicación:**\n${r.explicacion}\n\n¿Quieres practicar otra? Escribe "practicar ${r.materia.toLowerCase()}" o "simulacro".`,
+        type: 'check',
+        correcta: r.correcta,
+      });
+    }
+
+    /* ─── Detección de práctica ICFES ─── */
+    if (hasText) {
+      const practica = detectarPractica(message);
+
+      if (practica) {
+        if (practica.tipo === 'simulacro') {
+          const preguntas = simulacro(10);
+          const texto = preguntas.map((p, i) => {
+            return `**Pregunta ${i + 1} de 10** · ${p.materia}\n\n${p.contexto}\n\n${p.enunciado}\n\nA) ${p.opciones.A}\nB) ${p.opciones.B}\nC) ${p.opciones.C}\nD) ${p.opciones.D}\n\n_(ID: ${p.id})_`;
+          }).join('\n\n---\n\n');
+          return res.json({
+            reply: `# 📝 Simulacro ICFES · 10 preguntas\n\nResponde cada pregunta con la letra (A, B, C o D). Cuando termines, envía tu respuesta en el formato:\n\n\`MATE-001 B\` o simplemente dime "verificar MATE-001 B".\n\n---\n\n${texto}`,
+            type: 'simulacro',
+            preguntas,
+          });
+        }
+
+        const p = practica.tipo === 'materia'
+          ? preguntaAleatoria(practica.slug)
+          : preguntaAleatoria();
+
+        if (!p) return res.status(404).json({ error: 'No hay preguntas disponibles' });
+
+        return res.json({
+          reply: formatearParaChat(p),
+          type: 'practica',
+          pregunta: p,
+        });
+      }
+    }
+
+    /* ─── Detección de generación de imágenes ─── */
     if (hasText && detectImageIntent(message)) {
       const imagePrompt = extractImagePrompt(message);
 
@@ -296,6 +429,7 @@ app.post('/api/chat', async (req, res) => {
       }
     }
 
+    /* ─── Respuesta normal con IA ─── */
     const systemPrompt = buildSystemPrompt(role);
     const ordered = PROVIDERS;
 
@@ -348,9 +482,12 @@ app.get('*', (_req, res) => {
 if (process.env.VERCEL !== '1') {
   const PORT = process.env.PORT ?? 8080;
   app.listen(PORT, () => {
-    console.log(`🇨🇴 Numination escuchando en http://localhost:${PORT}`);
-    console.log(`🤖 Motores: Gemini → Kimi K3 → Groq`);
+    console.log(`🇨🇴 Numination v2.0 escuchando en http://localhost:${PORT}`);
+    console.log(`🤖 Motores: Groq → Gemini → Kimi K3`);
     console.log(`🎨 Imágenes: Pollinations (sin API key)`);
+    const banco = listarMaterias();
+    const total = banco.reduce((s, m) => s + m.total, 0);
+    console.log(`📚 Banco ICFES: ${total} preguntas en ${banco.length} materias`);
   });
 }
 

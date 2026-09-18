@@ -1,45 +1,31 @@
 /* ============================================================
    Servicio de preguntas
-   Lee los JSON de src/data/ y expone funciones para el chat.
+   Importa los JSON como módulos ES para que Vercel los bundlee.
    ============================================================ */
 
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const dataDir = path.join(__dirname, '..', 'data');
+import matematicas from '../data/matematicas.js';
+import lecturaCritica from '../data/lectura-critica.js';
+import cienciasNaturales from '../data/ciencias-naturales.js';
+import sociales from '../data/sociales.js';
+import ingles from '../data/ingles.js';
 
 const MATERIAS = {
-  matematicas:          { nombre: 'Matemáticas',          archivo: 'matematicas.json' },
-  'lectura-critica':    { nombre: 'Lectura Crítica',      archivo: 'lectura-critica.json' },
-  'ciencias-naturales': { nombre: 'Ciencias Naturales',   archivo: 'ciencias-naturales.json' },
-  sociales:             { nombre: 'Sociales y Ciudadanas', archivo: 'sociales.json' },
-  ingles:               { nombre: 'Inglés',               archivo: 'ingles.json' },
+  matematicas:          { nombre: 'Matemáticas',           data: matematicas },
+  'lectura-critica':    { nombre: 'Lectura Crítica',       data: lecturaCritica },
+  'ciencias-naturales': { nombre: 'Ciencias Naturales',    data: cienciasNaturales },
+  sociales:             { nombre: 'Sociales y Ciudadanas', data: sociales },
+  ingles:               { nombre: 'Inglés',                data: ingles },
 };
 
-const cache = new Map();
-
 function cargar(slug) {
-  if (cache.has(slug)) return cache.get(slug);
-  const info = MATERIAS[slug];
-  if (!info) return [];
-  try {
-    const raw = fs.readFileSync(path.join(dataDir, info.archivo), 'utf-8');
-    const data = JSON.parse(raw);
-    cache.set(slug, data);
-    return data;
-  } catch (err) {
-    console.error(`[questions] No pude leer ${slug}:`, err.message);
-    return [];
-  }
+  return MATERIAS[slug]?.data ?? [];
 }
 
 export function listarMaterias() {
   return Object.entries(MATERIAS).map(([slug, info]) => ({
     slug,
     nombre: info.nombre,
-    total: cargar(slug).length,
+    total: info.data.length,
   }));
 }
 

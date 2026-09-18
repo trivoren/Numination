@@ -1,12 +1,14 @@
-﻿/* ============================================================
+/* ============================================================
    Chat Numination - Conecta con POST /api/chat
+   Incluye adjuntos, dictado por voz y lectura en voz alta.
    ============================================================ */
+
+import { consumeAttachedFile } from './chat-media.js';
+import { attachSpeakButton } from './chat-audio.js';
 
 const API_URL = '/api/chat';
 const MAX = 4000;
 const ROLE = 'student';
-
-let sidebarEl, sidebarOverlay, sidebarOpen, sidebarClose;
 
 export function initChat() {
   const app = document.querySelector('.chat-app');
@@ -20,10 +22,10 @@ export function initChat() {
   const thread   = document.querySelector('[data-chat-thread]');
   const newBtn   = document.querySelector('[data-chat-new]');
 
-  sidebarEl      = document.querySelector('[data-chat-sidebar]');
-  sidebarOverlay = document.querySelector('[data-chat-sidebar-overlay]');
-  sidebarOpen    = document.querySelector('[data-chat-sidebar-open]');
-  sidebarClose   = document.querySelector('[data-chat-sidebar-close]');
+  const sidebarEl      = document.querySelector('[data-chat-sidebar]');
+  const sidebarOverlay = document.querySelector('[data-chat-sidebar-overlay]');
+  const sidebarOpen    = document.querySelector('[data-chat-sidebar-open]');
+  const sidebarClose   = document.querySelector('[data-chat-sidebar-close]');
 
   if (!form || !field || !sendBtn || !scroll || !thread) {
     console.warn('[chat] faltan elementos en el DOM');
@@ -89,13 +91,15 @@ export function initChat() {
     const text = field.value.trim();
     if (!text) return;
 
+    const attached = consumeAttachedFile();
+
     field.value = '';
     resize();
     updateSend();
 
     if (empty) empty.style.display = 'none';
 
-    addMessage(thread, 'user', text);
+    addMessage(thread, 'user', text, attached);
     busy = true;
     updateSend();
 
@@ -103,10 +107,19 @@ export function initChat() {
     scroll.scrollTop = scroll.scrollHeight;
 
     try {
+      const body = { message: text, role: ROLE };
+      if (attached) {
+        body.file = {
+          data: attached.data,
+          mimeType: attached.mimeType,
+          name: attached.name,
+        };
+      }
+
       const res = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, role: ROLE }),
+        body: JSON.stringify(body),
       });
 
       typingEl.remove();
@@ -117,7 +130,7 @@ export function initChat() {
           const data = await res.json();
           if (data && data.error) errMsg = data.error;
         } catch {}
-        addMessage(thread, 'ai', '\u26A0\uFE0F ' + errMsg);
+        addMessage(thread, 'ai', '⚠️ ' + errMsg);
         return;
       }
 
@@ -126,14 +139,14 @@ export function initChat() {
       const imageUrl = (data && data.imageUrl) || null;
 
       if (!reply && !imageUrl) {
-        addMessage(thread, 'ai', '(Respuesta vacia del servidor)');
+        addMessage(thread, 'ai', '(Respuesta vacía del servidor)');
         return;
       }
 
-      addMessage(thread, 'ai', reply || 'Aqui esta tu imagen:', imageUrl);
+      addMessage(thread, 'ai', reply || 'Aquí está tu imagen:', null, imageUrl);
     } catch (err) {
       typingEl.remove();
-      addMessage(thread, 'ai', '\u26A0\uFE0F No se pudo conectar con el servidor.\n\nDetalle: ' + err.message);
+      addMessage(thread, 'ai', '⚠️ No se pudo conectar con el servidor.\n\nDetalle: ' + err.message);
       console.error('[chat]', err);
     } finally {
       busy = false;
@@ -145,9 +158,7 @@ export function initChat() {
   updateSend();
 }
 
-function addMessage(container, role, text, imageUrl) {
-  if (imageUrl === undefined) imageUrl = null;
-
+function addMessage(container, role, text, attachment = null, imageUrl = null) {
   const wrap = document.createElement('div');
   wrap.className = 'msg msg--' + role;
 
@@ -160,7 +171,7 @@ function addMessage(container, role, text, imageUrl) {
 
   const author = document.createElement('div');
   author.className = 'msg__author';
-  author.textContent = role === 'user' ? 'Tu' : 'Numination';
+  author.textContent = role === 'user' ? 'Tú' : 'Numination';
 
   const bubble = document.createElement('div');
   bubble.className = 'msg__bubble';
@@ -171,6 +182,26 @@ function addMessage(container, role, text, imageUrl) {
     bubble.appendChild(p);
   }
 
+  if (attachment) {
+    if (attachment.mimeType && attachment.mimeType.startsWith('image/')) {
+      const img = document.createElement('img');
+      img.src = 'data:' + attachment.mimeType + ';base64,' + attachment.data;
+      img.alt = attachment.name || 'imagen';
+      img.className = 'msg__image';
+      bubble.appendChild(img);
+    } else {
+      const att = document.createElement('div');
+      att.className = 'msg-attachment';
+      const s1 = document.createElement('span');
+      s1.textContent = '📎';
+      const s2 = document.createElement('span');
+      s2.textContent = attachment.name || 'archivo';
+      att.appendChild(s1);
+      att.appendChild(s2);
+      bubble.appendChild(att);
+    }
+  }
+
   if (imageUrl) {
     const img = document.createElement('img');
     img.src = imageUrl;
@@ -178,6 +209,10 @@ function addMessage(container, role, text, imageUrl) {
     img.loading = 'lazy';
     img.className = 'msg__image';
     bubble.appendChild(img);
+  }
+
+  if (role === 'ai' && text) {
+    attachSpeakButton(bubble, text);
   }
 
   content.appendChild(author);

@@ -1,6 +1,5 @@
 /* ============================================================
    Numination — entrypoint del frontend
-   Carga todos los módulos. Cada uno se auto-registra.
    ============================================================ */
 
 import { initTheme }        from './modules/theme-toggle.js';
@@ -10,6 +9,8 @@ import { initCounters }     from './modules/counters.js';
 import { initScrollReveal } from './modules/scroll-reveal.js';
 import { initContactForm }  from './modules/contact-form.js';
 import { initChat }         from './modules/chat.js';
+import { initChatMedia }    from './modules/chat-media.js';
+import { initChatAudio }    from './modules/chat-audio.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
@@ -19,4 +20,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initScrollReveal();
   initContactForm();
   initChat();
+  initChatMedia();
+  initChatAudio();
 });

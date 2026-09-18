@@ -1,43 +1,62 @@
-/* ============================================================
-   Chat Numination — frontend
-   Backend espera: { message, role }
-   Backend devuelve: { reply } o { reply, imageUrl, type }
+﻿/* ============================================================
+   Chat Numination - Conecta con POST /api/chat
    ============================================================ */
 
 const API_URL = '/api/chat';
 const MAX = 4000;
-const ROLE = 'student'; // 'student' | 'teacher'
+const ROLE = 'student';
+
+let sidebarEl, sidebarOverlay, sidebarOpen, sidebarClose;
 
 export function initChat() {
-  const shell = document.querySelector('[data-chat-shell]');
-  if (!shell) return;
+  const app = document.querySelector('.chat-app');
+  if (!app) return;
 
   const form     = document.querySelector('[data-chat-form]');
   const field    = document.querySelector('[data-chat-field]');
   const sendBtn  = document.querySelector('[data-chat-send]');
-  const messages = document.querySelector('[data-chat-messages]');
+  const scroll   = document.querySelector('[data-chat-messages]');
   const empty    = document.querySelector('[data-chat-empty]');
-  const counter  = document.querySelector('[data-chat-counter]');
+  const thread   = document.querySelector('[data-chat-thread]');
+  const newBtn   = document.querySelector('[data-chat-new]');
 
-  if (!form || !field || !messages) return;
+  sidebarEl      = document.querySelector('[data-chat-sidebar]');
+  sidebarOverlay = document.querySelector('[data-chat-sidebar-overlay]');
+  sidebarOpen    = document.querySelector('[data-chat-sidebar-open]');
+  sidebarClose   = document.querySelector('[data-chat-sidebar-close]');
+
+  if (!form || !field || !sendBtn || !scroll || !thread) {
+    console.warn('[chat] faltan elementos en el DOM');
+    return;
+  }
 
   let busy = false;
 
+  if (sidebarOpen) sidebarOpen.addEventListener('click', () => {
+    if (sidebarEl) sidebarEl.classList.add('is-open');
+    if (sidebarOverlay) sidebarOverlay.classList.add('is-open');
+  });
+
+  const closeSidebar = () => {
+    if (sidebarEl) sidebarEl.classList.remove('is-open');
+    if (sidebarOverlay) sidebarOverlay.classList.remove('is-open');
+  };
+  if (sidebarClose) sidebarClose.addEventListener('click', closeSidebar);
+  if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeSidebar);
+
+  if (newBtn) newBtn.addEventListener('click', () => {
+    thread.innerHTML = '';
+    if (empty) empty.style.display = '';
+    field.focus();
+    closeSidebar();
+  });
+
   const resize = () => {
     field.style.height = 'auto';
-    field.style.height = Math.min(field.scrollHeight, 160) + 'px';
-  };
-
-  const updateCounter = () => {
-    if (!counter) return;
-    const len = field.value.length;
-    counter.classList.toggle('is-visible', len > 0);
-    counter.classList.toggle('is-warning', len > MAX * 0.85);
-    counter.textContent = `${len} / ${MAX}`;
+    field.style.height = Math.min(field.scrollHeight, 200) + 'px';
   };
 
   const updateSend = () => {
-    if (!sendBtn) return;
     sendBtn.disabled = busy || field.value.trim().length === 0;
   };
 
@@ -45,7 +64,6 @@ export function initChat() {
     if (field.value.length > MAX) field.value = field.value.slice(0, MAX);
     resize();
     updateSend();
-    updateCounter();
   });
 
   field.addEventListener('keydown', (e) => {
@@ -55,12 +73,11 @@ export function initChat() {
     }
   });
 
-  shell.querySelectorAll('[data-suggestion]').forEach((btn) => {
+  document.querySelectorAll('[data-suggestion]').forEach((btn) => {
     btn.addEventListener('click', () => {
       field.value = btn.dataset.suggestion || '';
       resize();
       updateSend();
-      updateCounter();
       field.focus();
     });
   });
@@ -74,15 +91,16 @@ export function initChat() {
 
     field.value = '';
     resize();
-    updateCounter();
+    updateSend();
 
     if (empty) empty.style.display = 'none';
 
-    addMessage(messages, 'user', text);
+    addMessage(thread, 'user', text);
     busy = true;
     updateSend();
 
-    const typingEl = addTyping(messages);
+    const typingEl = addTyping(thread);
+    scroll.scrollTop = scroll.scrollHeight;
 
     try {
       const res = await fetch(API_URL, {
@@ -94,32 +112,28 @@ export function initChat() {
       typingEl.remove();
 
       if (!res.ok) {
-        let errMsg = `HTTP ${res.status}`;
+        let errMsg = 'HTTP ' + res.status;
         try {
           const data = await res.json();
-          if (data?.error) errMsg = data.error;
+          if (data && data.error) errMsg = data.error;
         } catch {}
-        addMessage(messages, 'ai', `⚠️ ${errMsg}`);
+        addMessage(thread, 'ai', '\u26A0\uFE0F ' + errMsg);
         return;
       }
 
       const data = await res.json();
-      const reply = (data?.reply || '').trim();
-      const imageUrl = data?.imageUrl || null;
+      const reply = ((data && data.reply) || '').trim();
+      const imageUrl = (data && data.imageUrl) || null;
 
       if (!reply && !imageUrl) {
-        addMessage(messages, 'ai', '(Respuesta vacía del servidor)');
+        addMessage(thread, 'ai', '(Respuesta vacia del servidor)');
         return;
       }
 
-      addMessage(messages, 'ai', reply || 'Aquí está tu imagen:', imageUrl);
+      addMessage(thread, 'ai', reply || 'Aqui esta tu imagen:', imageUrl);
     } catch (err) {
       typingEl.remove();
-      addMessage(
-        messages,
-        'ai',
-        `⚠️ No se pudo conectar con el servidor.\n\nDetalle: ${err.message}`
-      );
+      addMessage(thread, 'ai', '\u26A0\uFE0F No se pudo conectar con el servidor.\n\nDetalle: ' + err.message);
       console.error('[chat]', err);
     } finally {
       busy = false;
@@ -129,12 +143,24 @@ export function initChat() {
   });
 
   updateSend();
-  updateCounter();
 }
 
-function addMessage(container, role, text, imageUrl = null) {
+function addMessage(container, role, text, imageUrl) {
+  if (imageUrl === undefined) imageUrl = null;
+
   const wrap = document.createElement('div');
-  wrap.className = `msg msg--${role}`;
+  wrap.className = 'msg msg--' + role;
+
+  const avatar = document.createElement('div');
+  avatar.className = 'msg__avatar';
+  avatar.textContent = role === 'user' ? 'T' : 'N';
+
+  const content = document.createElement('div');
+  content.className = 'msg__content';
+
+  const author = document.createElement('div');
+  author.className = 'msg__author';
+  author.textContent = role === 'user' ? 'Tu' : 'Numination';
 
   const bubble = document.createElement('div');
   bubble.className = 'msg__bubble';
@@ -148,30 +174,26 @@ function addMessage(container, role, text, imageUrl = null) {
   if (imageUrl) {
     const img = document.createElement('img');
     img.src = imageUrl;
-    img.alt = 'Imagen generada por Numination';
+    img.alt = 'Imagen generada';
     img.loading = 'lazy';
     img.className = 'msg__image';
-    img.onload = () => {
-      container.scrollTop = container.scrollHeight;
-    };
     bubble.appendChild(img);
   }
 
-  wrap.appendChild(bubble);
+  content.appendChild(author);
+  content.appendChild(bubble);
+  wrap.appendChild(avatar);
+  wrap.appendChild(content);
   container.appendChild(wrap);
-  container.scrollTop = container.scrollHeight;
-  return wrap;
+
+  const scroller = container.closest('[data-chat-messages]');
+  if (scroller) scroller.scrollTop = scroller.scrollHeight;
 }
 
 function addTyping(container) {
   const wrap = document.createElement('div');
   wrap.className = 'msg msg--ai';
-  wrap.innerHTML = `
-    <div class="msg__bubble">
-      <span class="msg__typing"><span></span><span></span><span></span></span>
-    </div>
-  `;
+  wrap.innerHTML = '<div class="msg__avatar">N</div><div class="msg__content"><div class="msg__author">Numination</div><div class="msg__bubble"><span class="msg__typing"><span></span><span></span><span></span></span></div></div>';
   container.appendChild(wrap);
-  container.scrollTop = container.scrollHeight;
   return wrap;
 }

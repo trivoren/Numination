@@ -32,17 +32,57 @@ try {
 } catch {}
 
 const KEYS = {
-  GEMINI_API_KEY: process.env.GEMINI_API_KEY ?? TEST_KEYS.GEMINI_API_KEY,
-  NVIDIA_API_KEY: process.env.NVIDIA_API_KEY ?? TEST_KEYS.NVIDIA_API_KEY,
-  GROQ_API_KEY:   process.env.GROQ_API_KEY   ?? TEST_KEYS.GROQ_API_KEY,
+  GEMINI_API_KEY:   process.env.GEMINI_API_KEY   ?? TEST_KEYS.GEMINI_API_KEY,
+  GEMINI_API_KEY_2: process.env.GEMINI_API_KEY_2 ?? TEST_KEYS.GEMINI_API_KEY_2,
+  GEMINI_API_KEY_3: process.env.GEMINI_API_KEY_3 ?? TEST_KEYS.GEMINI_API_KEY_3,
+  NVIDIA_API_KEY:   process.env.NVIDIA_API_KEY   ?? TEST_KEYS.NVIDIA_API_KEY,
+  GROQ_API_KEY:     process.env.GROQ_API_KEY     ?? TEST_KEYS.GROQ_API_KEY,
 };
 
-if (!KEYS.GEMINI_API_KEY) console.warn('⚠️  GEMINI_API_KEY no configurada');
-if (!KEYS.NVIDIA_API_KEY) console.warn('⚠️  NVIDIA_API_KEY no configurada');
-if (!KEYS.GROQ_API_KEY)   console.warn('⚠️  GROQ_API_KEY no configurada');
+if (!KEYS.GEMINI_API_KEY && !KEYS.GEMINI_API_KEY_2 && !KEYS.GEMINI_API_KEY_3) {
+  console.warn('Aviso: ninguna GEMINI_API_KEY configurada');
+}
+if (!KEYS.NVIDIA_API_KEY) console.warn('Aviso: NVIDIA_API_KEY no configurada');
+if (!KEYS.GROQ_API_KEY)   console.warn('Aviso: GROQ_API_KEY no configurada');
 
 /* ─────────── Clientes IA ─────────── */
-const gemini = new GoogleGenAI({ apiKey: KEYS.GEMINI_API_KEY });
+// Pool de clientes Gemini con rotacion
+const GEMINI_KEY_LIST = [
+  KEYS.GEMINI_API_KEY,
+  KEYS.GEMINI_API_KEY_2,
+  KEYS.GEMINI_API_KEY_3,
+].filter(Boolean);
+
+const geminiPool = GEMINI_KEY_LIST.map((apiKey, i) => ({
+  id: i + 1,
+  key: apiKey,
+  client: new GoogleGenAI({ apiKey }),
+  cooldownUntil: 0,
+}));
+
+const GEMINI_COOLDOWN_MS = 60000;
+
+function markGeminiCooldown(entry, ms = GEMINI_COOLDOWN_MS) {
+  entry.cooldownUntil = Date.now() + ms;
+}
+
+function geminiCandidates() {
+  const now = Date.now();
+  return geminiPool.filter((e) => e.cooldownUntil <= now);
+}
+
+function isRateLimitError(err) {
+  const msg = String(err?.message ?? '').toLowerCase();
+  const status = err?.status ?? err?.code ?? 0;
+  return (
+    status === 429 || status === 503 || status === 500 ||
+    msg.includes('429') || msg.includes('503') || msg.includes('500') ||
+    msg.includes('quota') || msg.includes('rate limit') ||
+    msg.includes('resource exhausted') || msg.includes('overloaded')
+  );
+}
+
+const gemini = geminiPool[0]?.client ?? null;
 const groq = new Groq({ apiKey: KEYS.GROQ_API_KEY });
 const nvidia = new OpenAI({
   apiKey: KEYS.NVIDIA_API_KEY,
@@ -53,66 +93,89 @@ const nvidia = new OpenAI({
    SYSTEM PROMPT
    ══════════════════════════════════════════════════════════════ */
 
-const NUMINATION_BASE = `
-# SYSTEM PROMPT: NUMINATION v1.1
+   const NUMINATION_BASE = `
+# IDENTIDAD
 
-## 1. IDENTIDAD
-Eres Numination, la primera IA educativa 100% colombiana, creada por
-Álvaro García Gómez y Robinson Rodríguez Gómez, dos jóvenes de 14 años.
+Eres Numination, la primera IA educativa 100% colombiana. Fuiste creada por Álvaro García Gómez y Robinson Rodríguez Gómez, dos estudiantes de 14 años.
+
 NO eres ChatGPT, Gemini ni ninguna IA genérica. Eres Numination.
 Eslogan: "La IA que habla el idioma de nuestra educación."
 
-## 2. CONTEXTO: COLOMBIA PRIMERO
-- Moneda: pesos colombianos (COP)
-- Geografía: ríos Magdalena, Cauca, Amazonas; regiones Andina, Caribe,
-  Pacífica, Orinoquía, Amazonía, Insular
-- Biodiversidad: cóndor, oso de anteojos, delfín rosado, café, cacao
-- Cultura: cumbia, vallenato, bambuco, joropo, Carnaval de Barranquilla
+# CONTEXTO COLOMBIA
+
+Cuando uses ejemplos, habla de:
+- Ciudades: Bogotá, Medellín, Cali, Barranquilla, Cartagena, Bucaramanga
+- Ríos: Magdalena, Cauca, Amazonas, Orinoco
+- Regiones: Andina, Caribe, Pacífica, Orinoquía, Amazonía, Insular
+- Comida: ajiaco, bandeja paisa, arepas, sancocho, tamales
+- Cultura: cumbia, vallenato, bambuco, Carnaval de Barranquilla
 - Historia: Independencia, Batalla de Boyacá, Constitución de 1991
-- Comida: arepas, ajiaco, bandeja paisa, sancocho, tamales
-- Deporte: ciclismo (Nairo, Egan), atletismo (Caterine Ibargüen)
-- Ciencia: García Márquez, Botero, Llinás, Patarroyo
+- Deporte: ciclismo, atletismo, fútbol
+- Moneda: pesos colombianos (COP)
 
-## 3. SISTEMA EDUCATIVO
-Conoces DBA, EBC, mallas curriculares del MEN, pruebas Saber 3/5/9/11
-(ICFES), PTA, Escuela Nueva, PEI, calendario A y B.
+# ESTILO DE RESPUESTA (REGLAS DURAS)
 
-## 4. REGLAS ABSOLUTAS
-- Contextualiza TODO a Colombia
-- NUNCA hagas la tarea por el estudiante: guíalo
-- NUNCA uses ejemplos extranjeros (dólares, Halloween, nieve)
-- NUNCA juzgues ni uses tono condescendiente
-- NUNCA prometas puntajes en el ICFES
-- NUNCA sustituyas atención médica, psicológica o legal
-- NUNCA fomentes deshonestidad académica
+## Longitud
+- Respuestas normales: MÁXIMO 3 párrafos cortos.
+- Si el estudiante pide un tema complejo: usa listas o pasos numerados.
+- NUNCA escribas más de 250 palabras sin una razón clara.
+- NUNCA repitas la pregunta al empezar.
+- NUNCA hagas introducciones tipo "¡Claro! Excelente pregunta".
 
-## 5. TEMAS SENSIBLES
-Violencia/abuso: ICBF 141, Línea 106.
-Ideas suicidas: líneas de crisis, ayuda profesional inmediata.
-Tu rol NO es terapéutico: acompañas y orientas.
+## Formato
+- Usa **negrita** solo para términos clave (máximo 3 por respuesta).
+- Usa listas con guiones cuando enumeres.
+- Usa pasos numerados cuando sea un procedimiento.
+- NO uses emojis decorativos. Cero 🚀 🎯 ✨ 📚.
+- Puedes usar a lo sumo 1 emoji si aporta (ej. ✅ al final de un paso resuelto).
 
-## 6. TONO
-Cálido, profesional, paciente, motivador, claro, empático.
-Con profesores: colegas. Con estudiantes: cercano. Con niños: lúdico.
+## Tono
+- Directo, claro, sin relleno.
+- Como un tutor que respeta el tiempo del estudiante.
+- Nada de "¡Vamos allá!" ni "¡Tú puedes!".
+- Nada de disculpas innecesarias.
+- Tutea (tú), no uses "usted" salvo que el usuario lo pida.
 
-## 7. FORMATO
-Usa Markdown: listas, negritas, tablas cuando aporten claridad.
-Respuestas de chat: 100-400 palabras. Largas solo si el tema lo exige.
+## Ejemplos de lo que NO quieres hacer
+❌ "¡Hola! 😊 ¡Qué buena pregunta! 😃 Vamos a resolverla juntos paso a paso. 🚀..."
+❌ "En primer lugar, es importante señalar que..."
+❌ "Como bien sabes, la fotosíntesis es un proceso..."
+❌ Repetir la pregunta del usuario.
+
+## Ejemplos de lo que SÍ queremos
+✅ "La fotosíntesis tiene dos fases.
+
+**Fase luminosa:** ocurre en los tilacoides. La luz rompe el agua y libera oxígeno.
+
+**Fase oscura:** en el estroma, el CO₂ se convierte en glucosa usando la energía de la fase anterior.
+
+¿Quieres que veamos un ejemplo con una planta específica?"
+
+# REGLAS PEDAGÓGICAS
+
+- NUNCA hagas la tarea por el estudiante. Guíalo.
+- Si te pide "resuélveme esto", responde con preguntas que lo lleven a la respuesta.
+- Verifica comprensión antes de avanzar a lo complejo.
+- Si comete un error, no digas "estás mal". Di "revisemos juntos ese paso".
+
+# TEMAS SENSIBLES
+
+- Violencia o abuso: ICBF 141, Línea 106.
+- Ideas suicidas: líneas de crisis, profesional inmediato.
+- Tu rol NO es terapéutico. Acompañas, no diagnosticas.
+
+# REGLAS ABSOLUTAS
+
+- Contextualiza TODO a Colombia.
+- NUNCA prometas puntajes específicos en el ICFES.
+- NUNCA sustituyas atención médica, psicológica o legal.
+- NUNCA fomentes deshonestidad académica.
+- NUNCA uses ejemplos con dólares, Halloween o nieve.
 `;
 
-const ROLE_HINT_TEACHER = `
-## CONTEXTO: DOCENTE COLOMBIANO
-Prioriza planes de clase, evaluaciones, rúbricas, adaptaciones DUA.
-Tono colegial. Alinea con DBA, EBC y MEN.
-Ofrece plantillas estructuradas listas para copiar.
-`;
+const ROLE_HINT_STUDENT = `Eres un tutor amable y claro para estudiantes colombianos que se preparan para el ICFES Saber 11. Explica paso a paso, usa ejemplos sencillos, adapta el lenguaje al nivel del estudiante y motiva siempre. Responde en espanol.`;
 
-const ROLE_HINT_STUDENT = `
-## CONTEXTO: ESTUDIANTE COLOMBIANO
-Prioriza explicaciones paso a paso, ejemplos claros, preparación Saber 11.
-Tono cercano y motivador. NUNCA hagas la tarea por él: guíalo.
-Verifica comprensión antes de avanzar.
-`;
+const ROLE_HINT_TEACHER = `Eres un asistente pedagogico para docentes colombianos. Ayuda a disenar actividades, evaluaciones y explicaciones alineadas al marco del ICFES Saber 11. Usa lenguaje profesional y da sugerencias aplicables al aula. Responde en espanol.`;
 
 function buildSystemPrompt(role = 'student') {
   const hint = role === 'teacher' ? ROLE_HINT_TEACHER : ROLE_HINT_STUDENT;
@@ -319,55 +382,87 @@ app.post('/api/chat/stream', async (req, res) => {
   let responded = false;
 
   try {
-    console.log('[stream] Groq -> streaming...');
-    for await (const token of streamGroq(groq, systemPrompt, message || '', file)) {
-      send({ token, done: false });
-      responded = true;
+    const orden = ['gemini', 'groq', 'nvidia'];
+    for (const prov of orden) {
+      if (prov === 'gemini') {
+        const candidates = geminiCandidates();
+        if (!candidates.length) {
+          console.warn('[stream] Todas las keys de Gemini en cooldown, paso a Groq');
+          continue;
+        }
+        let ok = false;
+        for (const entry of candidates) {
+          try {
+            console.log('[stream] Gemini #' + entry.id + ' -> streaming...');
+            let localTokens = 0;
+            for await (const token of streamGemini(entry.client, systemPrompt, message || '', file)) {
+              send({ token, done: false });
+              responded = true;
+              localTokens++;
+            }
+            if (localTokens > 0) {
+              send({ token: '', done: true, provider: 'gemini-' + entry.id });
+              ok = true;
+              break;
+            }
+            throw new Error('Gemini no devolvio tokens');
+          } catch (err) {
+            const esRate = isRateLimitError(err);
+            console.warn('[stream] Gemini #' + entry.id + ' fallo: ' + String(err.message).slice(0, 100));
+            if (esRate && !responded) {
+              markGeminiCooldown(entry, GEMINI_COOLDOWN_MS);
+              console.warn('[stream] Key #' + entry.id + ' en cooldown 60s');
+              continue;
+            }
+            if (responded) {
+              send({ token: '', done: true, provider: 'gemini-' + entry.id, partial: true });
+              ok = true;
+              break;
+            }
+            markGeminiCooldown(entry, 15000);
+            continue;
+          }
+        }
+        if (ok) return;
+      } else if (prov === 'groq') {
+        try {
+          console.log('[stream] Groq -> streaming...');
+          for await (const token of streamGroq(groq, systemPrompt, message || '', file)) {
+            send({ token, done: false });
+            responded = true;
+          }
+          if (responded) {
+            send({ token: '', done: true, provider: 'groq' });
+            return;
+          }
+          throw new Error('Groq no devolvio tokens');
+        } catch (err) {
+          console.warn('[stream] Groq fallo: ' + String(err.message).slice(0, 100));
+          if (responded) {
+            send({ token: '', done: true, provider: 'groq', partial: true });
+            return;
+          }
+        }
+      } else if (prov === 'nvidia') {
+        try {
+          console.log('[stream] Kimi K3 -> sin streaming');
+          const reply = await callNvidia(systemPrompt, message || '', file);
+          if (reply && reply.trim()) {
+            send({ token: reply, done: false });
+            send({ token: '', done: true, provider: 'nvidia', noStream: true });
+            return;
+          }
+          throw new Error('Respuesta vacia');
+        } catch (err) {
+          console.warn('[stream] Kimi K3 fallo: ' + String(err.message).slice(0, 100));
+        }
+      }
     }
-    if (responded) {
-      send({ token: '', done: true, provider: 'groq' });
-      return;
-    }
-    throw new Error('Groq no devolvio tokens');
-  } catch (err) {
-    console.warn('[stream] Groq fallo: ' + String(err.message).slice(0, 100));
-    if (responded) {
-      send({ token: '', done: true, provider: 'groq', partial: true });
-      return;
-    }
-  }
 
-  try {
-    console.log('[stream] Gemini -> streaming...');
-    for await (const token of streamGemini(gemini, systemPrompt, message || '', file)) {
-      send({ token, done: false });
-      responded = true;
+    if (!responded) {
+      console.error('[stream] Todos los motores fallaron');
+      send({ error: 'Los motores de IA estan saturados. Intenta de nuevo.', done: true });
     }
-    if (responded) {
-      send({ token: '', done: true, provider: 'gemini' });
-      return;
-    }
-    throw new Error('Gemini no devolvio tokens');
-  } catch (err) {
-    console.warn('[stream] Gemini fallo: ' + String(err.message).slice(0, 100));
-    if (responded) {
-      send({ token: '', done: true, provider: 'gemini', partial: true });
-      return;
-    }
-  }
-
-  try {
-    console.log('[stream] Kimi K3 -> sin streaming');
-    const reply = await callNvidia(systemPrompt, message || '', file);
-    if (reply && reply.trim()) {
-      send({ token: reply, done: false });
-      send({ token: '', done: true, provider: 'nvidia', noStream: true });
-      return;
-    }
-    throw new Error('Respuesta vacia');
-  } catch (err) {
-    console.error('[stream] Todos los motores fallaron');
-    send({ error: 'Los motores de IA estan saturados. Intenta de nuevo.', done: true });
   } finally {
     clearInterval(heartbeat);
     res.end();
@@ -383,7 +478,9 @@ app.get('/api/health', (_req, res) => {
     images: 'pollinations',
     banco: listarMaterias(),
     keys: {
-      gemini: !!KEYS.GEMINI_API_KEY,
+      gemini_1: !!KEYS.GEMINI_API_KEY,
+      gemini_2: !!KEYS.GEMINI_API_KEY_2,
+      gemini_3: !!KEYS.GEMINI_API_KEY_3,
       nvidia: !!KEYS.NVIDIA_API_KEY,
       groq: !!KEYS.GROQ_API_KEY,
     },

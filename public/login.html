@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="es-CO" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Numination — Ingresa</title>
+  <meta name="description" content="Ingresa a Numination, la IA educativa colombiana." />
+  <meta name="theme-color" content="#1a1a2e" />
+  <link rel="icon" href="favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/auth.css" />
+  <script>
+  /* Callback de Google — debe existir ANTES de cargar GSI */
+  window.handleGoogleCredential = function (response) {
+    console.log('[auth] Google callback ejecutado', response);
+    var credential = response && response.credential;
+    if (!credential) { console.error('[auth] sin credential'); return; }
+    fetch('/api/auth/google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ credential: credential, remember: true })
+    })
+    .then(function (r) { console.log('[auth] status:', r.status); return r.json(); })
+    .then(function (data) {
+      console.log('[auth] data:', data);
+      if (!data.ok) throw new Error(data.error || 'Auth failed');
+      var t = document.createElement('div');
+      t.textContent = 'Bienvenido, ' + data.user.name;
+      t.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#065f46;color:#fff;padding:12px 20px;border-radius:8px;z-index:9999;font-family:Inter,sans-serif;font-size:14px';
+      document.body.appendChild(t);
+      setTimeout(function () { location.href = '/chat.html'; }, 800);
+    })
+    .catch(function (err) {
+      console.error('[auth] error:', err);
+      alert('Error: ' + err.message);
+    });
+  };
+</script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body class="auth-body">
+
+<main class="auth-app">
+
+  <!-- ═══════ WELCOME ═══════ -->
+  <section class="auth-screen auth-screen--split" data-screen="welcome">
+    <aside class="auth-hero">
+      <div class="auth-hero__pattern" aria-hidden="true"></div>
+      <div class="auth-hero__content">
+        <h1 class="auth-hero__wordmark">Numination<span class="auth-hero__dot"></span></h1>
+        <p class="auth-hero__tagline">La IA que habla el idioma<br />de nuestra educación</p>
+        <ul class="auth-hero__features">
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>
+            <span>Practica con IA</span>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14a6 6 0 1 0 0-12 6 6 0 0 0 0 12Z"/><path d="M12 14v6"/><path d="M12 20H8"/><path d="M12 17H9"/></svg>
+            <span>Mide tu nivel</span>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><rect x="4" y="13" width="4" height="8"/><rect x="10" y="8" width="4" height="13"/><rect x="16" y="3" width="4" height="18"/></svg>
+            <span>Sube tu puntaje</span>
+          </li>
+        </ul>
+      </div>
+    </aside>
+
+    <div class="auth-panel">
+      <div class="auth-inner">
+        <div class="auth-logo"><img src="assets/img/logo-n.png" alt="Numination" /></div>
+        <h2 class="auth-title">Bienvenido a Numination</h2>
+        <p class="auth-subtitle">La IA que habla el idioma de nuestra educación</p>
+
+       <div id="g_id_onload"
+     data-client_id="815847930264-hqlpgm37slhbbtqotv4uv9erla4sdl6d.apps.googleusercontent.com"
+     data-callback="handleGoogleCredential"
+     data-auto_prompt="false">
+</div>
+<div class="g_id_signin"
+     data-type="standard"
+     data-size="large"
+     data-theme="outline"
+     data-text="continue_with"
+     data-shape="rectangular"
+     data-logo_alignment="left"
+     data-width="320">
+</div>
+        </button>
+
+        <div class="auth-divider"><span>o</span></div>
+
+        <button type="button" class="auth-btn auth-btn--primary" data-action="to-email">Continuar con correo</button>
+
+        <p class="auth-alt">¿Ya tienes cuenta? <a href="#" data-action="to-email">Inicia sesión</a></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════ EMAIL ═══════ -->
+  <section class="auth-screen auth-screen--centered" data-screen="email" hidden>
+    <div class="auth-inner">
+      <div class="auth-logo"><img src="assets/img/logo-n.png" alt="Numination" /></div>
+      <h2 class="auth-title">Ingresa a Numination</h2>
+
+      <form class="auth-form" data-form="email" novalidate>
+        <div class="auth-field">
+          <label for="email">Correo electrónico</label>
+          <input type="email" id="email" name="email" autocomplete="email" inputmode="email" placeholder="tucorreo@ejemplo.com" required autofocus />
+          <p class="auth-field__error" data-error></p>
+        </div>
+        <button type="submit" class="auth-btn auth-btn--primary auth-btn--submit">
+          <span data-label>Continuar</span>
+          <span class="auth-spinner" aria-hidden="true"></span>
+        </button>
+        <a href="#" class="auth-back" data-action="back">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          <span>Volver</span>
+        </a>
+      </form>
+    </div>
+  </section>
+
+  <!-- ═══════ PASSWORD ═══════ -->
+  <section class="auth-screen auth-screen--centered" data-screen="password" hidden>
+    <div class="auth-inner">
+      <div class="auth-logo"><img src="assets/img/logo-n.png" alt="Numination" /></div>
+
+      <div class="auth-chip">
+        <span data-chip-email>tucorreo@ejemplo.com</span>
+        <button type="button" data-action="to-email">Editar</button>
+      </div>
+
+      <h2 class="auth-title">Ingresa tu contraseña</h2>
+
+      <form class="auth-form" data-form="password" novalidate>
+        <div class="auth-field">
+          <label for="password">Contraseña</label>
+          <div class="auth-input-wrap">
+            <input type="password" id="password" name="password" autocomplete="current-password" placeholder="••••••••" minlength="8" required />
+            <button type="button" class="auth-eye" data-action="toggle-pass" aria-label="Mostrar contraseña">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-icon="eye"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-icon="eye-off" style="display:none"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
+            </button>
+          </div>
+          <p class="auth-field__error" data-error></p>
+        </div>
+
+        <div class="auth-row">
+          <label class="auth-check">
+            <input type="checkbox" name="remember" checked />
+            <span class="auth-check__box"></span>
+            <span>Recordarme</span>
+          </label>
+          <a href="#" class="auth-link" data-action="to-forgot">Olvidé mi contraseña</a>
+        </div>
+
+        <button type="submit" class="auth-btn auth-btn--primary auth-btn--submit">
+          <span data-label>Ingresar</span>
+          <span class="auth-spinner" aria-hidden="true"></span>
+        </button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ═══════ SIGNUP ═══════ -->
+  <section class="auth-screen auth-screen--centered" data-screen="signup" hidden>
+    <div class="auth-inner">
+      <div class="auth-logo"><img src="assets/img/logo-n.png" alt="Numination" /></div>
+
+      <div class="auth-chip">
+        <span data-chip-email>tucorreo@ejemplo.com</span>
+        <button type="button" data-action="to-email">Editar</button>
+      </div>
+
+      <h2 class="auth-title">Crea tu cuenta</h2>
+      <p class="auth-subtitle">Un solo paso. Sin tarjeta. Gratis.</p>
+
+      <form class="auth-form" data-form="signup" novalidate>
+        <div class="auth-field">
+          <label for="new-password">Contraseña</label>
+          <div class="auth-input-wrap">
+            <input type="password" id="new-password" name="password" autocomplete="new-password" placeholder="••••••••" minlength="8" required />
+            <button type="button" class="auth-eye" data-action="toggle-pass" aria-label="Mostrar contraseña">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-icon="eye"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-icon="eye-off" style="display:none"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
+            </button>
+          </div>
+          <div class="auth-strength" data-strength><span></span><span></span><span></span><span></span></div>
+          <p class="auth-strength__label" data-strength-label>(Débil)</p>
+        </div>
+
+        <label class="auth-check auth-check--full">
+          <input type="checkbox" name="terms" required />
+          <span class="auth-check__box"></span>
+          <span>Acepto los <a href="terminos.html" target="_blank">términos</a> y la <a href="terminos.html" target="_blank">política de privacidad</a></span>
+        </label>
+
+        <div class="auth-guardian">
+          <p class="auth-guardian__label">Si eres menor de 18 años:</p>
+          <label class="auth-check auth-check--full">
+            <input type="checkbox" name="guardian" />
+            <span class="auth-check__box"></span>
+            <span>Mi acudiente autoriza mi registro (Ley 1581 de 2012)</span>
+          </label>
+        </div>
+
+        <p class="auth-field__error" data-error></p>
+
+        <button type="submit" class="auth-btn auth-btn--primary auth-btn--submit">
+          <span data-label>Crear cuenta</span>
+          <span class="auth-spinner" aria-hidden="true"></span>
+        </button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ═══════ VERIFY ═══════ -->
+  <section class="auth-screen auth-screen--centered" data-screen="verify" hidden>
+    <div class="auth-inner auth-inner--wide">
+      <div class="auth-logo"><img src="assets/img/logo-n.png" alt="Numination" /></div>
+
+      <div class="auth-icon-lg">
+        <svg viewBox="0 0 80 80" fill="none"><rect x="10" y="20" width="60" height="46" rx="4" fill="#e8ebf5" stroke="#7c93d4" stroke-width="2.5"/><path d="M10 24 L40 44 L70 24" stroke="#7c93d4" stroke-width="2.5" fill="none" stroke-linejoin="round"/><circle cx="40" cy="34" r="12" fill="#7c93d4"/><text x="40" y="39" text-anchor="middle" fill="#fff" font-family="Inter" font-size="16" font-weight="600">@</text></svg>
+      </div>
+
+      <h2 class="auth-title">Revisa tu correo</h2>
+      <p class="auth-subtitle">Te enviamos un link de verificación a<br /><strong data-verify-email>tucorreo@ejemplo.com</strong></p>
+
+      <p class="auth-note">Haz clic en el link del correo para activar tu cuenta.</p>
+      <p class="auth-note auth-note--muted">Si no lo ves, revisa la carpeta de spam.</p>
+
+      <button type="button" class="auth-btn auth-btn--outline" data-action="resend" disabled>
+        <span data-resend-label>Reenviar correo</span>
+      </button>
+
+      <a href="#" class="auth-link auth-link--block" data-action="to-email">Cambiar correo</a>
+      <a href="#" class="auth-link auth-link--block" data-action="continue">Ya verifiqué, continuar</a>
+    </div>
+  </section>
+
+  <!-- ═══════ FORGOT ═══════ -->
+  <section class="auth-screen auth-screen--centered" data-screen="forgot" hidden>
+    <div class="auth-inner">
+      <div class="auth-logo"><img src="assets/img/logo-n.png" alt="Numination" /></div>
+      <h2 class="auth-title">Recupera tu contraseña</h2>
+      <p class="auth-subtitle">Te enviaremos un link para crear una nueva.</p>
+
+      <form class="auth-form" data-form="forgot" novalidate>
+        <div class="auth-field">
+          <label for="forgot-email">Correo electrónico</label>
+          <input type="email" id="forgot-email" name="email" autocomplete="email" placeholder="tucorreo@ejemplo.com" required />
+          <p class="auth-field__error" data-error></p>
+        </div>
+        <button type="submit" class="auth-btn auth-btn--primary auth-btn--submit">
+          <span data-label>Enviar link</span>
+          <span class="auth-spinner" aria-hidden="true"></span>
+        </button>
+        <a href="#" class="auth-back" data-action="back">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          <span>Volver</span>
+        </a>
+      </form>
+    </div>
+  </section>
+
+  <!-- ═══════ RESET ═══════ -->
+  <section class="auth-screen auth-screen--centered" data-screen="reset" hidden>
+    <div class="auth-inner">
+      <div class="auth-logo"><img src="assets/img/logo-n.png" alt="Numination" /></div>
+      <h2 class="auth-title">Crea una nueva contraseña</h2>
+      <p class="auth-subtitle">Debe tener al menos 8 caracteres.</p>
+
+      <form class="auth-form" data-form="reset" novalidate>
+        <div class="auth-field">
+          <div class="auth-input-wrap">
+            <input type="password" id="reset-1" name="password" autocomplete="new-password" placeholder="Nueva contraseña" minlength="8" required />
+            <button type="button" class="auth-eye" data-action="toggle-pass" aria-label="Mostrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-icon="eye"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-icon="eye-off" style="display:none"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg></button>
+          </div>
+        </div>
+        <div class="auth-field">
+          <div class="auth-input-wrap">
+            <input type="password" id="reset-2" name="password2" autocomplete="new-password" placeholder="Confirmar contraseña" minlength="8" required />
+            <button type="button" class="auth-eye" data-action="toggle-pass" aria-label="Mostrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-icon="eye"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-icon="eye-off" style="display:none"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg></button>
+          </div>
+          <p class="auth-field__error" data-error></p>
+        </div>
+        <button type="submit" class="auth-btn auth-btn--primary auth-btn--submit">
+          <span data-label>Guardar contraseña</span>
+          <span class="auth-spinner" aria-hidden="true"></span>
+        </button>
+      </form>
+    </div>
+  </section>
+
+</main>
+
+<div class="toast-host" aria-live="polite"></div>
+
+<script src="assets/js/auth.js"></script>
+</body>
+</html>

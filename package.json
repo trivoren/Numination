@@ -9,9 +9,12 @@
   "dependencies": {
     "@google/genai": "^2.22.0",
     "@mistralai/mistralai": "^2.7.0",
+    "cookie-parser": "^1.4.7",
     "dotenv": "^16.6.1",
     "express": "^4.21.2",
+    "google-auth-library": "^11.1.0",
     "groq-sdk": "^1.6.0",
+    "jsonwebtoken": "^9.0.3",
     "openai": "^7.15.0"
   },
   "engines": {

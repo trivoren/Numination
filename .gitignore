@@ -58,3 +58,5 @@ coverage/
 *.bak
 *.orig
 .vercel
+
+/data/

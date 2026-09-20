@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="es-CO" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Mi progreso — Numination</title>
+  <meta name="description" content="Tu progreso real en Numination: estadísticas, historial y análisis por materia." />
+  <meta name="theme-color" content="#1a1a2e" />
+  <link rel="icon" href="favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/practica.css" />
+  <style>
+    /* ── Estilos exclusivos del progreso ── */
+    .prog-hero {
+      padding: 32px 0 16px;
+    }
+    .prog-hero__title {
+      font-family: var(--pr-serif);
+      font-size: clamp(28px, 4vw, 40px);
+      font-weight: 400;
+      line-height: 1.15;
+      letter-spacing: -0.025em;
+      margin-top: 8px;
+      margin-bottom: 10px;
+    }
+    .prog-hero__sub {
+      font-size: 16px;
+      line-height: 1.6;
+      color: var(--pr-fg-muted);
+      max-width: 60ch;
+    }
+
+    /* ── Cards de stats grandes ── */
+    .prog-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin: 32px 0;
+    }
+    .prog-stat {
+      padding: 24px;
+      border-radius: var(--pr-radius-lg);
+      background: var(--pr-bg-alt);
+      border: 1px solid var(--pr-border);
+      position: relative;
+      overflow: hidden;
+    }
+    .prog-stat::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--stat-color, var(--pr-periwinkle));
+    }
+    .prog-stat__label {
+      font-size: 11.5px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--pr-fg-subtle);
+      margin-bottom: 10px;
+    }
+    .prog-stat__value {
+      font-family: var(--pr-serif);
+      font-size: 44px;
+      font-weight: 400;
+      line-height: 1;
+      letter-spacing: -0.03em;
+      color: var(--pr-fg);
+      font-variant-numeric: tabular-nums;
+    }
+    .prog-stat__sub {
+      font-size: 13px;
+      color: var(--pr-fg-muted);
+      margin-top: 8px;
+    }
+
+    /* ── Score card grande ── */
+    .prog-score-card {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 32px;
+      align-items: center;
+      padding: 32px;
+      border-radius: var(--pr-radius-lg);
+      background: linear-gradient(135deg, var(--pr-navy) 0%, var(--pr-navy-soft) 60%, var(--pr-periwinkle-strong) 100%);
+      color: #fff;
+      margin-bottom: 40px;
+      position: relative;
+      overflow: hidden;
+    }
+    .prog-score-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 80% 20%, rgba(255,205,0,.12) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    .prog-score-card__ring {
+      position: relative;
+      width: 140px;
+      height: 140px;
+      z-index: 1;
+    }
+    .prog-score-card__ring svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+    .prog-score-card__ring circle.bg {
+      fill: none;
+      stroke: rgba(255,255,255,.15);
+      stroke-width: 10;
+    }
+    .prog-score-card__ring circle.fill {
+      fill: none;
+      stroke: #FFCD00;
+      stroke-width: 10;
+      stroke-linecap: round;
+      stroke-dasharray: 327;
+      stroke-dashoffset: 327;
+      transition: stroke-dashoffset 1.5s cubic-bezier(0,0,.2,1);
+    }
+    .prog-score-card__ring-inner {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .prog-score-card__number {
+      font-family: var(--pr-serif);
+      font-size: 40px;
+      font-weight: 400;
+      line-height: 1;
+      letter-spacing: -0.03em;
+      color: #fff;
+    }
+    .prog-score-card__of {
+      font-size: 12px;
+      opacity: .7;
+    }
+    .prog-score-card__text {
+      z-index: 1;
+      position: relative;
+    }
+    .prog-score-card__eyebrow {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.7);
+      margin-bottom: 8px;
+    }
+    .prog-score-card__title {
+      font-family: var(--pr-serif);
+      font-size: clamp(24px, 3vw, 32px);
+      font-weight: 400;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+    .prog-score-card__sub {
+      font-size: 14.5px;
+      line-height: 1.55;
+      color: rgba(255,255,255,.8);
+      max-width: 420px;
+    }
+
+    /* ── Section titles ── */
+    .prog-section {
+      margin-bottom: 40px;
+    }
+    .prog-section__head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .prog-section__title {
+      font-family: var(--pr-font);
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--pr-fg);
+    }
+    .prog-section__meta {
+      font-size: 13px;
+      color: var(--pr-fg-subtle);
+    }
+
+    /* ── Materias grid ── */
+    .prog-materias {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px;
+    }
+    .prog-materia {
+      padding: 18px 20px;
+      border-radius: var(--pr-radius);
+      background: var(--pr-bg-alt);
+      border: 1px solid var(--pr-border);
+      position: relative;
+    }
+    .prog-materia__head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .prog-materia__ico {
+      font-size: 20px;
+    }
+    .prog-materia__name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--pr-fg);
+      flex: 1;
+    }
+    .prog-materia__pct {
+      font-family: var(--pr-serif);
+      font-size: 20px;
+      color: var(--materia-color, var(--pr-periwinkle));
+      letter-spacing: -0.02em;
+    }
+    .prog-materia__bar {
+      height: 6px;
+      border-radius: 3px;
+      background: var(--pr-bg-hover);
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+    .prog-materia__fill {
+      display: block;
+      height: 100%;
+      background: var(--materia-color, var(--pr-periwinkle));
+      border-radius: 3px;
+      width: 0;
+      transition: width 1s cubic-bezier(0,0,.2,1);
+    }
+    .prog-materia__meta {
+      font-size: 12px;
+      color: var(--pr-fg-subtle);
+    }
+
+    /* ── Historial reciente ── */
+    .prog-sessions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .prog-session {
+      display: grid;
+      grid-template-columns: 60px 1fr auto;
+      gap: 16px;
+      align-items: center;
+      padding: 14px 18px;
+      border-radius: var(--pr-radius);
+      background: var(--pr-bg-alt);
+      border: 1px solid var(--pr-border);
+      transition: all var(--pr-dur-fast) var(--pr-ease);
+    }
+    .prog-session:hover {
+      border-color: var(--pr-periwinkle);
+      transform: translateX(2px);
+    }
+    .prog-session__score {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 52px;
+      height: 52px;
+      border-radius: var(--pr-radius-md);
+      background: var(--pr-periwinkle-soft);
+      color: var(--pr-periwinkle-strong);
+      font-family: var(--pr-serif);
+      font-size: 18px;
+      font-weight: 400;
+      flex-shrink: 0;
+    }
+    .prog-session__info {
+      min-width: 0;
+    }
+    .prog-session__title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--pr-fg);
+      margin-bottom: 4px;
+    }
+    .prog-session__meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 12px;
+      color: var(--pr-fg-subtle);
+    }
+    .prog-session__date {
+      font-size: 12px;
+      color: var(--pr-fg-subtle);
+      white-space: nowrap;
+    }
+
+    /* ── Empty state ── */
+    .prog-empty {
+      text-align: center;
+      padding: 60px 24px;
+      border-radius: var(--pr-radius-lg);
+      background: var(--pr-bg-alt);
+      border: 1px dashed var(--pr-border-strong);
+    }
+    .prog-empty__ico {
+      font-size: 56px;
+      margin-bottom: 16px;
+      opacity: .5;
+    }
+    .prog-empty__title {
+      font-family: var(--pr-serif);
+      font-size: 22px;
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      color: var(--pr-fg);
+      margin-bottom: 8px;
+    }
+    .prog-empty__text {
+      font-size: 14.5px;
+      color: var(--pr-fg-muted);
+      max-width: 420px;
+      margin: 0 auto 24px;
+      line-height: 1.55;
+    }
+
+    /* ── Chart semanal ── */
+    .prog-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      height: 140px;
+      padding: 16px 0;
+    }
+    .prog-chart__bar {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      height: 100%;
+      justify-content: flex-end;
+    }
+    .prog-chart__fill {
+      width: 100%;
+      border-radius: 4px 4px 0 0;
+      background: var(--pr-periwinkle);
+      min-height: 2px;
+      transition: height 1s cubic-bezier(0,0,.2,1);
+      position: relative;
+    }
+    .prog-chart__fill::after {
+      content: attr(data-count);
+      position: absolute;
+      top: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--pr-fg-muted);
+    }
+    .prog-chart__label {
+      font-size: 10.5px;
+      font-weight: 500;
+      color: var(--pr-fg-subtle);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    @media (max-width: 640px) {
+      .prog-score-card {
+        grid-template-columns: 1fr;
+        text-align: center;
+        padding: 24px 20px;
+      }
+      .prog-score-card__ring { margin: 0 auto; }
+      .prog-session {
+        grid-template-columns: 52px 1fr;
+      }
+      .prog-session__date { display: none; }
+    }
+  </style>
+</head>
+<body class="practica-body">
+
+<div class="practica-app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" data-sidebar>
+    <header class="sidebar__header">
+      <a href="index.html" class="sidebar__brand">
+        <span class="sidebar__logo"><img src="assets/img/logo-n.png" alt="Numination" /></span>
+        <span>Numination</span>
+      </a>
+      <button type="button" class="sidebar__close" data-sidebar-close aria-label="Cerrar menú">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </header>
+
+    <nav class="sidebar__nav">
+      <a href="chat.html" class="sidebar__nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <span>Chat con IA</span>
+      </a>
+      <a href="practica.html" class="sidebar__nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span>Práctica</span>
+      </a>
+      <a href="progreso.html" class="sidebar__nav-item is-active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+        <span>Mi progreso</span>
+      </a>
+      <a href="index.html" class="sidebar__nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span>Inicio</span>
+      </a>
+    </nav>
+
+    <div class="sidebar__footer">
+      <a href="login.html" class="sidebar__user">
+        <span class="sidebar__avatar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </span>
+        <span class="sidebar__user-info">
+          <span class="sidebar__user-name" data-user-name>Cargando...</span>
+          <span class="sidebar__user-plan">Estudiante</span>
+        </span>
+      </a>
+    </div>
+  </aside>
+
+  <div class="sidebar-overlay" data-sidebar-overlay></div>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <header class="topbar">
+      <button type="button" class="topbar__menu" data-sidebar-open aria-label="Abrir menú">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+      </button>
+      <span class="topbar__title">Mi progreso</span>
+    </header>
+
+    <div class="screen-host">
+      <div class="screen is-active" data-screen="progreso">
+        <div class="screen__inner">
+
+          <div class="prog-hero">
+            <p class="eyebrow" id="prog-eyebrow">Tu desempeño</p>
+            <h1 class="prog-hero__title" id="prog-title">Cargando tu progreso...</h1>
+            <p class="prog-hero__sub" id="prog-sub"></p>
+          </div>
+
+          <!-- Score card principal (solo si hay datos) -->
+          <div class="prog-score-card" id="prog-score-card" hidden>
+            <div class="prog-score-card__ring">
+              <svg viewBox="0 0 120 120">
+                <circle class="bg" cx="60" cy="60" r="52" />
+                <circle class="fill" id="prog-ring" cx="60" cy="60" r="52" />
+              </svg>
+              <div class="prog-score-card__ring-inner">
+                <span class="prog-score-card__number" id="prog-score">0</span>
+                <span class="prog-score-card__of">/ 500</span>
+              </div>
+            </div>
+            <div class="prog-score-card__text">
+              <p class="prog-score-card__eyebrow">Último puntaje estimado</p>
+              <h2 class="prog-score-card__title" id="prog-score-title">—</h2>
+              <p class="prog-score-card__sub" id="prog-score-sub">—</p>
+            </div>
+          </div>
+
+          <!-- Stats cards -->
+          <div class="prog-stats" id="prog-stats" hidden>
+            <div class="prog-stat" style="--stat-color: var(--pr-periwinkle)">
+              <p class="prog-stat__label">Preguntas respondidas</p>
+              <p class="prog-stat__value" id="stat-total">0</p>
+              <p class="prog-stat__sub" id="stat-total-sub">en total</p>
+            </div>
+            <div class="prog-stat" style="--stat-color: #10b981">
+              <p class="prog-stat__label">Correctas</p>
+              <p class="prog-stat__value" id="stat-correct">0</p>
+              <p class="prog-stat__sub" id="stat-correct-sub">—</p>
+            </div>
+            <div class="prog-stat" style="--stat-color: #ef4444">
+              <p class="prog-stat__label">Incorrectas</p>
+              <p class="prog-stat__value" id="stat-wrong">0</p>
+              <p class="prog-stat__sub" id="stat-wrong-sub">—</p>
+            </div>
+            <div class="prog-stat" style="--stat-color: #f59e0b">
+              <p class="prog-stat__label">Precisión</p>
+              <p class="prog-stat__value" id="stat-acc">0%</p>
+              <p class="prog-stat__sub" id="stat-acc-sub">—</p>
+            </div>
+          </div>
+
+          <!-- Gráfica semanal -->
+          <section class="prog-section" id="prog-week-section" hidden>
+            <div class="prog-section__head">
+              <h2 class="prog-section__title">Últimos 7 días</h2>
+              <span class="prog-section__meta" id="prog-week-meta"></span>
+            </div>
+            <div class="prog-chart" id="prog-chart"></div>
+          </section>
+
+          <!-- Desglose por materia -->
+          <section class="prog-section" id="prog-materias-section" hidden>
+            <div class="prog-section__head">
+              <h2 class="prog-section__title">Desempeño por materia</h2>
+              <span class="prog-section__meta">Basado en tu historial</span>
+            </div>
+            <div class="prog-materias" id="prog-materias"></div>
+          </section>
+
+          <!-- Historial reciente -->
+          <section class="prog-section" id="prog-sessions-section" hidden>
+            <div class="prog-section__head">
+              <h2 class="prog-section__title">Historial reciente</h2>
+              <span class="prog-section__meta" id="prog-sessions-meta"></span>
+            </div>
+            <div class="prog-sessions" id="prog-sessions"></div>
+          </section>
+
+          <!-- Empty state -->
+          <div class="prog-empty" id="prog-empty" hidden>
+            <div class="prog-empty__ico">📊</div>
+            <h2 class="prog-empty__title">Aún no hay datos de progreso</h2>
+            <p class="prog-empty__text">
+              Cuando hagas tu primera práctica o simulacro, aquí verás tus estadísticas reales,
+              el desglose por materia y tu evolución en el tiempo.
+            </p>
+            <a href="practica.html" class="btn btn--primary btn--lg">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px">
+                <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+              </svg>
+              <span>Empezar a practicar</span>
+            </a>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="toast-host" aria-live="polite"></div>
+
+  </main>
+
+</div>
+
+<script>
+/* ================================================================
+   progreso.js — carga datos reales del usuario
+   ================================================================ */
+(() => {
+  'use strict';
+
+  const CFG = {
+    storage: {
+      history: 'numination-practice-history',
+      stats: 'numination-practice-stats',
+    },
+    api: { auth: '/api/auth/me' },
+    icfesMax: 500,
+  };
+
+  const MATERIAS_META = {
+    matematicas:          { nombre: 'Matemáticas',           icono: '🧮', color: '#3b82f6' },
+    'lectura-critica':    { nombre: 'Lectura Crítica',       icono: '📖', color: '#8b5cf6' },
+    'ciencias-naturales': { nombre: 'Ciencias Naturales',    icono: '🔬', color: '#10b981' },
+    sociales:             { nombre: 'Sociales y Ciudadanas', icono: '🌎', color: '#f59e0b' },
+    ingles:               { nombre: 'Inglés',                icono: '🌐', color: '#ec4899' },
+  };
+
+  const $ = (sel) => document.querySelector(sel);
+
+  const escapeHtml = (s) =>
+    String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  const fmtRelative = (ts) => {
+    const diff = Date.now() - ts;
+    const s = Math.floor(diff / 1000);
+    if (s < 60) return 'hace un momento';
+    const m = Math.floor(s / 60);
+    if (m < 60) return `hace ${m} min`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `hace ${h} h`;
+    const d = Math.floor(h / 24);
+    if (d < 7) return `hace ${d} d`;
+    return new Date(ts).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' });
+  };
+
+  const fmtTime = (seconds) => {
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m}:${String(s).padStart(2, '0')}`;
+  };
+
+  const read = (key, fb = null) => {
+    try {
+      const raw = localStorage.getItem(key);
+      if (raw == null) return fb;
+      return JSON.parse(raw);
+    } catch { return fb; }
+  };
+
+  /* ── Sidebar ── */
+  function initSidebar() {
+    $('[data-sidebar-open]')?.addEventListener('click', () => {
+      $('[data-sidebar]')?.classList.add('is-open');
+      $('[data-sidebar-overlay]')?.classList.add('is-open');
+    });
+    $('[data-sidebar-close]')?.addEventListener('click', () => {
+      $('[data-sidebar]')?.classList.remove('is-open');
+      $('[data-sidebar-overlay]')?.classList.remove('is-open');
+    });
+    $('[data-sidebar-overlay]')?.addEventListener('click', () => {
+      $('[data-sidebar]')?.classList.remove('is-open');
+      $('[data-sidebar-overlay]')?.classList.remove('is-open');
+    });
+  }
+
+  /* ── Cargar usuario ── */
+  async function loadUser() {
+    try {
+      const res = await fetch(CFG.api.auth, { credentials: 'include' });
+      const data = await res.json();
+      if (data.ok && data.user) {
+        $('[data-user-name]').textContent = data.user.name || data.user.email;
+        const firstName = (data.user.name || '').split(' ')[0];
+        $('#prog-eyebrow').textContent = firstName
+          ? `Hola, ${firstName}`
+          : 'Tu desempeño';
+        return data.user;
+      }
+    } catch {}
+    $('[data-user-name]').textContent = 'Invitado';
+    return null;
+  }
+
+  /* ── Cargar datos y renderizar ── */
+  function render() {
+    const history = read(CFG.storage.history, []) || [];
+    const stats = read(CFG.storage.stats, null) || {};
+
+    // Si no hay sesiones → empty state
+    if (!history.length) {
+      $('#prog-title').textContent = 'Aún no hay progreso que mostrar';
+      $('#prog-sub').textContent = 'Cuando completes tu primera práctica, aquí verás tus estadísticas reales.';
+      $('#prog-empty').hidden = false;
+      return;
+    }
+
+    // ── Datos reales ──
+    const totalSessions = history.length;
+    const totalAnswered = history.reduce((sum, s) => sum + (s.count || 0), 0);
+    const totalCorrect = history.reduce((sum, s) => sum + (s.correct || 0), 0);
+    const totalWrong = totalAnswered - totalCorrect;
+    const accuracy = totalAnswered ? totalCorrect / totalAnswered : 0;
+
+    // Último puntaje (más reciente)
+    const lastSession = history[0];
+    const lastScore = lastSession.score || 0;
+    const lastAccuracy = lastSession.count ? lastSession.correct / lastSession.count : 0;
+
+    // ── Título dinámico ──
+    if (accuracy >= 0.85) {
+      $('#prog-title').textContent = 'Vas muy bien';
+      $('#prog-sub').textContent = `Has respondido ${totalAnswered} preguntas con un ${Math.round(accuracy * 100)}% de precisión. Sigue así.`;
+    } else if (accuracy >= 0.6) {
+      $('#prog-title').textContent = 'Buen ritmo de práctica';
+      $('#prog-sub').textContent = `${totalCorrect} de ${totalAnswered} respuestas correctas. Hay espacio para mejorar.`;
+    } else {
+      $('#prog-title').textContent = 'Sigue practicando';
+      $('#prog-sub').textContent = `Has completado ${totalSessions} sesiones. Cada intento te acerca a tu meta.`;
+    }
+
+    // ── Score card ──
+    $('#prog-score-card').hidden = false;
+    const circumference = 2 * Math.PI * 52;
+    const offset = circumference * (1 - lastAccuracy);
+    setTimeout(() => {
+      $('#prog-ring').style.strokeDashoffset = String(offset);
+    }, 300);
+
+    animateNumber($('#prog-score'), lastScore);
+
+    if (lastAccuracy >= 0.85) {
+      $('#prog-score-title').textContent = 'Excelente dominio';
+      $('#prog-score-sub').textContent = `En tu última sesión acertaste ${lastSession.correct} de ${lastSession.count}.`;
+    } else if (lastAccuracy >= 0.6) {
+      $('#prog-score-title').textContent = 'Buen desempeño';
+      $('#prog-score-sub').textContent = `En tu última sesión acertaste ${lastSession.correct} de ${lastSession.count}.`;
+    } else {
+      $('#prog-score-title').textContent = 'Sigue así';
+      $('#prog-score-sub').textContent = `En tu última sesión acertaste ${lastSession.correct} de ${lastSession.count}.`;
+    }
+
+    // ── Stats cards ──
+    $('#prog-stats').hidden = false;
+    animateNumber($('#stat-total'), totalAnswered);
+    animateNumber($('#stat-correct'), totalCorrect);
+    animateNumber($('#stat-wrong'), totalWrong);
+    $('#stat-acc').textContent = Math.round(accuracy * 100) + '%';
+
+    $('#stat-total-sub').textContent = `en ${totalSessions} ${totalSessions === 1 ? 'sesión' : 'sesiones'}`;
+    $('#stat-correct-sub').textContent = `${Math.round(accuracy * 100)}% del total`;
+    $('#stat-wrong-sub').textContent = `${Math.round((1 - accuracy) * 100)}% del total`;
+
+    // ── Gráfica semanal ──
+    renderWeekChart(history);
+
+    // ── Desglose por materia ──
+    renderMaterias(history);
+
+    // ── Sesiones recientes ──
+    renderSessions(history);
+  }
+
+  /* ── Gráfica de últimos 7 días ── */
+  function renderWeekChart(history) {
+    const days = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const label = d.toLocaleDateString('es-CO', { weekday: 'short' }).slice(0, 3);
+      days.push({ key, label, count: 0 });
+    }
+
+    let totalWeek = 0;
+    for (const session of history) {
+      const d = new Date(session.ts);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const day = days.find((x) => x.key === key);
+      if (day) {
+        day.count += session.count || 0;
+        totalWeek += session.count || 0;
+      }
+    }
+
+    const max = Math.max(...days.map((d) => d.count), 1);
+    const chart = $('#prog-chart');
+    chart.innerHTML = '';
+
+    for (const day of days) {
+      const pct = (day.count / max) * 100;
+      const bar = document.createElement('div');
+      bar.className = 'prog-chart__bar';
+      bar.innerHTML = `
+        <div class="prog-chart__fill" style="height:0%" data-count="${day.count || ''}"></div>
+        <span class="prog-chart__label">${day.label}</span>
+      `;
+      chart.appendChild(bar);
+      setTimeout(() => {
+        bar.querySelector('.prog-chart__fill').style.height = pct + '%';
+      }, 100);
+    }
+
+    $('#prog-week-section').hidden = false;
+    $('#prog-week-meta').textContent = totalWeek
+      ? `${totalWeek} preguntas esta semana`
+      : 'Sin actividad esta semana';
+  }
+
+  /* ── Desglose por materia ── */
+  function renderMaterias(history) {
+    const byMateria = {};
+
+    for (const session of history) {
+      const slug = session.materia;
+      const key = slug || '_general';
+      if (!byMateria[key]) {
+        byMateria[key] = { slug, correct: 0, total: 0 };
+      }
+      byMateria[key].correct += session.correct || 0;
+      byMateria[key].total += session.count || 0;
+    }
+
+    const entries = Object.values(byMateria).filter((x) => x.total > 0);
+    if (!entries.length) return;
+
+    entries.sort((a, b) => (b.correct / b.total) - (a.correct / a.total));
+
+    const wrap = $('#prog-materias');
+    wrap.innerHTML = '';
+
+    for (const m of entries) {
+      const meta = MATERIAS_META[m.slug] || {
+        nombre: m.slug ? m.slug : 'General',
+        icono: '📚',
+        color: '#7c93d4',
+      };
+      const pct = Math.round((m.correct / m.total) * 100);
+
+      const card = document.createElement('div');
+      card.className = 'prog-materia';
+      card.style.setProperty('--materia-color', meta.color);
+      card.innerHTML = `
+        <div class="prog-materia__head">
+          <span class="prog-materia__ico">${meta.icono}</span>
+          <span class="prog-materia__name">${escapeHtml(meta.nombre)}</span>
+          <span class="prog-materia__pct">${pct}%</span>
+        </div>
+        <div class="prog-materia__bar">
+          <span class="prog-materia__fill" style="width:0%"></span>
+        </div>
+        <p class="prog-materia__meta">${m.correct} de ${m.total} correctas</p>
+      `;
+      wrap.appendChild(card);
+
+      setTimeout(() => {
+        const fill = card.querySelector('.prog-materia__fill');
+        if (fill) fill.style.width = pct + '%';
+      }, 200);
+    }
+
+    $('#prog-materias-section').hidden = false;
+  }
+
+  /* ── Sesiones recientes ── */
+  function renderSessions(history) {
+    const recent = history.slice(0, 10);
+    const wrap = $('#prog-sessions');
+    wrap.innerHTML = '';
+
+    for (const s of recent) {
+      const pct = s.count ? Math.round((s.correct / s.count) * 100) : 0;
+      const item = document.createElement('div');
+      item.className = 'prog-session';
+      item.innerHTML = `
+        <div class="prog-session__score">${s.score || 0}</div>
+        <div class="prog-session__info">
+          <p class="prog-session__title">${escapeHtml(s.materiaNombre || 'Práctica')}</p>
+          <div class="prog-session__meta">
+            <span>✓ ${s.correct}/${s.count} (${pct}%)</span>
+            <span>⏱ ${fmtTime(s.time || 0)}</span>
+          </div>
+        </div>
+        <span class="prog-session__date">${fmtRelative(s.ts)}</span>
+      `;
+      wrap.appendChild(item);
+    }
+
+    $('#prog-sessions-section').hidden = false;
+    $('#prog-sessions-meta').textContent = `${history.length} ${history.length === 1 ? 'sesión' : 'sesiones'} en total`;
+  }
+
+  /* ── Animar números ── */
+  function animateNumber(el, target, duration = 1200) {
+    if (!el) return;
+    const t0 = performance.now();
+    const tick = (now) => {
+      const p = Math.min((now - t0) / duration, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = String(Math.round(target * eased));
+      if (p < 1) requestAnimationFrame(tick);
+      else el.textContent = String(target);
+    };
+    requestAnimationFrame(tick);
+  }
+
+  /* ── Init ── */
+  async function init() {
+    initSidebar();
+    await loadUser();
+    render();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>

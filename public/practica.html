@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="es-CO" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Práctica ICFES — Numination</title>
+  <meta name="description" content="Practica con preguntas tipo ICFES Saber 11. Mide tu nivel, mejora tu puntaje." />
+  <meta name="theme-color" content="#1a1a2e" />
+  <link rel="icon" href="favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/practica.css" />
+</head>
+<body class="practica-body">
+
+<div class="practica-app">
+
+  <!-- ═══════════════════════════════════════════════════════
+       SIDEBAR
+       ═══════════════════════════════════════════════════════ -->
+  <aside class="sidebar" data-sidebar>
+    <header class="sidebar__header">
+      <a href="index.html" class="sidebar__brand">
+        <span class="sidebar__logo"><img src="assets/img/logo-n.png" alt="Numination" /></span>
+        <span>Numination</span>
+      </a>
+      <button type="button" class="sidebar__close" data-sidebar-close aria-label="Cerrar menú">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </header>
+
+    <nav class="sidebar__nav">
+      <a href="chat.html" class="sidebar__nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <span>Chat con IA</span>
+      </a>
+      <a href="practica.html" class="sidebar__nav-item is-active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span>Práctica</span>
+      </a>
+      <a href="progreso.html" class="sidebar__nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+        <span>Mi progreso</span>
+      </a>
+      <a href="index.html" class="sidebar__nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span>Inicio</span>
+      </a>
+    </nav>
+
+    <!-- Racha y estadísticas del sidebar -->
+    <section class="sidebar__stats">
+      <div class="sidebar__stat">
+        <span class="sidebar__stat-ico">🔥</span>
+        <div>
+          <span class="sidebar__stat-value" data-streak>0</span>
+          <span class="sidebar__stat-label">días de racha</span>
+        </div>
+      </div>
+      <div class="sidebar__stat">
+        <span class="sidebar__stat-ico">🎯</span>
+        <div>
+          <span class="sidebar__stat-value" data-total-answered>0</span>
+          <span class="sidebar__stat-label">preguntas hechas</span>
+        </div>
+      </div>
+      <div class="sidebar__stat">
+        <span class="sidebar__stat-ico">📈</span>
+        <div>
+          <span class="sidebar__stat-value" data-accuracy>—</span>
+          <span class="sidebar__stat-label">precisión</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="sidebar__footer">
+      <a href="login.html" class="sidebar__user" data-user-link>
+        <span class="sidebar__avatar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </span>
+        <span class="sidebar__user-info">
+          <span class="sidebar__user-name" data-user-name>Invitado</span>
+          <span class="sidebar__user-plan">Estudiante</span>
+        </span>
+      </a>
+    </div>
+  </aside>
+
+  <div class="sidebar-overlay" data-sidebar-overlay></div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       MAIN
+       ═══════════════════════════════════════════════════════ -->
+  <main class="main">
+
+    <header class="topbar">
+      <button type="button" class="topbar__menu" data-sidebar-open aria-label="Abrir menú">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+      </button>
+      <span class="topbar__title">Práctica</span>
+      <button type="button" class="topbar__action" data-show-history aria-label="Historial">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><polyline points="3 3 3 8 8 8"/><polyline points="12 7 12 12 15 14"/></svg>
+      </button>
+    </header>
+
+    <div class="screen-host" data-screen-host>
+
+      <!-- ══════════════════════════════════════════════════════
+           SCREEN 1 · SELECCIÓN DE MATERIA
+           ══════════════════════════════════════════════════════ -->
+      <section class="screen is-active" data-screen="home">
+        <div class="screen__inner">
+
+          <header class="screen__head">
+            <p class="eyebrow">Empieza a practicar</p>
+            <h1 class="screen__title">¿Qué quieres reforzar hoy?</h1>
+            <p class="screen__sub">Elige una materia para práctica rápida, o lanza un simulacro completo del ICFES.</p>
+          </header>
+
+          <!-- Botón de simulacro destacado -->
+          <button type="button" class="simulacro-card" data-action="simulacro">
+            <div class="simulacro-card__glow"></div>
+            <div class="simulacro-card__body">
+              <span class="simulacro-card__badge">⚡ Recomendado</span>
+              <h2 class="simulacro-card__title">Simulacro completo</h2>
+              <p class="simulacro-card__text">10 preguntas aleatorias de todas las materias · cronómetro · puntaje ICFES estimado</p>
+              <div class="simulacro-card__meta">
+                <span>⏱ 15 min</span>
+                <span>📝 10 preguntas</span>
+                <span>🎯 Todas las áreas</span>
+              </div>
+            </div>
+            <span class="simulacro-card__arrow">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </span>
+          </button>
+
+          <!-- Grid de materias -->
+          <div class="materia-grid" data-materia-grid>
+            <!-- Se llenan por JS -->
+          </div>
+
+          <!-- Acciones secundarias -->
+          <div class="screen__actions">
+            <button type="button" class="btn btn--ghost" data-show-history>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><polyline points="3 3 3 8 8 8"/><polyline points="12 7 12 12 15 14"/></svg>
+              <span>Ver historial</span>
+            </button>
+            <button type="button" class="btn btn--ghost" data-show-config>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              <span>Configuración</span>
+            </button>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════════════
+           SCREEN 2 · CONFIGURACIÓN DE PRÁCTICA
+           ══════════════════════════════════════════════════════ -->
+      <section class="screen" data-screen="config">
+        <div class="screen__inner">
+
+          <button type="button" class="screen__back" data-action="back">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            <span>Volver</span>
+          </button>
+
+          <header class="screen__head">
+            <p class="eyebrow" data-config-eyebrow>Configuración</p>
+            <h1 class="screen__title" data-config-title>Prepara tu práctica</h1>
+          </header>
+
+          <div class="config-grid">
+
+            <!-- Cantidad -->
+            <div class="config-group">
+              <label class="config-group__label">¿Cuántas preguntas?</label>
+              <div class="chip-row" data-chip-group="count">
+                <button type="button" class="chip" data-value="5">5</button>
+                <button type="button" class="chip is-active" data-value="10">10</button>
+                <button type="button" class="chip" data-value="20">20</button>
+                <button type="button" class="chip" data-value="30">30</button>
+              </div>
+            </div>
+
+            <!-- Dificultad -->
+            <div class="config-group">
+              <label class="config-group__label">Dificultad</label>
+              <div class="chip-row" data-chip-group="difficulty">
+                <button type="button" class="chip" data-value="all">Todas</button>
+                <button type="button" class="chip is-active" data-value="easy">Fácil</button>
+                <button type="button" class="chip" data-value="medium">Media</button>
+                <button type="button" class="chip" data-value="hard">Difícil</button>
+              </div>
+            </div>
+
+            <!-- Modo -->
+            <div class="config-group">
+              <label class="config-group__label">Modo</label>
+              <div class="chip-row" data-chip-group="mode">
+                <button type="button" class="chip is-active" data-value="practice">Práctica (feedback al instante)</button>
+                <button type="button" class="chip" data-value="exam">Simulacro (resultado al final)</button>
+              </div>
+            </div>
+
+            <!-- Cronómetro -->
+            <div class="config-group">
+              <label class="config-group__label">Tiempo</label>
+              <div class="chip-row" data-chip-group="time">
+                <button type="button" class="chip" data-value="0">Sin límite</button>
+                <button type="button" class="chip is-active" data-value="1.5">1.5 min / pregunta</button>
+                <button type="button" class="chip" data-value="1">1 min / pregunta</button>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="config-summary" data-config-summary>
+            <!-- Se llena por JS -->
+          </div>
+
+          <button type="button" class="btn btn--primary btn--lg btn--block" data-action="start">
+            <span>Empezar</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
+
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════════════
+           SCREEN 3 · EXAMEN
+           ══════════════════════════════════════════════════════ -->
+      <section class="screen screen--exam" data-screen="exam">
+        <div class="exam-header">
+          <div class="exam-header__left">
+            <button type="button" class="exam-header__exit" data-action="exit-exam" aria-label="Salir">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <div class="exam-header__progress">
+              <span data-exam-counter>Pregunta 1 de 10</span>
+              <div class="exam-header__bar"><span data-exam-progress></span></div>
+            </div>
+          </div>
+          <div class="exam-header__right">
+            <div class="exam-timer" data-exam-timer>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span data-timer-value>--:--</span>
+            </div>
+            <button type="button" class="exam-header__flag" data-action="flag" aria-label="Marcar para revisar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="exam-body">
+          <article class="question" data-question>
+            <header class="question__meta">
+              <span class="question__materia" data-question-materia>Matemáticas</span>
+              <span class="question__nivel" data-question-level>Nivel 2</span>
+            </header>
+
+            <div class="question__context" data-question-context>
+              <!-- contexto opcional -->
+            </div>
+
+            <h2 class="question__enunciado" data-question-text>
+              <!-- enunciado -->
+            </h2>
+
+            <div class="options" data-options>
+              <!-- se llenan por JS -->
+            </div>
+
+            <div class="question__feedback" data-feedback hidden>
+              <div class="feedback__head">
+                <span class="feedback__icon" data-feedback-icon>✓</span>
+                <span class="feedback__title" data-feedback-title>¡Correcto!</span>
+              </div>
+              <div class="feedback__body" data-feedback-body></div>
+            </div>
+          </article>
+
+          <aside class="exam-nav" data-exam-nav>
+            <!-- se llena por JS: mini mapa de preguntas -->
+          </aside>
+        </div>
+
+        <footer class="exam-footer">
+          <button type="button" class="btn btn--secondary" data-action="prev" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            <span>Anterior</span>
+          </button>
+
+          <div class="exam-footer__center">
+            <button type="button" class="btn btn--ghost btn--sm" data-action="skip">Saltar</button>
+          </div>
+
+          <button type="button" class="btn btn--primary" data-action="next">
+            <span>Siguiente</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
+        </footer>
+      </section>
+
+      <!-- ══════════════════════════════════════════════════════
+           SCREEN 4 · RESULTADOS
+           ══════════════════════════════════════════════════════ -->
+      <section class="screen" data-screen="results">
+        <div class="screen__inner">
+
+          <header class="results-head">
+            <div class="results-head__score" data-result-score-circle>
+              <svg viewBox="0 0 120 120" class="score-ring">
+                <circle cx="60" cy="60" r="52" class="score-ring__bg" />
+                <circle cx="60" cy="60" r="52" class="score-ring__fill" data-result-ring />
+              </svg>
+              <div class="results-head__score-inner">
+                <span class="results-head__number" data-result-score>0</span>
+                <span class="results-head__of">/ 500</span>
+              </div>
+            </div>
+
+            <div class="results-head__text">
+              <p class="eyebrow" data-result-eyebrow>Simulacro completado</p>
+              <h1 class="screen__title" data-result-title>Buen trabajo</h1>
+              <p class="screen__sub" data-result-sub>Aquí está tu desempeño.</p>
+            </div>
+          </header>
+
+          <!-- Stats rápidas -->
+          <div class="results-stats">
+            <div class="result-stat">
+              <span class="result-stat__value" data-result-correct>0</span>
+              <span class="result-stat__label">Correctas</span>
+            </div>
+            <div class="result-stat">
+              <span class="result-stat__value" data-result-wrong>0</span>
+              <span class="result-stat__label">Incorrectas</span>
+            </div>
+            <div class="result-stat">
+              <span class="result-stat__value" data-result-time>0:00</span>
+              <span class="result-stat__label">Tiempo</span>
+            </div>
+            <div class="result-stat">
+              <span class="result-stat__value" data-result-accuracy>0%</span>
+              <span class="result-stat__label">Precisión</span>
+            </div>
+          </div>
+
+          <!-- Desglose por materia -->
+          <section class="results-breakdown">
+            <h2 class="results-section-title">Desglose por materia</h2>
+            <div class="breakdown-list" data-result-breakdown>
+              <!-- se llena por JS -->
+            </div>
+          </section>
+
+          <!-- Revisión de preguntas -->
+          <section class="results-review">
+            <h2 class="results-section-title">Revisión de respuestas</h2>
+            <div class="review-list" data-review-list>
+              <!-- se llena por JS -->
+            </div>
+          </section>
+
+          <div class="results-actions">
+            <button type="button" class="btn btn--primary btn--lg" data-action="retry">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/><path d="M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              <span>Practicar otra vez</span>
+            </button>
+            <button type="button" class="btn btn--secondary btn--lg" data-action="home">
+              Volver al inicio
+            </button>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════════════
+           SCREEN 5 · HISTORIAL
+           ══════════════════════════════════════════════════════ -->
+      <section class="screen" data-screen="history">
+        <div class="screen__inner">
+
+          <button type="button" class="screen__back" data-action="home">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            <span>Volver</span>
+          </button>
+
+          <header class="screen__head">
+            <p class="eyebrow">Tu historial</p>
+            <h1 class="screen__title">Sesiones anteriores</h1>
+          </header>
+
+          <div class="history-list" data-history-list>
+            <!-- se llena por JS -->
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════════════
+           SCREEN 6 · CONFIGURACIÓN
+           ══════════════════════════════════════════════════════ -->
+      <section class="screen" data-screen="settings">
+        <div class="screen__inner">
+
+          <button type="button" class="screen__back" data-action="home">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            <span>Volver</span>
+          </button>
+
+          <header class="screen__head">
+            <p class="eyebrow">Ajustes</p>
+            <h1 class="screen__title">Configuración</h1>
+          </header>
+
+          <div class="settings-list">
+            <div class="settings-row">
+              <div class="settings-row__info">
+                <span class="settings-row__label">Sonido al responder</span>
+                <span class="settings-row__hint">Pitido suave al acertar o fallar</span>
+              </div>
+              <button type="button" class="switch" data-switch="sound" role="switch" aria-checked="true"><span></span></button>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row__info">
+                <span class="settings-row__label">Feedback inmediato</span>
+                <span class="settings-row__hint">Mostrar explicación después de cada respuesta</span>
+              </div>
+              <button type="button" class="switch is-on" data-switch="instantFeedback" role="switch" aria-checked="true"><span></span></button>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row__info">
+                <span class="settings-row__label">Modo oscuro</span>
+                <span class="settings-row__hint">Cambiar entre claro y oscuro</span>
+              </div>
+              <button type="button" class="switch" data-switch="dark" role="switch" aria-checked="false"><span></span></button>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row__info">
+                <span class="settings-row__label">Modo compacto</span>
+                <span class="settings-row__hint">Menos espacio entre elementos</span>
+              </div>
+              <button type="button" class="switch" data-switch="compact" role="switch" aria-checked="false"><span></span></button>
+            </div>
+          </div>
+
+          <div class="settings-danger">
+            <h3 class="settings-danger__title">Zona peligrosa</h3>
+            <p class="settings-danger__text">Borrar el historial completo de prácticas. Esta acción no se puede deshacer.</p>
+            <button type="button" class="btn btn--danger" data-action="clear-history">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              <span>Borrar historial</span>
+            </button>
+          </div>
+
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Loading overlay -->
+    <div class="loading-overlay" data-loading hidden>
+      <div class="loading-spinner"></div>
+      <p class="loading-text" data-loading-text>Cargando preguntas...</p>
+    </div>
+
+    <!-- Toasts -->
+    <div class="toast-host" aria-live="polite"></div>
+
+    <!-- Modal de salida -->
+    <div class="modal-backdrop" data-modal="exit" hidden>
+      <div class="modal">
+        <div class="modal__head">
+          <h3 class="modal__title">¿Salir de la práctica?</h3>
+        </div>
+        <div class="modal__body">
+          <p>Vas a perder las respuestas de esta sesión. ¿Seguro que quieres salir?</p>
+        </div>
+        <div class="modal__foot">
+          <button type="button" class="btn btn--ghost" data-modal-close>Cancelar</button>
+          <button type="button" class="btn btn--danger" data-modal-confirm>Salir</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de confirmación -->
+    <div class="modal-backdrop" data-modal="confirm" hidden>
+      <div class="modal">
+        <div class="modal__head">
+          <h3 class="modal__title" data-modal-title>Confirmar</h3>
+        </div>
+        <div class="modal__body">
+          <p data-modal-body>¿Estás seguro?</p>
+        </div>
+        <div class="modal__foot">
+          <button type="button" class="btn btn--ghost" data-modal-close>Cancelar</button>
+          <button type="button" class="btn btn--danger" data-modal-confirm>Confirmar</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+</div>
+
+<!-- Confetti canvas -->
+<canvas class="confetti-canvas" data-confetti hidden></canvas>
+
+<script src="assets/js/practica.js"></script>
+</body>
+</html>

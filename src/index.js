@@ -1,13 +1,14 @@
 /* ══════════════════════════════════════════════════════════════
    NUMINATION — Backend v2.0
-   Motores: Gemini → Kimi K3 → Groq
+   Motores: Gemini → Groq → Kimi K3
    Imágenes: Pollinations (sin API key)
-   Banco ICFES: 500 preguntas reales (5 materias × 100)
+   Auth: Google OAuth + JWT
    ══════════════════════════════════════════════════════════════ */
 
 import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import cookieParser from 'cookie-parser';
 import { GoogleGenAI } from '@google/genai';
 import Groq from 'groq-sdk';
 import OpenAI from 'openai';
@@ -20,6 +21,7 @@ import {
   verificarRespuesta,
   formatearParaChat,
 } from './services/questions.js';
+import { mountAuthRoutes, attachUser } from './auth.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, '..', 'public');
@@ -45,8 +47,7 @@ if (!KEYS.GEMINI_API_KEY && !KEYS.GEMINI_API_KEY_2 && !KEYS.GEMINI_API_KEY_3) {
 if (!KEYS.NVIDIA_API_KEY) console.warn('Aviso: NVIDIA_API_KEY no configurada');
 if (!KEYS.GROQ_API_KEY)   console.warn('Aviso: GROQ_API_KEY no configurada');
 
-/* ─────────── Clientes IA ─────────── */
-// Pool de clientes Gemini con rotacion
+/* ─────────── Pool de clientes Gemini ─────────── */
 const GEMINI_KEY_LIST = [
   KEYS.GEMINI_API_KEY,
   KEYS.GEMINI_API_KEY_2,
@@ -93,7 +94,7 @@ const nvidia = new OpenAI({
    SYSTEM PROMPT
    ══════════════════════════════════════════════════════════════ */
 
-   const NUMINATION_BASE = `
+const NUMINATION_BASE = `
 # IDENTIDAD
 
 Eres Numination, la primera IA educativa 100% colombiana. Fuiste creada por Álvaro García Gómez y Robinson Rodríguez Gómez, dos estudiantes de 14 años.
@@ -173,9 +174,9 @@ Cuando uses ejemplos, habla de:
 - NUNCA uses ejemplos con dólares, Halloween o nieve.
 `;
 
-const ROLE_HINT_STUDENT = `Eres un tutor amable y claro para estudiantes colombianos que se preparan para el ICFES Saber 11. Explica paso a paso, usa ejemplos sencillos, adapta el lenguaje al nivel del estudiante y motiva siempre. Responde en espanol.`;
+const ROLE_HINT_STUDENT = `Eres un tutor amable y claro para estudiantes colombianos que se preparan para el ICFES Saber 11. Explica paso a paso, usa ejemplos sencillos, adapta el lenguaje al nivel del estudiante y motiva siempre. Responde en español.`;
 
-const ROLE_HINT_TEACHER = `Eres un asistente pedagogico para docentes colombianos. Ayuda a disenar actividades, evaluaciones y explicaciones alineadas al marco del ICFES Saber 11. Usa lenguaje profesional y da sugerencias aplicables al aula. Responde en espanol.`;
+const ROLE_HINT_TEACHER = `Eres un asistente pedagógico para docentes colombianos. Ayuda a diseñar actividades, evaluaciones y explicaciones alineadas al marco del ICFES Saber 11. Usa lenguaje profesional y da sugerencias aplicables al aula. Responde en español.`;
 
 function buildSystemPrompt(role = 'student') {
   const hint = role === 'teacher' ? ROLE_HINT_TEACHER : ROLE_HINT_STUDENT;
@@ -269,7 +270,7 @@ function isRetryable(err) {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   GENERACIÓN DE IMÁGENES CON POLLINATIONS
+   IMÁGENES CON POLLINATIONS
    ══════════════════════════════════════════════════════════════ */
 
 function buildImageUrl(prompt, options = {}) {
@@ -315,12 +316,19 @@ function enrichPromptWithColombia(prompt) {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   SERVIDOR
+   SERVIDOR EXPRESS
    ══════════════════════════════════════════════════════════════ */
 
 const app = express();
+
+/* ── Middleware (en orden correcto) ── */
 app.use(express.json({ limit: '15mb' }));
+app.use(cookieParser());
+app.use(attachUser);
 app.use(express.static(publicDir));
+
+/* ── Rutas de autenticación (UNA SOLA VEZ) ── */
+mountAuthRoutes(app);
 
 /* ─────────── ENDPOINTS DE PREGUNTAS ─────────── */
 
@@ -354,6 +362,71 @@ app.post('/api/questions/check', (req, res) => {
 
 /* ─────────── HEALTH ─────────── */
 
+app.get('/api/health', (req, res) => {
+  res.json({
+    ok: true,
+    service: 'numination',
+    version: '2.0',
+    motors: PROVIDERS,
+    images: 'pollinations',
+    banco: listarMaterias(),
+    auth: {
+      google: Boolean(TEST_KEYS.GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID),
+      session: Boolean(req.user),
+      email: req.user?.email || null,
+    },
+    keys: {
+      gemini_1: !!KEYS.GEMINI_API_KEY,
+      gemini_2: !!KEYS.GEMINI_API_KEY_2,
+      gemini_3: !!KEYS.GEMINI_API_KEY_3,
+      nvidia: !!KEYS.NVIDIA_API_KEY,
+      groq: !!KEYS.GROQ_API_KEY,
+    },
+  });
+});
+
+/* ══════════════════════════════════════════════════════════════
+   DETECCIÓN DE INTENCIÓN DE PRÁCTICA
+   ══════════════════════════════════════════════════════════════ */
+
+function detectarPractica(message) {
+  const t = message.trim().toLowerCase();
+
+  const materiaMatch = t.match(
+    /^(?:practicar|practica|practícame|quiero practicar|dame practica de|hazme practicar)\s+(?:de\s+)?(.+)$/i
+  );
+  if (materiaMatch) {
+    const raw = materiaMatch[1].trim();
+    const mapa = {
+      matematicas: 'matematicas', matemática: 'matematicas', matemáticas: 'matematicas',
+      'lectura critica': 'lectura-critica', 'lectura crítica': 'lectura-critica',
+      sociales: 'sociales', 'ciencias sociales': 'sociales',
+      'ciencias naturales': 'ciencias-naturales', ciencias: 'ciencias-naturales',
+      ingles: 'ingles', inglés: 'ingles',
+    };
+    const slug = mapa[raw] || (raw.includes('matem') ? 'matematicas'
+                 : raw.includes('lectura') ? 'lectura-critica'
+                 : raw.includes('social') ? 'sociales'
+                 : raw.includes('cienc') ? 'ciencias-naturales'
+                 : raw.includes('ingl') ? 'ingles'
+                 : null);
+    if (slug) return { tipo: 'materia', slug };
+  }
+
+  if (/^(?:simulacro|simulacro completo|hazme un simulacro|quiero un simulacro)/i.test(t)) {
+    return { tipo: 'simulacro' };
+  }
+
+  if (/^(?:practicar|practica|pregunta aleatoria|dame una pregunta)/i.test(t)) {
+    return { tipo: 'aleatoria' };
+  }
+
+  return null;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CHAT STREAMING
+   ══════════════════════════════════════════════════════════════ */
 
 app.post('/api/chat/stream', async (req, res) => {
   const { message, role = 'student', file = null } = req.body ?? {};
@@ -405,10 +478,10 @@ app.post('/api/chat/stream', async (req, res) => {
               ok = true;
               break;
             }
-            throw new Error('Gemini no devolvio tokens');
+            throw new Error('Gemini no devolvió tokens');
           } catch (err) {
             const esRate = isRateLimitError(err);
-            console.warn('[stream] Gemini #' + entry.id + ' fallo: ' + String(err.message).slice(0, 100));
+            console.warn('[stream] Gemini #' + entry.id + ' falló: ' + String(err.message).slice(0, 100));
             if (esRate && !responded) {
               markGeminiCooldown(entry, GEMINI_COOLDOWN_MS);
               console.warn('[stream] Key #' + entry.id + ' en cooldown 60s');
@@ -435,9 +508,9 @@ app.post('/api/chat/stream', async (req, res) => {
             send({ token: '', done: true, provider: 'groq' });
             return;
           }
-          throw new Error('Groq no devolvio tokens');
+          throw new Error('Groq no devolvió tokens');
         } catch (err) {
-          console.warn('[stream] Groq fallo: ' + String(err.message).slice(0, 100));
+          console.warn('[stream] Groq falló: ' + String(err.message).slice(0, 100));
           if (responded) {
             send({ token: '', done: true, provider: 'groq', partial: true });
             return;
@@ -452,16 +525,16 @@ app.post('/api/chat/stream', async (req, res) => {
             send({ token: '', done: true, provider: 'nvidia', noStream: true });
             return;
           }
-          throw new Error('Respuesta vacia');
+          throw new Error('Respuesta vacía');
         } catch (err) {
-          console.warn('[stream] Kimi K3 fallo: ' + String(err.message).slice(0, 100));
+          console.warn('[stream] Kimi K3 falló: ' + String(err.message).slice(0, 100));
         }
       }
     }
 
     if (!responded) {
       console.error('[stream] Todos los motores fallaron');
-      send({ error: 'Los motores de IA estan saturados. Intenta de nuevo.', done: true });
+      send({ error: 'Los motores de IA están saturados. Intenta de nuevo.', done: true });
     }
   } finally {
     clearInterval(heartbeat);
@@ -469,66 +542,8 @@ app.post('/api/chat/stream', async (req, res) => {
   }
 });
 
-app.get('/api/health', (_req, res) => {
-  res.json({
-    ok: true,
-    service: 'numination',
-    version: '2.0',
-    motors: PROVIDERS,
-    images: 'pollinations',
-    banco: listarMaterias(),
-    keys: {
-      gemini_1: !!KEYS.GEMINI_API_KEY,
-      gemini_2: !!KEYS.GEMINI_API_KEY_2,
-      gemini_3: !!KEYS.GEMINI_API_KEY_3,
-      nvidia: !!KEYS.NVIDIA_API_KEY,
-      groq: !!KEYS.GROQ_API_KEY,
-    },
-  });
-});
-
 /* ══════════════════════════════════════════════════════════════
-   DETECCIÓN DE INTENCIÓN DE PRÁCTICA
-   ══════════════════════════════════════════════════════════════ */
-
-function detectarPractica(message) {
-  const t = message.trim().toLowerCase();
-
-  // "practicar matematicas", "practicar lectura critica"
-  const materiaMatch = t.match(
-    /^(?:practicar|practica|practícame|quiero practicar|dame practica de|hazme practicar)\s+(?:de\s+)?(.+)$/i
-  );
-  if (materiaMatch) {
-    const raw = materiaMatch[1].trim();
-    const mapa = {
-      matematicas: 'matematicas', matemática: 'matematicas', matemáticas: 'matematicas',
-      'lectura critica': 'lectura-critica', 'lectura crítica': 'lectura-critica',
-      sociales: 'sociales', 'ciencias sociales': 'sociales',
-      'ciencias naturales': 'ciencias-naturales', ciencias: 'ciencias-naturales',
-      ingles: 'ingles', inglés: 'ingles',
-    };
-    const slug = mapa[raw] || (raw.includes('matem') ? 'matematicas'
-                 : raw.includes('lectura') ? 'lectura-critica'
-                 : raw.includes('social') ? 'sociales'
-                 : raw.includes('cienc') ? 'ciencias-naturales'
-                 : raw.includes('ingl') ? 'ingles'
-                 : null);
-    if (slug) return { tipo: 'materia', slug };
-  }
-
-  if (/^(?:simulacro|simulacro completo|hazme un simulacro|quiero un simulacro)/i.test(t)) {
-    return { tipo: 'simulacro' };
-  }
-
-  if (/^(?:practicar|practica|pregunta aleatoria|dame una pregunta)/i.test(t)) {
-    return { tipo: 'aleatoria' };
-  }
-
-  return null;
-}
-
-/* ══════════════════════════════════════════════════════════════
-   CHAT
+   CHAT NORMAL (no streaming) — prácticas, simulacros, imágenes
    ══════════════════════════════════════════════════════════════ */
 
 app.post('/api/chat', async (req, res) => {
@@ -623,8 +638,6 @@ app.post('/api/chat', async (req, res) => {
       { provider: ordered[2], delay: 2500 },
     ];
 
-    let lastError = null;
-
     for (let i = 0; i < attempts.length; i++) {
       const { provider: prov, delay } = attempts[i];
       if (delay > 0) await sleep(delay);
@@ -641,7 +654,6 @@ app.post('/api/chat', async (req, res) => {
       } catch (err) {
         const msg = String(err?.message ?? '').slice(0, 120);
         console.warn(`[chat] ${PROVIDER_NAMES[prov]} falló: ${msg}`);
-        lastError = err;
         if (!isRetryable(err)) break;
       }
     }
@@ -656,9 +668,13 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
+/* ─────────── FALLBACK SPA ─────────── */
+
 app.get('*', (_req, res) => {
   res.sendFile(path.join(publicDir, 'index.html'));
 });
+
+/* ─────────── ARRANQUE ─────────── */
 
 if (process.env.VERCEL !== '1') {
   const PORT = process.env.PORT ?? 8080;
@@ -666,6 +682,7 @@ if (process.env.VERCEL !== '1') {
     console.log(`🇨🇴 Numination v2.0 escuchando en http://localhost:${PORT}`);
     console.log(`🤖 Motores: Groq → Gemini → Kimi K3`);
     console.log(`🎨 Imágenes: Pollinations (sin API key)`);
+    console.log(`🔐 Auth: Google OAuth`);
     const banco = listarMaterias();
     const total = banco.reduce((s, m) => s + m.total, 0);
     console.log(`📚 Banco ICFES: ${total} preguntas en ${banco.length} materias`);

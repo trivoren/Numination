@@ -1,6 +1,8 @@
 /* ================================================================
    NUMINATION · auth.js
-   Google OAuth + sesiones JWT en cookies httpOnly.
+   Google OAuth + sesiones JWT.
+   - Local: guarda usuarios en data/users.json
+   - Producción (Vercel): sin escritura a disco, JWT stateless
    ================================================================ */
 
 import { OAuth2Client } from 'google-auth-library';
@@ -11,6 +13,10 @@ import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+/* ── Detectar entorno ── */
+const IS_VERCEL = process.env.VERCEL === '1';
+const CAN_WRITE = !IS_VERCEL; // Vercel = read-only
 
 /* ── Cargar credenciales ── */
 let TEST_KEYS = {};
@@ -28,21 +34,29 @@ const SESSION_DAYS = 30;
 const USERS_FILE = path.join(__dirname, '..', 'data', 'users.json');
 
 if (!CLIENT_ID) console.warn('⚠️  GOOGLE_CLIENT_ID no configurado');
-if (!CLIENT_SECRET) console.warn('⚠️  GOOGLE_CLIENT_SECRET no configurado');
 if (!JWT_SECRET) console.warn('⚠️  JWT_SECRET no configurado');
 
 const googleClient = new OAuth2Client(CLIENT_ID);
 
-/* ── Almacenamiento de usuarios (JSON temporal) ── */
+/* ── Caché en memoria para producción (vive mientras el lambda esté caliente) ── */
+const memoryUsers = new Map();
+
+/* ── Storage de usuarios ── */
 function ensureDataDir() {
+  if (!CAN_WRITE) return;
   const dir = path.dirname(USERS_FILE);
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  if (!fs.existsSync(USERS_FILE)) fs.writeFileSync(USERS_FILE, '{}', 'utf-8');
+  try {
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    if (!fs.existsSync(USERS_FILE)) fs.writeFileSync(USERS_FILE, '{}', 'utf-8');
+  } catch (e) {
+    console.warn('[auth] no se pudo crear data dir:', e.message);
+  }
 }
 
 function loadUsers() {
-  ensureDataDir();
+  if (!CAN_WRITE) return {}; // En producción siempre vacío
   try {
+    ensureDataDir();
     const raw = fs.readFileSync(USERS_FILE, 'utf-8').trim();
     if (!raw || raw === '{}') return {};
     return JSON.parse(raw);
@@ -50,22 +64,44 @@ function loadUsers() {
 }
 
 function saveUsers(users) {
-  ensureDataDir();
-  fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2), 'utf-8');
+  if (!CAN_WRITE) return false; // En Vercel, no escribe
+  try {
+    ensureDataDir();
+    fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2), 'utf-8');
+    return true;
+  } catch (e) {
+    console.warn('[auth] save failed:', e.message);
+    return false;
+  }
 }
 
+/* ── Buscar o crear usuario ── */
 function findOrCreateUser({ email, name, picture, provider }) {
-  const users = loadUsers();
   const key = email.toLowerCase();
 
-  if (users[key]) {
-    users[key].lastLogin = Date.now();
-    users[key].name = name || users[key].name;
-    users[key].picture = picture || users[key].picture;
-    saveUsers(users);
-    return users[key];
+  // Caché en memoria primero (para producción)
+  if (memoryUsers.has(key)) {
+    const user = memoryUsers.get(key);
+    user.lastLogin = Date.now();
+    user.name = name || user.name;
+    user.picture = picture || user.picture;
+    return user;
   }
 
+  // En local, revisar JSON
+  if (CAN_WRITE) {
+    const users = loadUsers();
+    if (users[key]) {
+      users[key].lastLogin = Date.now();
+      users[key].name = name || users[key].name;
+      users[key].picture = picture || users[key].picture;
+      saveUsers(users);
+      memoryUsers.set(key, users[key]);
+      return users[key];
+    }
+  }
+
+  // Crear nuevo usuario
   const user = {
     id: 'u-' + crypto.randomBytes(8).toString('hex'),
     email: key,
@@ -77,16 +113,30 @@ function findOrCreateUser({ email, name, picture, provider }) {
     role: 'student',
     verified: true,
   };
-  users[key] = user;
-  saveUsers(users);
+
+  // Guardar
+  memoryUsers.set(key, user);
+
+  if (CAN_WRITE) {
+    const users = loadUsers();
+    users[key] = user;
+    saveUsers(users);
+  }
+
   return user;
 }
 
-/* ── Sesiones JWT ── */
+/* ── JWT ── */
 function signSession(user, remember = true) {
   const expiresIn = remember ? `${SESSION_DAYS}d` : '1d';
   return jwt.sign(
-    { sub: user.id, email: user.email, role: user.role },
+    {
+      sub: user.id,
+      email: user.email,
+      name: user.name,
+      picture: user.picture,
+      role: user.role,
+    },
     JWT_SECRET,
     { expiresIn }
   );
@@ -105,7 +155,7 @@ function setSessionCookie(res, token, remember = true) {
 
   res.cookie(COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production' || process.env.VERCEL === '1',
+    secure: true, // Vercel siempre HTTPS
     sameSite: 'lax',
     maxAge,
     path: '/',
@@ -116,6 +166,17 @@ function clearSessionCookie(res) {
   res.clearCookie(COOKIE_NAME, { path: '/' });
 }
 
+/* ── Construir usuario desde el JWT ── */
+function userFromPayload(payload) {
+  return {
+    id: payload.sub,
+    email: payload.email,
+    name: payload.name,
+    picture: payload.picture,
+    role: payload.role || 'student',
+  };
+}
+
 /* ── Middleware ── */
 export function requireAuth(req, res, next) {
   const token = req.cookies?.[COOKIE_NAME];
@@ -124,11 +185,7 @@ export function requireAuth(req, res, next) {
   const payload = verifySession(token);
   if (!payload) return res.status(401).json({ error: 'Sesión inválida' });
 
-  const users = loadUsers();
-  const user = users[payload.email];
-  if (!user) return res.status(401).json({ error: 'Usuario no encontrado' });
-
-  req.user = user;
+  req.user = userFromPayload(payload);
   next();
 }
 
@@ -136,10 +193,7 @@ export function attachUser(req, _res, next) {
   const token = req.cookies?.[COOKIE_NAME];
   if (token) {
     const payload = verifySession(token);
-    if (payload) {
-      const users = loadUsers();
-      req.user = users[payload.email] || null;
-    }
+    if (payload) req.user = userFromPayload(payload);
   }
   next();
 }
@@ -174,7 +228,7 @@ export function mountAuthRoutes(app) {
       return res.json({ ok: true, user: publicUser(user) });
     } catch (err) {
       console.error('[auth] error Google:', err.message);
-      return res.status(401).json({ error: 'Token de Google inválido' });
+      return res.status(401).json({ error: 'Token de Google inválido: ' + err.message });
     }
   });
 
@@ -185,11 +239,7 @@ export function mountAuthRoutes(app) {
     const payload = verifySession(token);
     if (!payload) return res.json({ ok: false, user: null });
 
-    const users = loadUsers();
-    const user = users[payload.email];
-    if (!user) return res.json({ ok: false, user: null });
-
-    return res.json({ ok: true, user: publicUser(user) });
+    return res.json({ ok: true, user: userFromPayload(payload) });
   });
 
   app.post('/api/auth/logout', (_req, res) => {
@@ -201,6 +251,8 @@ export function mountAuthRoutes(app) {
     const token = req.cookies?.[COOKIE_NAME];
     return res.json({ authenticated: Boolean(token && verifySession(token)) });
   });
+
+  console.log(`[auth] rutas montadas (${CAN_WRITE ? 'con persistencia JSON' : 'stateless / producción'})`);
 }
 
 function publicUser(user) {

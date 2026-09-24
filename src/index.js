@@ -1,8 +1,11 @@
 /* ══════════════════════════════════════════════════════════════
-   NUMINATION — Backend v2.0
-   Motores: Gemini → Groq → Kimi K3
-   Imágenes: Pollinations (sin API key)
+   NUMINATION — Backend v3.0
+   ----------------------------------------------------------------
+   Chat IA con 3 motores en cascada.
    Auth: Google OAuth + JWT
+   DB: Supabase (Postgres)
+   Límites: Upstash Redis
+   Imágenes: Pollinations
    ══════════════════════════════════════════════════════════════ */
 
 import express from 'express';
@@ -14,19 +17,18 @@ import Groq from 'groq-sdk';
 import OpenAI from 'openai';
 
 import { streamGroq, streamGemini } from './services/streaming.js';
-import {
-  listarMaterias,
-  preguntaAleatoria,
-  simulacro,
-  verificarRespuesta,
-  formatearParaChat,
-} from './services/questions.js';
-import { mountAuthRoutes, attachUser } from './auth.js';
+import { mountAuthRoutes, attachUser, requireAuth } from './auth.js';
+import { mountChatRoutes } from './chats.js';
+import { verificarLimite, consultarUso } from './services/limits.js';
+import { supabaseDisponible } from './services/supabase.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, '..', 'public');
 
-/* ─────────── API Keys ─────────── */
+/* ══════════════════════════════════════════════════════════════
+   API KEYS
+   ══════════════════════════════════════════════════════════════ */
+
 let TEST_KEYS = {};
 try {
   const mod = await import('../env.local.js');
@@ -42,12 +44,15 @@ const KEYS = {
 };
 
 if (!KEYS.GEMINI_API_KEY && !KEYS.GEMINI_API_KEY_2 && !KEYS.GEMINI_API_KEY_3) {
-  console.warn('Aviso: ninguna GEMINI_API_KEY configurada');
+  console.warn('⚠️  Ninguna GEMINI_API_KEY configurada');
 }
-if (!KEYS.NVIDIA_API_KEY) console.warn('Aviso: NVIDIA_API_KEY no configurada');
-if (!KEYS.GROQ_API_KEY)   console.warn('Aviso: GROQ_API_KEY no configurada');
+if (!KEYS.NVIDIA_API_KEY) console.warn('⚠️  NVIDIA_API_KEY no configurada');
+if (!KEYS.GROQ_API_KEY)   console.warn('⚠️  GROQ_API_KEY no configurada');
 
-/* ─────────── Pool de clientes Gemini ─────────── */
+/* ══════════════════════════════════════════════════════════════
+   POOL DE GEMINI
+   ══════════════════════════════════════════════════════════════ */
+
 const GEMINI_KEY_LIST = [
   KEYS.GEMINI_API_KEY,
   KEYS.GEMINI_API_KEY_2,
@@ -97,7 +102,7 @@ const nvidia = new OpenAI({
 const NUMINATION_BASE = `
 # IDENTIDAD
 
-Eres Numination, la primera IA educativa 100% colombiana. Fuiste creada por Álvaro García Gómez y Robinson Rodríguez Gómez, dos estudiantes de 14 años.
+Eres Numination, una IA educativa 100% colombiana. Fuiste creada por Álvaro García Gómez y Robinson Rodríguez Gómez.
 
 NO eres ChatGPT, Gemini ni ninguna IA genérica. Eres Numination.
 Eslogan: "La IA que habla el idioma de nuestra educación."
@@ -118,7 +123,7 @@ Cuando uses ejemplos, habla de:
 
 ## Longitud
 - Respuestas normales: MÁXIMO 3 párrafos cortos.
-- Si el estudiante pide un tema complejo: usa listas o pasos numerados.
+- Si el tema es complejo: usa listas o pasos numerados.
 - NUNCA escribas más de 250 palabras sin una razón clara.
 - NUNCA repitas la pregunta al empezar.
 - NUNCA hagas introducciones tipo "¡Claro! Excelente pregunta".
@@ -133,24 +138,7 @@ Cuando uses ejemplos, habla de:
 ## Tono
 - Directo, claro, sin relleno.
 - Como un tutor que respeta el tiempo del estudiante.
-- Nada de "¡Vamos allá!" ni "¡Tú puedes!".
-- Nada de disculpas innecesarias.
 - Tutea (tú), no uses "usted" salvo que el usuario lo pida.
-
-## Ejemplos de lo que NO quieres hacer
-❌ "¡Hola! 😊 ¡Qué buena pregunta! 😃 Vamos a resolverla juntos paso a paso. 🚀..."
-❌ "En primer lugar, es importante señalar que..."
-❌ "Como bien sabes, la fotosíntesis es un proceso..."
-❌ Repetir la pregunta del usuario.
-
-## Ejemplos de lo que SÍ queremos
-✅ "La fotosíntesis tiene dos fases.
-
-**Fase luminosa:** ocurre en los tilacoides. La luz rompe el agua y libera oxígeno.
-
-**Fase oscura:** en el estroma, el CO₂ se convierte en glucosa usando la energía de la fase anterior.
-
-¿Quieres que veamos un ejemplo con una planta específica?"
 
 # REGLAS PEDAGÓGICAS
 
@@ -168,15 +156,14 @@ Cuando uses ejemplos, habla de:
 # REGLAS ABSOLUTAS
 
 - Contextualiza TODO a Colombia.
-- NUNCA prometas puntajes específicos en el ICFES.
 - NUNCA sustituyas atención médica, psicológica o legal.
 - NUNCA fomentes deshonestidad académica.
 - NUNCA uses ejemplos con dólares, Halloween o nieve.
 `;
 
-const ROLE_HINT_STUDENT = `Eres un tutor amable y claro para estudiantes colombianos que se preparan para el ICFES Saber 11. Explica paso a paso, usa ejemplos sencillos, adapta el lenguaje al nivel del estudiante y motiva siempre. Responde en español.`;
+const ROLE_HINT_STUDENT = `Eres un tutor amable y claro para estudiantes colombianos. Explica paso a paso, usa ejemplos sencillos, adapta el lenguaje al nivel del estudiante y motiva siempre. Responde en español.`;
 
-const ROLE_HINT_TEACHER = `Eres un asistente pedagógico para docentes colombianos. Ayuda a diseñar actividades, evaluaciones y explicaciones alineadas al marco del ICFES Saber 11. Usa lenguaje profesional y da sugerencias aplicables al aula. Responde en español.`;
+const ROLE_HINT_TEACHER = `Eres un asistente pedagógico para docentes colombianos. Ayuda a diseñar actividades, evaluaciones y explicaciones. Usa lenguaje profesional y da sugerencias aplicables al aula. Responde en español.`;
 
 function buildSystemPrompt(role = 'student') {
   const hint = role === 'teacher' ? ROLE_HINT_TEACHER : ROLE_HINT_STUDENT;
@@ -184,7 +171,7 @@ function buildSystemPrompt(role = 'student') {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   LLAMADAS A CADA MOTOR
+   LLAMADAS A MOTORES
    ══════════════════════════════════════════════════════════════ */
 
 async function callGemini(systemPrompt, message, file) {
@@ -321,43 +308,32 @@ function enrichPromptWithColombia(prompt) {
 
 const app = express();
 
-/* ── Middleware (en orden correcto) ── */
+/* ── Middleware ── */
 app.use(express.json({ limit: '15mb' }));
 app.use(cookieParser());
 app.use(attachUser);
+
+/* ── Protección de rutas privadas ── */
+app.use((req, res, next) => {
+  const privadas = ['/chat.html'];
+  if (privadas.includes(req.path) && !req.user) {
+    return res.redirect('/login.html');
+  }
+  next();
+});
+
 app.use(express.static(publicDir));
 
-/* ── Rutas de autenticación (UNA SOLA VEZ) ── */
+/* ── Rutas de auth y chats ── */
 mountAuthRoutes(app);
+mountChatRoutes(app, requireAuth);
 
-/* ─────────── ENDPOINTS DE PREGUNTAS ─────────── */
+/* ─────────── LÍMITES DE USO ─────────── */
 
-app.get('/api/questions/materias', (_req, res) => {
-  res.json({ materias: listarMaterias() });
-});
-
-app.get('/api/questions/random', (req, res) => {
-  const materia = req.query.materia || null;
-  const p = preguntaAleatoria(materia);
-  if (!p) return res.status(404).json({ error: 'No hay preguntas disponibles' });
-  res.json({ pregunta: p });
-});
-
-app.get('/api/questions/simulacro', (req, res) => {
-  const cantidad = Math.min(parseInt(req.query.cantidad, 10) || 10, 40);
-  const areas = req.query.areas ? String(req.query.areas).split(',') : null;
-  const preguntas = simulacro(cantidad, areas);
-  res.json({ cantidad: preguntas.length, preguntas });
-});
-
-app.post('/api/questions/check', (req, res) => {
-  const { id, respuesta } = req.body ?? {};
-  if (!id || !respuesta) {
-    return res.status(400).json({ error: 'Faltan id y respuesta' });
-  }
-  const resultado = verificarRespuesta(id, respuesta);
-  if (!resultado.ok) return res.status(404).json(resultado);
-  res.json(resultado);
+app.get('/api/limits/usage', async (req, res) => {
+  const uso = await consultarUso(req);
+  if (!uso) return res.json({ ok: false, error: 'Límites no configurados' });
+  res.json({ ok: true, ...uso });
 });
 
 /* ─────────── HEALTH ─────────── */
@@ -366,14 +342,23 @@ app.get('/api/health', (req, res) => {
   res.json({
     ok: true,
     service: 'numination',
-    version: '2.0',
+    version: '3.0',
     motors: PROVIDERS,
     images: 'pollinations',
-    banco: listarMaterias(),
     auth: {
       google: Boolean(TEST_KEYS.GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID),
       session: Boolean(req.user),
       email: req.user?.email || null,
+    },
+    limits: {
+      enabled: Boolean(
+        (TEST_KEYS.UPSTASH_REDIS_REST_URL || process.env.UPSTASH_REDIS_REST_URL) &&
+        (TEST_KEYS.UPSTASH_REDIS_REST_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN)
+      ),
+    },
+    database: {
+      supabase: Boolean(TEST_KEYS.SUPABASE_URL || process.env.SUPABASE_URL),
+      connected: supabaseDisponible(),
     },
     keys: {
       gemini_1: !!KEYS.GEMINI_API_KEY,
@@ -386,49 +371,22 @@ app.get('/api/health', (req, res) => {
 });
 
 /* ══════════════════════════════════════════════════════════════
-   DETECCIÓN DE INTENCIÓN DE PRÁCTICA
-   ══════════════════════════════════════════════════════════════ */
-
-function detectarPractica(message) {
-  const t = message.trim().toLowerCase();
-
-  const materiaMatch = t.match(
-    /^(?:practicar|practica|practícame|quiero practicar|dame practica de|hazme practicar)\s+(?:de\s+)?(.+)$/i
-  );
-  if (materiaMatch) {
-    const raw = materiaMatch[1].trim();
-    const mapa = {
-      matematicas: 'matematicas', matemática: 'matematicas', matemáticas: 'matematicas',
-      'lectura critica': 'lectura-critica', 'lectura crítica': 'lectura-critica',
-      sociales: 'sociales', 'ciencias sociales': 'sociales',
-      'ciencias naturales': 'ciencias-naturales', ciencias: 'ciencias-naturales',
-      ingles: 'ingles', inglés: 'ingles',
-    };
-    const slug = mapa[raw] || (raw.includes('matem') ? 'matematicas'
-                 : raw.includes('lectura') ? 'lectura-critica'
-                 : raw.includes('social') ? 'sociales'
-                 : raw.includes('cienc') ? 'ciencias-naturales'
-                 : raw.includes('ingl') ? 'ingles'
-                 : null);
-    if (slug) return { tipo: 'materia', slug };
-  }
-
-  if (/^(?:simulacro|simulacro completo|hazme un simulacro|quiero un simulacro)/i.test(t)) {
-    return { tipo: 'simulacro' };
-  }
-
-  if (/^(?:practicar|practica|pregunta aleatoria|dame una pregunta)/i.test(t)) {
-    return { tipo: 'aleatoria' };
-  }
-
-  return null;
-}
-
-/* ══════════════════════════════════════════════════════════════
    CHAT STREAMING
    ══════════════════════════════════════════════════════════════ */
 
 app.post('/api/chat/stream', async (req, res) => {
+  const lim = await verificarLimite(req);
+  if (!lim.permitido) {
+    return res.status(429).json({
+      error: lim.mensaje,
+      razon: lim.razon,
+      retryAfter: lim.retryAfter,
+      plan: lim.plan,
+      uso: lim.uso,
+      limites: lim.limites,
+    });
+  }
+
   const { message, role = 'student', file = null } = req.body ?? {};
   const hasText = message && message.trim();
   const hasFile = file && file.data;
@@ -442,6 +400,16 @@ app.post('/api/chat/stream', async (req, res) => {
   res.setHeader('Connection', 'keep-alive');
   res.setHeader('X-Accel-Buffering', 'no');
   res.flushHeaders?.();
+
+  if (lim.restanteDia != null) {
+    res.write('data: ' + JSON.stringify({
+      meta: {
+        plan: lim.plan,
+        restanteDia: lim.restanteDia,
+        restanteMin: lim.restanteMin,
+      },
+    }) + '\n\n');
+  }
 
   const heartbeat = setInterval(() => {
     try { res.write(': ping\n\n'); } catch {}
@@ -543,63 +511,29 @@ app.post('/api/chat/stream', async (req, res) => {
 });
 
 /* ══════════════════════════════════════════════════════════════
-   CHAT NORMAL (no streaming) — prácticas, simulacros, imágenes
+   CHAT NORMAL (con imágenes)
    ══════════════════════════════════════════════════════════════ */
 
 app.post('/api/chat', async (req, res) => {
   try {
-    const { message, role = 'student', file = null, checkId = null, checkRespuesta = null } = req.body ?? {};
-    const hasText = message && message.trim();
-    const hasFile = file && file.data;
-
-    if (!hasText && !hasFile && !checkId) {
-      return res.status(400).json({ error: 'Falta el mensaje o archivo' });
-    }
-
-    /* ─── Verificar respuesta de pregunta ICFES ─── */
-    if (checkId && checkRespuesta) {
-      const r = verificarRespuesta(checkId, checkRespuesta);
-      if (!r.ok) return res.status(404).json(r);
-      const emoji = r.correcta ? '✅' : '❌';
-      const encabezado = r.correcta
-        ? `${emoji} **¡Correcto!** La respuesta era **${r.respuesta_correcta}**.`
-        : `${emoji} **Incorrecto.** La respuesta correcta era **${r.respuesta_correcta}**.`;
-      return res.json({
-        reply: `${encabezado}\n\n**Explicación:**\n${r.explicacion}\n\n¿Quieres practicar otra? Escribe "practicar ${r.materia.toLowerCase()}" o "simulacro".`,
-        type: 'check',
-        correcta: r.correcta,
+    const lim = await verificarLimite(req);
+    if (!lim.permitido) {
+      return res.status(429).json({
+        error: lim.mensaje,
+        razon: lim.razon,
+        retryAfter: lim.retryAfter,
+        plan: lim.plan,
+        uso: lim.uso,
+        limites: lim.limites,
       });
     }
 
-    /* ─── Detección de práctica ICFES ─── */
-    if (hasText) {
-      const practica = detectarPractica(message);
+    const { message, role = 'student', file = null } = req.body ?? {};
+    const hasText = message && message.trim();
+    const hasFile = file && file.data;
 
-      if (practica) {
-        if (practica.tipo === 'simulacro') {
-          const preguntas = simulacro(10);
-          const texto = preguntas.map((p, i) => {
-            return `**Pregunta ${i + 1} de 10** · ${p.materia}\n\n${p.contexto}\n\n${p.enunciado}\n\nA) ${p.opciones.A}\nB) ${p.opciones.B}\nC) ${p.opciones.C}\nD) ${p.opciones.D}\n\n_(ID: ${p.id})_`;
-          }).join('\n\n---\n\n');
-          return res.json({
-            reply: `# 📝 Simulacro ICFES · 10 preguntas\n\nResponde cada pregunta con la letra (A, B, C o D). Cuando termines, envía tu respuesta en el formato:\n\n\`MATE-001 B\` o simplemente dime "verificar MATE-001 B".\n\n---\n\n${texto}`,
-            type: 'simulacro',
-            preguntas,
-          });
-        }
-
-        const p = practica.tipo === 'materia'
-          ? preguntaAleatoria(practica.slug)
-          : preguntaAleatoria();
-
-        if (!p) return res.status(404).json({ error: 'No hay preguntas disponibles' });
-
-        return res.json({
-          reply: formatearParaChat(p),
-          type: 'practica',
-          pregunta: p,
-        });
-      }
+    if (!hasText && !hasFile) {
+      return res.status(400).json({ error: 'Falta el mensaje o archivo' });
     }
 
     /* ─── Detección de generación de imágenes ─── */
@@ -674,18 +608,24 @@ app.get('*', (_req, res) => {
   res.sendFile(path.join(publicDir, 'index.html'));
 });
 
-/* ─────────── ARRANQUE ─────────── */
+/* ══════════════════════════════════════════════════════════════
+   ARRANQUE
+   ══════════════════════════════════════════════════════════════ */
 
 if (process.env.VERCEL !== '1') {
   const PORT = process.env.PORT ?? 8080;
   app.listen(PORT, () => {
-    console.log(`🇨🇴 Numination v2.0 escuchando en http://localhost:${PORT}`);
-    console.log(`🤖 Motores: Groq → Gemini → Kimi K3`);
-    console.log(`🎨 Imágenes: Pollinations (sin API key)`);
+    const limitsOn = Boolean(
+      TEST_KEYS.UPSTASH_REDIS_REST_URL || process.env.UPSTASH_REDIS_REST_URL
+    );
+    const dbOn = supabaseDisponible();
+
+    console.log(`🇨🇴 Numination v3.0 escuchando en http://localhost:${PORT}`);
+    console.log(`🤖 Motores: Gemini → Groq → Kimi K3`);
+    console.log(`🎨 Imágenes: Pollinations`);
     console.log(`🔐 Auth: Google OAuth`);
-    const banco = listarMaterias();
-    const total = banco.reduce((s, m) => s + m.total, 0);
-    console.log(`📚 Banco ICFES: ${total} preguntas en ${banco.length} materias`);
+    console.log(`🚦 Límites: ${limitsOn ? 'activos' : 'desactivados'}`);
+    console.log(`🗄️  DB: ${dbOn ? 'Supabase conectado' : 'sin conexión'}`);
   });
 }
 

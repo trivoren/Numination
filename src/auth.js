@@ -1,24 +1,18 @@
 /* ================================================================
    NUMINATION · auth.js
-   Google OAuth + sesiones JWT.
-   - Local: guarda usuarios en data/users.json
-   - Producción (Vercel): sin escritura a disco, JWT stateless
+   Google OAuth + JWT + Supabase como almacenamiento.
    ================================================================ */
 
 import { OAuth2Client } from 'google-auth-library';
 import jwt from 'jsonwebtoken';
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
+import {
+  getProfileByEmail,
+  createProfile,
+  updateLastLogin,
+  supabaseDisponible,
+} from './services/supabase.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-/* ── Detectar entorno ── */
-const IS_VERCEL = process.env.VERCEL === '1';
-const CAN_WRITE = !IS_VERCEL; // Vercel = read-only
-
-/* ── Cargar credenciales ── */
 let TEST_KEYS = {};
 try {
   const mod = await import('../env.local.js');
@@ -26,107 +20,17 @@ try {
 } catch {}
 
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID ?? TEST_KEYS.GOOGLE_CLIENT_ID;
-const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET ?? TEST_KEYS.GOOGLE_CLIENT_SECRET;
 const JWT_SECRET = process.env.JWT_SECRET ?? TEST_KEYS.JWT_SECRET;
 
 const COOKIE_NAME = 'numination_session';
 const SESSION_DAYS = 30;
-const USERS_FILE = path.join(__dirname, '..', 'data', 'users.json');
 
 if (!CLIENT_ID) console.warn('⚠️  GOOGLE_CLIENT_ID no configurado');
 if (!JWT_SECRET) console.warn('⚠️  JWT_SECRET no configurado');
 
 const googleClient = new OAuth2Client(CLIENT_ID);
 
-/* ── Caché en memoria para producción (vive mientras el lambda esté caliente) ── */
-const memoryUsers = new Map();
-
-/* ── Storage de usuarios ── */
-function ensureDataDir() {
-  if (!CAN_WRITE) return;
-  const dir = path.dirname(USERS_FILE);
-  try {
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    if (!fs.existsSync(USERS_FILE)) fs.writeFileSync(USERS_FILE, '{}', 'utf-8');
-  } catch (e) {
-    console.warn('[auth] no se pudo crear data dir:', e.message);
-  }
-}
-
-function loadUsers() {
-  if (!CAN_WRITE) return {}; // En producción siempre vacío
-  try {
-    ensureDataDir();
-    const raw = fs.readFileSync(USERS_FILE, 'utf-8').trim();
-    if (!raw || raw === '{}') return {};
-    return JSON.parse(raw);
-  } catch { return {}; }
-}
-
-function saveUsers(users) {
-  if (!CAN_WRITE) return false; // En Vercel, no escribe
-  try {
-    ensureDataDir();
-    fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2), 'utf-8');
-    return true;
-  } catch (e) {
-    console.warn('[auth] save failed:', e.message);
-    return false;
-  }
-}
-
-/* ── Buscar o crear usuario ── */
-function findOrCreateUser({ email, name, picture, provider }) {
-  const key = email.toLowerCase();
-
-  // Caché en memoria primero (para producción)
-  if (memoryUsers.has(key)) {
-    const user = memoryUsers.get(key);
-    user.lastLogin = Date.now();
-    user.name = name || user.name;
-    user.picture = picture || user.picture;
-    return user;
-  }
-
-  // En local, revisar JSON
-  if (CAN_WRITE) {
-    const users = loadUsers();
-    if (users[key]) {
-      users[key].lastLogin = Date.now();
-      users[key].name = name || users[key].name;
-      users[key].picture = picture || users[key].picture;
-      saveUsers(users);
-      memoryUsers.set(key, users[key]);
-      return users[key];
-    }
-  }
-
-  // Crear nuevo usuario
-  const user = {
-    id: 'u-' + crypto.randomBytes(8).toString('hex'),
-    email: key,
-    name: name || key.split('@')[0],
-    picture: picture || null,
-    provider: provider || 'google',
-    createdAt: Date.now(),
-    lastLogin: Date.now(),
-    role: 'student',
-    verified: true,
-  };
-
-  // Guardar
-  memoryUsers.set(key, user);
-
-  if (CAN_WRITE) {
-    const users = loadUsers();
-    users[key] = user;
-    saveUsers(users);
-  }
-
-  return user;
-}
-
-/* ── JWT ── */
+/* ── Sesiones JWT ── */
 function signSession(user, remember = true) {
   const expiresIn = remember ? `${SESSION_DAYS}d` : '1d';
   return jwt.sign(
@@ -135,7 +39,8 @@ function signSession(user, remember = true) {
       email: user.email,
       name: user.name,
       picture: user.picture,
-      role: user.role,
+      role: user.role || 'student',
+      plan: user.plan || 'free',
     },
     JWT_SECRET,
     { expiresIn }
@@ -147,15 +52,24 @@ function verifySession(token) {
   catch { return null; }
 }
 
+function userFromPayload(payload) {
+  return {
+    id: payload.sub,
+    email: payload.email,
+    name: payload.name,
+    picture: payload.picture,
+    role: payload.role || 'student',
+    plan: payload.plan || 'free',
+  };
+}
+
 /* ── Cookies ── */
 function setSessionCookie(res, token, remember = true) {
-  const maxAge = remember
-    ? SESSION_DAYS * 24 * 60 * 60 * 1000
-    : 24 * 60 * 60 * 1000;
-
+  const maxAge = remember ? SESSION_DAYS * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
+  const isProd = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
   res.cookie(COOKIE_NAME, token, {
     httpOnly: true,
-    secure: true, // Vercel siempre HTTPS
+    secure: isProd,
     sameSite: 'lax',
     maxAge,
     path: '/',
@@ -166,18 +80,44 @@ function clearSessionCookie(res) {
   res.clearCookie(COOKIE_NAME, { path: '/' });
 }
 
-/* ── Construir usuario desde el JWT ── */
-function userFromPayload(payload) {
-  return {
-    id: payload.sub,
-    email: payload.email,
-    name: payload.name,
-    picture: payload.picture,
-    role: payload.role || 'student',
-  };
+/* ── Encontrar o crear usuario ── */
+async function findOrCreateUser({ email, name, picture, provider }) {
+  const key = email.toLowerCase();
+
+  // 1. Buscar en Supabase
+  let user = await getProfileByEmail(key);
+
+  if (user) {
+    await updateLastLogin(user.id);
+    return user;
+  }
+
+  // 2. Crear nuevo
+  const id = 'u-' + crypto.randomBytes(8).toString('hex');
+  user = await createProfile({
+    id,
+    email: key,
+    name: name || key.split('@')[0],
+    picture: picture || null,
+  });
+
+  if (!user) {
+    // Fallback: usuario en memoria si Supabase falla
+    console.warn('[auth] Supabase falló, usando usuario en memoria');
+    user = {
+      id,
+      email: key,
+      name: name || key.split('@')[0],
+      picture: picture || null,
+      role: 'student',
+      plan: 'free',
+    };
+  }
+
+  return user;
 }
 
-/* ── Middleware ── */
+/* ── Middlewares ── */
 export function requireAuth(req, res, next) {
   const token = req.cookies?.[COOKIE_NAME];
   if (!token) return res.status(401).json({ error: 'No autenticado' });
@@ -214,7 +154,7 @@ export function mountAuthRoutes(app) {
       if (!payload?.email) return res.status(400).json({ error: 'Token sin email' });
       if (!payload.email_verified) return res.status(400).json({ error: 'Email no verificado' });
 
-      const user = findOrCreateUser({
+      const user = await findOrCreateUser({
         email: payload.email,
         name: payload.name,
         picture: payload.picture,
@@ -228,7 +168,7 @@ export function mountAuthRoutes(app) {
       return res.json({ ok: true, user: publicUser(user) });
     } catch (err) {
       console.error('[auth] error Google:', err.message);
-      return res.status(401).json({ error: 'Token de Google inválido: ' + err.message });
+      return res.status(401).json({ error: 'Token de Google inválido' });
     }
   });
 
@@ -252,7 +192,7 @@ export function mountAuthRoutes(app) {
     return res.json({ authenticated: Boolean(token && verifySession(token)) });
   });
 
-  console.log(`[auth] rutas montadas (${CAN_WRITE ? 'con persistencia JSON' : 'stateless / producción'})`);
+  console.log(`[auth] rutas montadas (${supabaseDisponible() ? 'Supabase' : 'sin DB'})`);
 }
 
 function publicUser(user) {
@@ -261,7 +201,8 @@ function publicUser(user) {
     email: user.email,
     name: user.name,
     picture: user.picture,
-    role: user.role,
-    createdAt: user.createdAt,
+    role: user.role || 'student',
+    plan: user.plan || 'free',
+    createdAt: user.created_at || user.createdAt,
   };
 }

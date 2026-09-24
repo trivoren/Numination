@@ -1,305 +1,1153 @@
 <!DOCTYPE html>
-<html lang="es-CO" data-theme="light">
+<html lang="es-CO" data-theme="medianoche">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Numination — Ingresa</title>
+  <title>Ingresar · Numination</title>
   <meta name="description" content="Ingresa a Numination, la IA educativa colombiana." />
-  <meta name="theme-color" content="#1a1a2e" />
+  <meta name="theme-color" content="#0a0a1a" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="robots" content="noindex" />
   <link rel="icon" href="favicon.ico" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="assets/css/auth.css" />
-  <script>
-  /* Callback de Google — debe existir ANTES de cargar GSI */
-  window.handleGoogleCredential = function (response) {
-    console.log('[auth] Google callback ejecutado', response);
-    var credential = response && response.credential;
-    if (!credential) { console.error('[auth] sin credential'); return; }
-    fetch('/api/auth/google', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ credential: credential, remember: true })
-    })
-    .then(function (r) { console.log('[auth] status:', r.status); return r.json(); })
-    .then(function (data) {
-      console.log('[auth] data:', data);
-      if (!data.ok) throw new Error(data.error || 'Auth failed');
-      var t = document.createElement('div');
-      t.textContent = 'Bienvenido, ' + data.user.name;
-      t.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#065f46;color:#fff;padding:12px 20px;border-radius:8px;z-index:9999;font-family:Inter,sans-serif;font-size:14px';
-      document.body.appendChild(t);
-      setTimeout(function () { location.href = '/chat.html'; }, 800);
-    })
-    .catch(function (err) {
-      console.error('[auth] error:', err);
-      alert('Error: ' + err.message);
-    });
-  };
-</script>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ================================================================
+       VARIABLES
+       ================================================================ */
+    :root {
+      --c-bg: #0a0a1a;
+      --c-bg-alt: #101023;
+      --c-bg-elevated: #16162b;
+      --c-bg-hover: #1c1c36;
+      --c-border: #24243e;
+      --c-border-strong: #34345a;
+      --c-text: #e0e0ff;
+      --c-text-muted: #8888aa;
+      --c-text-subtle: #5a5a7a;
+      --c-primary: #7c5eff;
+      --c-primary-hover: #6b4eff;
+      --c-primary-glow: rgba(124, 94, 255, 0.35);
+      --c-danger: #ff4d4d;
+      --c-success: #4dff88;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --transition: 180ms cubic-bezier(0.4, 0, 0.2, 1);
+      --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    [data-theme="oscuro"] {
+      --c-bg: #0a0a0a;
+      --c-bg-alt: #141414;
+      --c-bg-elevated: #1a1a1f;
+      --c-bg-hover: #22222a;
+      --c-border: #2a2a30;
+      --c-border-strong: #3a3a42;
+      --c-text: #ececf1;
+      --c-text-muted: #8e8ea0;
+      --c-text-subtle: #5a5a6a;
+    }
+
+    [data-theme="medianoche"] {
+      --c-bg: #0a0a1a;
+      --c-bg-alt: #101023;
+      --c-bg-elevated: #16162b;
+      --c-bg-hover: #1c1c36;
+      --c-border: #24243e;
+      --c-border-strong: #34345a;
+      --c-text: #e0e0ff;
+      --c-text-muted: #8888aa;
+      --c-text-subtle: #5a5a7a;
+    }
+
+    /* ================================================================
+       RESET
+       ================================================================ */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+      width: 100%;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--c-bg);
+      color: var(--c-text);
+      font-size: 15px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+    }
+
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: inherit;
+    }
+
+    input {
+      font-family: inherit;
+      color: inherit;
+      background: none;
+      border: none;
+      outline: none;
+      width: 100%;
+      font-size: 15px;
+    }
+
+    a {
+      color: var(--c-primary);
+      text-decoration: none;
+      transition: color var(--transition);
+    }
+    a:hover { text-decoration: underline; }
+
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--c-border); border-radius: 4px; }
+
+    /* ================================================================
+       LAYOUT
+       ================================================================ */
+    .auth-app {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr;
+      min-height: 100vh;
+      min-height: 100dvh;
+    }
+
+    /* ═══════════ HERO (izquierda) ═══════════ */
+    .auth-hero {
+      position: relative;
+      display: flex;
+      align-items: center;
+      padding: 64px;
+      overflow: hidden;
+      background: var(--c-bg);
+      border-right: 1px solid var(--c-border);
+    }
+
+    .auth-hero::before {
+      content: '';
+      position: absolute;
+      top: 30%;
+      left: 40%;
+      transform: translate(-50%, -50%);
+      width: 700px;
+      height: 700px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--c-primary-glow) 0%, transparent 55%);
+      pointer-events: none;
+      filter: blur(50px);
+      opacity: 0.35;
+    }
+
+    .auth-hero__pattern {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+      background-size: 44px 44px;
+      mask-image: radial-gradient(ellipse at 30% 50%, #000 20%, transparent 75%);
+      -webkit-mask-image: radial-gradient(ellipse at 30% 50%, #000 20%, transparent 75%);
+      pointer-events: none;
+    }
+
+    .auth-hero__content {
+      position: relative;
+      z-index: 1;
+      max-width: 560px;
+      animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .auth-hero__wordmark {
+      font-size: clamp(40px, 4.5vw, 56px);
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      line-height: 1;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      color: var(--c-text);
+    }
+
+    .auth-hero__dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      background: var(--c-primary);
+      border-radius: 50%;
+      margin-left: 8px;
+      box-shadow: 0 0 20px var(--c-primary-glow);
+      position: relative;
+      top: -0.6em;
+      animation: pulse 2.4s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 20px var(--c-primary-glow); }
+      50% { transform: scale(1.25); box-shadow: 0 0 32px var(--c-primary-glow); }
+    }
+
+    .auth-hero__tagline {
+      font-size: clamp(20px, 2.2vw, 26px);
+      line-height: 1.4;
+      color: var(--c-text-muted);
+      margin-bottom: 56px;
+      font-weight: 400;
+      letter-spacing: -0.01em;
+    }
+
+    .auth-hero__features {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .auth-hero__features li {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      font-size: 15px;
+      color: var(--c-text);
+      line-height: 1.5;
+    }
+
+    .auth-hero__features svg {
+      width: 22px;
+      height: 22px;
+      color: var(--c-primary);
+      flex-shrink: 0;
+      padding: 5px;
+      background: rgba(124, 94, 255, 0.08);
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(124, 94, 255, 0.18);
+      box-sizing: content-box;
+      margin-top: 1px;
+    }
+
+    /* ═══════════ PANEL (derecha) ═══════════ */
+    .auth-panel {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 48px;
+      background: var(--c-bg);
+      position: relative;
+      overflow-y: auto;
+    }
+
+    .auth-inner {
+      width: 100%;
+      max-width: 380px;
+      animation: fadeIn 0.9s ease 0.15s both;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .auth-logo {
+      width: 52px;
+      height: 52px;
+      background: linear-gradient(135deg, var(--c-primary), #a78bfa);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 28px;
+      font-size: 24px;
+      font-weight: 800;
+      color: #fff;
+      box-shadow: 0 8px 28px var(--c-primary-glow);
+      letter-spacing: -0.02em;
+    }
+
+    .auth-title {
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+
+    .auth-subtitle {
+      font-size: 14.5px;
+      color: var(--c-text-muted);
+      margin-bottom: 32px;
+      line-height: 1.55;
+    }
+
+    .auth-subtitle strong {
+      color: var(--c-text);
+      font-weight: 500;
+    }
+
+    /* ================================================================
+       BOTÓN GOOGLE CUSTOM (SVG)
+       ================================================================ */
+    .auth-google-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 13px 20px;
+      background: var(--c-bg-elevated);
+      border: 1px solid var(--c-border-strong);
+      border-radius: var(--radius-md);
+      color: var(--c-text);
+      font-size: 14.5px;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .auth-google-btn:hover:not(:disabled) {
+      background: var(--c-bg-hover);
+      border-color: var(--c-border-strong);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .auth-google-btn:active:not(:disabled) {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+
+    .auth-google-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .auth-google-btn svg {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+
+    .auth-google-btn.is-loading {
+      pointer-events: none;
+    }
+
+    .auth-google-btn.is-loading .auth-google-btn__label {
+      opacity: 0.5;
+    }
+
+    .auth-google-btn.is-loading::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 18px;
+      height: 18px;
+      margin: -9px 0 0 -9px;
+      border: 2px solid var(--c-primary);
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ================================================================
+       SEPARADOR
+       ================================================================ */
+    .auth-divider {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin: 24px 0;
+      color: var(--c-text-subtle);
+      font-size: 11.5px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .auth-divider::before,
+    .auth-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--c-border);
+    }
+
+    /* ================================================================
+       BOTÓN EMAIL
+       ================================================================ */
+    .auth-email-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 13px 20px;
+      background: transparent;
+      border: 1px solid var(--c-border-strong);
+      border-radius: var(--radius-md);
+      color: var(--c-text);
+      font-size: 14.5px;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .auth-email-btn:hover {
+      background: var(--c-bg-elevated);
+      border-color: var(--c-primary);
+      transform: translateY(-1px);
+    }
+
+    .auth-email-btn svg {
+      width: 18px;
+      height: 18px;
+      color: var(--c-primary);
+    }
+
+    /* ================================================================
+       FORMULARIO EMAIL
+       ================================================================ */
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .auth-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .auth-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--c-text);
+      letter-spacing: 0.01em;
+    }
+
+    .auth-input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      background: var(--c-bg-elevated);
+      border: 1px solid var(--c-border-strong);
+      border-radius: var(--radius-md);
+      transition: all var(--transition);
+    }
+
+    .auth-input-wrap:focus-within {
+      border-color: var(--c-primary);
+      box-shadow: 0 0 0 3px var(--c-primary-glow);
+    }
+
+    .auth-input-wrap.is-invalid {
+      border-color: var(--c-danger);
+    }
+
+    .auth-input-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 12px;
+      color: var(--c-text-muted);
+      flex-shrink: 0;
+    }
+
+    .auth-input-icon svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .auth-input {
+      padding: 12px 0;
+      font-size: 14.5px;
+    }
+
+    .auth-input::placeholder { color: var(--c-text-subtle); }
+
+    .auth-input-action {
+      padding: 0 12px;
+      color: var(--c-text-muted);
+      display: flex;
+      align-items: center;
+      transition: color var(--transition);
+    }
+
+    .auth-input-action:hover { color: var(--c-text); }
+    .auth-input-action svg { width: 16px; height: 16px; }
+
+    .auth-error-msg {
+      font-size: 12px;
+      color: var(--c-danger);
+      display: none;
+      margin-top: 2px;
+    }
+
+    .auth-input-wrap.is-invalid ~ .auth-error-msg { display: block; }
+
+    .auth-submit {
+      width: 100%;
+      padding: 13px 20px;
+      background: var(--c-primary);
+      color: #fff;
+      border-radius: var(--radius-md);
+      font-size: 14.5px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all var(--transition);
+      margin-top: 6px;
+      position: relative;
+    }
+
+    .auth-submit:hover:not(:disabled) {
+      background: var(--c-primary-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px var(--c-primary-glow);
+    }
+
+    .auth-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .auth-submit.is-loading {
+      color: transparent;
+      pointer-events: none;
+    }
+
+    .auth-submit.is-loading::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 16px;
+      height: 16px;
+      margin: -8px 0 0 -8px;
+      border: 2px solid #fff;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    .auth-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--c-text-muted);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px 0;
+      margin-top: 4px;
+      transition: color var(--transition);
+      align-self: center;
+    }
+
+    .auth-back:hover { color: var(--c-text); }
+    .auth-back svg { width: 14px; height: 14px; }
+
+    /* Vista oculta */
+    .auth-view[hidden] { display: none; }
+
+    /* ================================================================
+       FOOTER NAV
+       ================================================================ */
+    .auth-footer-nav {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin-top: 40px;
+      padding-top: 24px;
+      border-top: 1px solid var(--c-border);
+      font-size: 12.5px;
+      color: var(--c-text-muted);
+      flex-wrap: wrap;
+    }
+
+    .auth-footer-nav a {
+      color: var(--c-text-muted);
+      transition: color var(--transition);
+    }
+
+    .auth-footer-nav a:hover {
+      color: var(--c-primary);
+      text-decoration: none;
+    }
+
+    .auth-footer-nav__dot { opacity: 0.4; }
+
+    .auth-copyright {
+      text-align: center;
+      margin-top: 14px;
+      font-size: 11.5px;
+      color: var(--c-text-subtle);
+      opacity: 0.75;
+    }
+
+    .auth-legal-note {
+      font-size: 12px;
+      color: var(--c-text-muted);
+      text-align: center;
+      margin-top: 24px;
+      line-height: 1.55;
+    }
+
+    .auth-legal-note a {
+      color: var(--c-text-muted);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      text-decoration-color: var(--c-border);
+      transition: all var(--transition);
+    }
+
+    .auth-legal-note a:hover {
+      color: var(--c-primary);
+      text-decoration-color: var(--c-primary);
+    }
+
+    /* ================================================================
+       TOASTS
+       ================================================================ */
+    .nm-toasts {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 1000;
+      pointer-events: none;
+    }
+
+    .nm-toast {
+      padding: 12px 18px;
+      background: var(--c-bg-elevated);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      color: var(--c-text);
+      animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 260px;
+      max-width: 380px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+      pointer-events: auto;
+      line-height: 1.4;
+    }
+
+    .nm-toast--ok { border-left: 3px solid var(--c-success); }
+    .nm-toast--err { border-left: 3px solid var(--c-danger); }
+    .nm-toast--info { border-left: 3px solid var(--c-primary); }
+
+    @keyframes slideIn {
+      from { transform: translateX(120%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* GSI oculto */
+    .gsi-hidden {
+      position: absolute;
+      width: 0;
+      height: 0;
+      overflow: hidden;
+      opacity: 0;
+      pointer-events: none;
+      top: -9999px;
+      left: -9999px;
+    }
+
+    /* ================================================================
+       RESPONSIVE
+       ================================================================ */
+    @media (max-width: 960px) {
+      .auth-app { grid-template-columns: 1fr; }
+      .auth-hero { display: none; }
+      .auth-panel { padding: 40px 24px; min-height: 100vh; min-height: 100dvh; }
+      .auth-inner { max-width: 400px; }
+    }
+
+    @media (max-width: 480px) {
+      .auth-panel {
+        padding: 32px 20px;
+        align-items: flex-start;
+        padding-top: 56px;
+      }
+      .auth-logo { width: 46px; height: 46px; font-size: 22px; margin-bottom: 24px; }
+      .auth-title { font-size: 22px; }
+      .nm-toasts { left: 12px; right: 12px; bottom: 12px; }
+      .nm-toast { max-width: none; width: 100%; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
 </head>
-<body class="auth-body">
+
+<body>
 
 <main class="auth-app">
 
-  <!-- ═══════ WELCOME ═══════ -->
-  <section class="auth-screen auth-screen--split" data-screen="welcome">
-    <aside class="auth-hero">
-      <div class="auth-hero__pattern" aria-hidden="true"></div>
-      <div class="auth-hero__content">
-        <h1 class="auth-hero__wordmark">Numination<span class="auth-hero__dot"></span></h1>
-        <p class="auth-hero__tagline">La IA que habla el idioma<br />de nuestra educación</p>
-        <ul class="auth-hero__features">
-          <li>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>
-            <span>Practica con IA</span>
-          </li>
-          <li>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14a6 6 0 1 0 0-12 6 6 0 0 0 0 12Z"/><path d="M12 14v6"/><path d="M12 20H8"/><path d="M12 17H9"/></svg>
-            <span>Mide tu nivel</span>
-          </li>
-          <li>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><rect x="4" y="13" width="4" height="8"/><rect x="10" y="8" width="4" height="13"/><rect x="16" y="3" width="4" height="18"/></svg>
-            <span>Sube tu puntaje</span>
-          </li>
-        </ul>
-      </div>
-    </aside>
+  <!-- ═══════════════════════════════════════════════════════════
+       HERO
+       ═══════════════════════════════════════════════════════════ -->
+  <aside class="auth-hero">
+    <div class="auth-hero__pattern" aria-hidden="true"></div>
 
-    <div class="auth-panel">
-      <div class="auth-inner">
-        <div class="auth-logo"><img src="assets/img/logo-n.png" alt="Numination" /></div>
-        <h2 class="auth-title">Bienvenido a Numination</h2>
-        <p class="auth-subtitle">La IA que habla el idioma de nuestra educación</p>
+    <div class="auth-hero__content">
+      <h1 class="auth-hero__wordmark">
+        Numination<span class="auth-hero__dot" aria-hidden="true"></span>
+      </h1>
 
-       <div id="g_id_onload"
-     data-client_id="815847930264-hqlpgm37slhbbtqotv4uv9erla4sdl6d.apps.googleusercontent.com"
-     data-callback="handleGoogleCredential"
-     data-auto_prompt="false">
-</div>
-<div class="g_id_signin"
-     data-type="standard"
-     data-size="large"
-     data-theme="outline"
-     data-text="continue_with"
-     data-shape="rectangular"
-     data-logo_alignment="left"
-     data-width="320">
-</div>
+      <p class="auth-hero__tagline">
+        La IA que habla el idioma<br />
+        de nuestra educación.
+      </p>
+
+      <ul class="auth-hero__features">
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+          <span>Pregunta lo que quieras, en tus palabras</span>
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 2 4 7v10l8 5 8-5V7z"/>
+            <path d="m4 7 8 5 8-5"/>
+            <path d="M12 12v10"/>
+          </svg>
+          <span>Aprende a tu ritmo, con ejemplos de Colombia</span>
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 2v4"/>
+            <path d="m16.24 7.76 2.83-2.83"/>
+            <path d="M18 12h4"/>
+            <path d="m16.24 16.24 2.83 2.83"/>
+            <path d="M12 18v4"/>
+            <path d="m4.93 19.07 2.83-2.83"/>
+            <path d="M2 12h4"/>
+            <path d="m4.93 4.93 2.83 2.83"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+          <span>Tres motores de IA trabajando sin parar</span>
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="m9 12 2 2 4-4"/>
+          </svg>
+          <span>Tus datos están seguros y nunca se venden</span>
+        </li>
+      </ul>
+    </div>
+  </aside>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       PANEL
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="auth-panel">
+    <div class="auth-inner">
+
+      <div class="auth-logo" aria-hidden="true">N</div>
+
+      <h2 class="auth-title">Bienvenido a Numination</h2>
+      <p class="auth-subtitle">
+        Tu tutor con IA, hecho en Colombia.<br />
+        <strong>Gratis para empezar.</strong>
+      </p>
+
+      <!-- ═══════════ VISTA 1: MÉTODOS DE LOGIN ═══════════ -->
+      <div class="auth-view" data-view="methods">
+
+        <!-- Botón Google custom con SVG -->
+        <button type="button" class="auth-google-btn" data-google-btn>
+          <svg viewBox="0 0 48 48" aria-hidden="true">
+            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+          </svg>
+          <span class="auth-google-btn__label">Continuar con Google</span>
         </button>
 
         <div class="auth-divider"><span>o</span></div>
 
-        <button type="button" class="auth-btn auth-btn--primary" data-action="to-email">Continuar con correo</button>
-
-        <p class="auth-alt">¿Ya tienes cuenta? <a href="#" data-action="to-email">Inicia sesión</a></p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══════ EMAIL ═══════ -->
-  <section class="auth-screen auth-screen--centered" data-screen="email" hidden>
-    <div class="auth-inner">
-      <div class="auth-logo"><img src="assets/img/logo-n.png" alt="Numination" /></div>
-      <h2 class="auth-title">Ingresa a Numination</h2>
-
-      <form class="auth-form" data-form="email" novalidate>
-        <div class="auth-field">
-          <label for="email">Correo electrónico</label>
-          <input type="email" id="email" name="email" autocomplete="email" inputmode="email" placeholder="tucorreo@ejemplo.com" required autofocus />
-          <p class="auth-field__error" data-error></p>
-        </div>
-        <button type="submit" class="auth-btn auth-btn--primary auth-btn--submit">
-          <span data-label>Continuar</span>
-          <span class="auth-spinner" aria-hidden="true"></span>
+        <!-- Botón email -->
+        <button type="button" class="auth-email-btn" data-show-email>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
+          </svg>
+          <span>Continuar con correo</span>
         </button>
-        <a href="#" class="auth-back" data-action="back">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-          <span>Volver</span>
-        </a>
-      </form>
-    </div>
-  </section>
 
-  <!-- ═══════ PASSWORD ═══════ -->
-  <section class="auth-screen auth-screen--centered" data-screen="password" hidden>
-    <div class="auth-inner">
-      <div class="auth-logo"><img src="assets/img/logo-n.png" alt="Numination" /></div>
-
-      <div class="auth-chip">
-        <span data-chip-email>tucorreo@ejemplo.com</span>
-        <button type="button" data-action="to-email">Editar</button>
+        <p class="auth-legal-note">
+          Al continuar aceptas nuestros
+          <a href="terminos.html">términos</a> y la
+          <a href="terminos.html">política de privacidad</a>.
+        </p>
       </div>
 
-      <h2 class="auth-title">Ingresa tu contraseña</h2>
+      <!-- ═══════════ VISTA 2: FORM CORREO ═══════════ -->
+      <div class="auth-view" data-view="email" hidden>
+        <form class="auth-form" data-email-form novalidate>
 
-      <form class="auth-form" data-form="password" novalidate>
-        <div class="auth-field">
-          <label for="password">Contraseña</label>
-          <div class="auth-input-wrap">
-            <input type="password" id="password" name="password" autocomplete="current-password" placeholder="••••••••" minlength="8" required />
-            <button type="button" class="auth-eye" data-action="toggle-pass" aria-label="Mostrar contraseña">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-icon="eye"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-icon="eye-off" style="display:none"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
-            </button>
+          <div class="auth-field">
+            <label class="auth-label" for="email">Correo electrónico</label>
+            <div class="auth-input-wrap" data-field="email">
+              <span class="auth-input-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+              </span>
+              <input type="email" id="email" class="auth-input" placeholder="tu@correo.com" autocomplete="email" required />
+            </div>
+            <span class="auth-error-msg">Ingresa un correo válido.</span>
           </div>
-          <p class="auth-field__error" data-error></p>
-        </div>
 
-        <div class="auth-row">
-          <label class="auth-check">
-            <input type="checkbox" name="remember" checked />
-            <span class="auth-check__box"></span>
-            <span>Recordarme</span>
-          </label>
-          <a href="#" class="auth-link" data-action="to-forgot">Olvidé mi contraseña</a>
-        </div>
+          <div class="auth-field">
+            <label class="auth-label" for="password">Contraseña</label>
+            <div class="auth-input-wrap" data-field="password">
+              <span class="auth-input-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              </span>
+              <input type="password" id="password" class="auth-input" placeholder="••••••••" autocomplete="current-password" minlength="6" required />
+              <button type="button" class="auth-input-action" data-toggle-pass aria-label="Mostrar contraseña">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-icon="eye">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-icon="eye-off" style="display:none">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+              </button>
+            </div>
+            <span class="auth-error-msg">La contraseña debe tener al menos 6 caracteres.</span>
+          </div>
 
-        <button type="submit" class="auth-btn auth-btn--primary auth-btn--submit">
-          <span data-label>Ingresar</span>
-          <span class="auth-spinner" aria-hidden="true"></span>
-        </button>
-      </form>
-    </div>
-  </section>
+          <button type="submit" class="auth-submit" data-email-submit>
+            Ingresar
+          </button>
 
-  <!-- ═══════ SIGNUP ═══════ -->
-  <section class="auth-screen auth-screen--centered" data-screen="signup" hidden>
-    <div class="auth-inner">
-      <div class="auth-logo"><img src="assets/img/logo-n.png" alt="Numination" /></div>
-
-      <div class="auth-chip">
-        <span data-chip-email>tucorreo@ejemplo.com</span>
-        <button type="button" data-action="to-email">Editar</button>
+          <button type="button" class="auth-back" data-back-to-methods>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"/>
+              <polyline points="12 19 5 12 12 5"/>
+            </svg>
+            <span>Volver a métodos de ingreso</span>
+          </button>
+        </form>
       </div>
 
-      <h2 class="auth-title">Crea tu cuenta</h2>
-      <p class="auth-subtitle">Un solo paso. Sin tarjeta. Gratis.</p>
+      <!-- Footer -->
+      <nav class="auth-footer-nav" aria-label="Enlaces">
+        <a href="index.html">Inicio</a>
+        <span class="auth-footer-nav__dot" aria-hidden="true">·</span>
+        <a href="precio.html">Precios</a>
+        <span class="auth-footer-nav__dot" aria-hidden="true">·</span>
+        <a href="terminos.html">Términos</a>
+      </nav>
 
-      <form class="auth-form" data-form="signup" novalidate>
-        <div class="auth-field">
-          <label for="new-password">Contraseña</label>
-          <div class="auth-input-wrap">
-            <input type="password" id="new-password" name="password" autocomplete="new-password" placeholder="••••••••" minlength="8" required />
-            <button type="button" class="auth-eye" data-action="toggle-pass" aria-label="Mostrar contraseña">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-icon="eye"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-icon="eye-off" style="display:none"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
-            </button>
-          </div>
-          <div class="auth-strength" data-strength><span></span><span></span><span></span><span></span></div>
-          <p class="auth-strength__label" data-strength-label>(Débil)</p>
-        </div>
+      <p class="auth-copyright">
+        © 2026 Numination · Hecho en Colombia 🇨🇴
+      </p>
 
-        <label class="auth-check auth-check--full">
-          <input type="checkbox" name="terms" required />
-          <span class="auth-check__box"></span>
-          <span>Acepto los <a href="terminos.html" target="_blank">términos</a> y la <a href="terminos.html" target="_blank">política de privacidad</a></span>
-        </label>
-
-        <div class="auth-guardian">
-          <p class="auth-guardian__label">Si eres menor de 18 años:</p>
-          <label class="auth-check auth-check--full">
-            <input type="checkbox" name="guardian" />
-            <span class="auth-check__box"></span>
-            <span>Mi acudiente autoriza mi registro (Ley 1581 de 2012)</span>
-          </label>
-        </div>
-
-        <p class="auth-field__error" data-error></p>
-
-        <button type="submit" class="auth-btn auth-btn--primary auth-btn--submit">
-          <span data-label>Crear cuenta</span>
-          <span class="auth-spinner" aria-hidden="true"></span>
-        </button>
-      </form>
     </div>
-  </section>
-
-  <!-- ═══════ VERIFY ═══════ -->
-  <section class="auth-screen auth-screen--centered" data-screen="verify" hidden>
-    <div class="auth-inner auth-inner--wide">
-      <div class="auth-logo"><img src="assets/img/logo-n.png" alt="Numination" /></div>
-
-      <div class="auth-icon-lg">
-        <svg viewBox="0 0 80 80" fill="none"><rect x="10" y="20" width="60" height="46" rx="4" fill="#e8ebf5" stroke="#7c93d4" stroke-width="2.5"/><path d="M10 24 L40 44 L70 24" stroke="#7c93d4" stroke-width="2.5" fill="none" stroke-linejoin="round"/><circle cx="40" cy="34" r="12" fill="#7c93d4"/><text x="40" y="39" text-anchor="middle" fill="#fff" font-family="Inter" font-size="16" font-weight="600">@</text></svg>
-      </div>
-
-      <h2 class="auth-title">Revisa tu correo</h2>
-      <p class="auth-subtitle">Te enviamos un link de verificación a<br /><strong data-verify-email>tucorreo@ejemplo.com</strong></p>
-
-      <p class="auth-note">Haz clic en el link del correo para activar tu cuenta.</p>
-      <p class="auth-note auth-note--muted">Si no lo ves, revisa la carpeta de spam.</p>
-
-      <button type="button" class="auth-btn auth-btn--outline" data-action="resend" disabled>
-        <span data-resend-label>Reenviar correo</span>
-      </button>
-
-      <a href="#" class="auth-link auth-link--block" data-action="to-email">Cambiar correo</a>
-      <a href="#" class="auth-link auth-link--block" data-action="continue">Ya verifiqué, continuar</a>
-    </div>
-  </section>
-
-  <!-- ═══════ FORGOT ═══════ -->
-  <section class="auth-screen auth-screen--centered" data-screen="forgot" hidden>
-    <div class="auth-inner">
-      <div class="auth-logo"><img src="assets/img/logo-n.png" alt="Numination" /></div>
-      <h2 class="auth-title">Recupera tu contraseña</h2>
-      <p class="auth-subtitle">Te enviaremos un link para crear una nueva.</p>
-
-      <form class="auth-form" data-form="forgot" novalidate>
-        <div class="auth-field">
-          <label for="forgot-email">Correo electrónico</label>
-          <input type="email" id="forgot-email" name="email" autocomplete="email" placeholder="tucorreo@ejemplo.com" required />
-          <p class="auth-field__error" data-error></p>
-        </div>
-        <button type="submit" class="auth-btn auth-btn--primary auth-btn--submit">
-          <span data-label>Enviar link</span>
-          <span class="auth-spinner" aria-hidden="true"></span>
-        </button>
-        <a href="#" class="auth-back" data-action="back">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-          <span>Volver</span>
-        </a>
-      </form>
-    </div>
-  </section>
-
-  <!-- ═══════ RESET ═══════ -->
-  <section class="auth-screen auth-screen--centered" data-screen="reset" hidden>
-    <div class="auth-inner">
-      <div class="auth-logo"><img src="assets/img/logo-n.png" alt="Numination" /></div>
-      <h2 class="auth-title">Crea una nueva contraseña</h2>
-      <p class="auth-subtitle">Debe tener al menos 8 caracteres.</p>
-
-      <form class="auth-form" data-form="reset" novalidate>
-        <div class="auth-field">
-          <div class="auth-input-wrap">
-            <input type="password" id="reset-1" name="password" autocomplete="new-password" placeholder="Nueva contraseña" minlength="8" required />
-            <button type="button" class="auth-eye" data-action="toggle-pass" aria-label="Mostrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-icon="eye"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-icon="eye-off" style="display:none"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg></button>
-          </div>
-        </div>
-        <div class="auth-field">
-          <div class="auth-input-wrap">
-            <input type="password" id="reset-2" name="password2" autocomplete="new-password" placeholder="Confirmar contraseña" minlength="8" required />
-            <button type="button" class="auth-eye" data-action="toggle-pass" aria-label="Mostrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-icon="eye"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-icon="eye-off" style="display:none"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg></button>
-          </div>
-          <p class="auth-field__error" data-error></p>
-        </div>
-        <button type="submit" class="auth-btn auth-btn--primary auth-btn--submit">
-          <span data-label>Guardar contraseña</span>
-          <span class="auth-spinner" aria-hidden="true"></span>
-        </button>
-      </form>
-    </div>
-  </section>
+  </div>
 
 </main>
 
-<div class="toast-host" aria-live="polite"></div>
+<!-- GSI oculto (para el flujo OAuth real) -->
+<div class="gsi-hidden" aria-hidden="true">
+  <div id="g_id_onload"
+       data-client_id="815847930264-hqlpgm37slhbbtqotv4uv9erla4sdl6d.apps.googleusercontent.com"
+       data-callback="handleGoogleCredential"
+       data-auto_prompt="false"
+       data-context="signin"
+       data-ux_mode="popup"></div>
+  <div class="g_id_signin"
+       data-type="standard"
+       data-size="large"
+       data-theme="filled_black"
+       data-text="continue_with"
+       data-shape="rectangular"
+       data-logo_alignment="center"
+       data-width="340"></div>
+</div>
 
-<script src="assets/js/auth.js"></script>
+<!-- Toasts -->
+<div class="nm-toasts" id="nm-toasts" aria-live="polite" role="status"></div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     Callback de Google — ANTES de cargar GSI
+     ═══════════════════════════════════════════════════════════ -->
+<script>
+(function () {
+  'use strict';
+
+  /* ── Toasts ── */
+  const Toasts = {
+    _push(kind, msg) {
+      const host = document.getElementById('nm-toasts');
+      if (!host) return;
+      const t = document.createElement('div');
+      t.className = 'nm-toast nm-toast--' + kind;
+      const ico = { ok: '✓', err: '✕', info: 'ⓘ' }[kind] || '';
+      t.innerHTML = `<span>${ico}</span><span>${msg}</span>`;
+      host.appendChild(t);
+      setTimeout(() => {
+        t.style.transition = 'opacity .3s, transform .3s';
+        t.style.opacity = '0';
+        t.style.transform = 'translateX(20px)';
+        setTimeout(() => t.remove(), 320);
+      }, 3400);
+    },
+    ok(m)   { this._push('ok', m); },
+    err(m)  { this._push('err', m); },
+    info(m) { this._push('info', m); },
+  };
+
+  window.__numination = window.__numination || {};
+  window.__numination.Toasts = Toasts;
+
+  /* ── Tema guardado ── */
+  try {
+    const saved = localStorage.getItem('numination-theme');
+    if (saved) document.documentElement.dataset.theme = saved;
+  } catch (e) {}
+
+  /* ══════════════════════════════════════════════════════════════
+     CALLBACK GOOGLE
+     ══════════════════════════════════════════════════════════════ */
+  window.handleGoogleCredential = async function (response) {
+    const credential = response && response.credential;
+
+    if (!credential) {
+      console.error('[auth] sin credential');
+      Toasts.err('Google no devolvió credenciales. Intenta de nuevo.');
+      setGoogleLoading(false);
+      return;
+    }
+
+    Toasts.info('Verificando con Google…');
+
+    try {
+      const res = await fetch('/api/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ credential: credential, remember: true }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.ok) {
+        throw new Error((data && data.error) || 'Error de autenticación');
+      }
+
+      Toasts.ok('¡Bienvenido, ' + (data.user.name || data.user.email) + '!');
+
+      setTimeout(() => { location.href = '/chat.html'; }, 700);
+    } catch (err) {
+      console.error('[auth]', err);
+      setGoogleLoading(false);
+      Toasts.err('No pudimos iniciar sesión. Intenta de nuevo.');
+    }
+  };
+
+  /* ══════════════════════════════════════════════════════════════
+     BOTÓN GOOGLE CUSTOM → CLICK PROGRAMÁTICO AL GSI
+     ══════════════════════════════════════════════════════════════ */
+  function setGoogleLoading(loading) {
+    const btn = document.querySelector('[data-google-btn]');
+    if (!btn) return;
+    btn.classList.toggle('is-loading', loading);
+    btn.disabled = loading;
+  }
+
+  document.querySelector('[data-google-btn]')?.addEventListener('click', function () {
+    setGoogleLoading(true);
+
+    // Buscar el botón renderizado por Google dentro del div oculto
+    const gsiBtn = document.querySelector('.gsi-hidden [role="button"], .gsi-hidden button, .gsi-hidden div[tabindex]');
+
+    if (gsiBtn) {
+      gsiBtn.click();
+    } else {
+      // Si GSI aún no renderizó, esperar y reintentar
+      setTimeout(() => {
+        const retryBtn = document.querySelector('.gsi-hidden [role="button"], .gsi-hidden button, .gsi-hidden div[tabindex]');
+        if (retryBtn) retryBtn.click();
+        else {
+          setGoogleLoading(false);
+          Toasts.err('Google no está listo. Recarga la página.');
+        }
+      }, 500);
+    }
+  });
+
+  /* ══════════════════════════════════════════════════════════════
+     ROUTER DE VISTAS (methods ↔ email)
+     ══════════════════════════════════════════════════════════════ */
+  function showView(name) {
+    document.querySelectorAll('[data-view]').forEach((v) => {
+      v.hidden = v.dataset.view !== name;
+    });
+  }
+
+  document.querySelector('[data-show-email]')?.addEventListener('click', () => {
+    showView('email');
+    setTimeout(() => document.getElementById('email')?.focus(), 80);
+  });
+
+  document.querySelector('[data-back-to-methods]')?.addEventListener('click', () => {
+    showView('methods');
+  });
+
+  /* ══════════════════════════════════════════════════════════════
+     TOGGLE PASSWORD
+     ══════════════════════════════════════════════════════════════ */
+  document.querySelector('[data-toggle-pass]')?.addEventListener('click', function () {
+    const input = document.getElementById('password');
+    const eye = this.querySelector('[data-icon="eye"]');
+    const eyeOff = this.querySelector('[data-icon="eye-off"]');
+    if (!input) return;
+
+    const showing = input.type === 'text';
+    input.type = showing ? 'password' : 'text';
+    if (eye) eye.style.display = showing ? '' : 'none';
+    if (eyeOff) eyeOff.style.display = showing ? 'none' : '';
+  });
+
+  /* ══════════════════════════════════════════════════════════════
+     VALIDACIÓN + SUBMIT FORM CORREO
+     ══════════════════════════════════════════════════════════════ */
+  const emailForm = document.querySelector('[data-email-form]');
+  if (emailForm) {
+    const emailInput = document.getElementById('email');
+    const passInput = document.getElementById('password');
+
+    const setInvalid = (name, invalid) => {
+      const wrap = document.querySelector(`[data-field="${name}"]`);
+      if (wrap) wrap.classList.toggle('is-invalid', invalid);
+    };
+
+    emailInput?.addEventListener('input', () => {
+      if (emailInput.value.length > 0) setInvalid('email', false);
+    });
+    passInput?.addEventListener('input', () => {
+      if (passInput.value.length > 0) setInvalid('password', false);
+    });
+
+    emailForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const email = emailInput.value.trim();
+      const password = passInput.value;
+      const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      const passOk = password.length >= 6;
+
+      setInvalid('email', !emailOk);
+      setInvalid('password', !passOk);
+
+      if (!emailOk || !passOk) return;
+
+      const submitBtn = emailForm.querySelector('[data-email-submit]');
+      submitBtn.classList.add('is-loading');
+      submitBtn.disabled = true;
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ email, password, remember: true }),
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok || !data.ok) {
+          // Si el backend no soporta email/password todavía
+          if (res.status === 404 || res.status === 501) {
+            throw new Error('El ingreso con correo todavía no está disponible. Usa Google.');
+          }
+          throw new Error(data.error || 'Credenciales incorrectas.');
+        }
+
+        Toasts.ok('¡Bienvenido!');
+        setTimeout(() => { location.href = '/chat.html'; }, 700);
+      } catch (err) {
+        console.error('[auth/email]', err);
+        Toasts.err(err.message || 'No pudimos iniciar sesión.');
+        submitBtn.classList.remove('is-loading');
+        submitBtn.disabled = false;
+      }
+    });
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     SESIÓN ACTIVA → REDIRIGIR
+     ══════════════════════════════════════════════════════════════ */
+  (async function checkSession() {
+    try {
+      const res = await fetch('/api/auth/me', { credentials: 'include' });
+      const data = await res.json();
+      if (data && data.ok && data.user) {
+        if (!new URLSearchParams(location.search).has('stay')) {
+          location.href = '/chat.html';
+        }
+      }
+    } catch (e) { /* sin sesión */ }
+  })();
+})();
+</script>
+
+<!-- Google Identity Services -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+
 </body>
 </html>

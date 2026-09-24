@@ -1,173 +1,104 @@
 <!DOCTYPE html>
-<html lang="es-CO" data-theme="light">
+<html lang="es-CO" data-theme="oscuro">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Términos y privacidad — Numination</title>
+  <title>Términos y privacidad · Numination</title>
   <meta name="description" content="Términos de uso, política de privacidad y tratamiento de datos personales de Numination." />
-  <meta name="theme-color" content="#1a1a2e" />
+  <meta name="theme-color" content="#0a0a0a" />
+  <meta name="color-scheme" content="dark" />
   <link rel="icon" href="favicon.ico" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="assets/css/main.css" />
-  <style>
-    .legal-layout {
-      display: grid;
-      grid-template-columns: 260px 1fr;
-      gap: 64px;
-      align-items: start;
-    }
-    .legal-nav {
-      position: sticky;
-      top: 96px;
-      padding: 20px 0;
-      border-right: 1px solid var(--border);
-    }
-    .legal-nav__title {
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--fg-subtle);
-      padding: 0 20px 12px;
-    }
-    .legal-nav a {
-      display: block;
-      padding: 8px 20px;
-      font-size: 13.5px;
-      color: var(--fg-muted);
-      border-left: 2px solid transparent;
-      transition: all 150ms var(--ease);
-    }
-    .legal-nav a:hover {
-      color: var(--fg);
-      border-left-color: var(--brand-periwinkle);
-      background: var(--bg-alt);
-    }
-    .legal-content { max-width: 720px; }
-    .legal-content h2 {
-      font-size: 28px;
-      margin-top: 64px;
-      margin-bottom: 20px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid var(--border);
-      scroll-margin-top: 96px;
-    }
-    .legal-content h2:first-of-type { margin-top: 0; }
-    .legal-content h3 {
-      font-family: var(--font-sans);
-      font-size: 17px;
-      font-weight: 600;
-      margin-top: 32px;
-      margin-bottom: 12px;
-      color: var(--fg);
-    }
-    .legal-content p {
-      font-size: 15px;
-      line-height: 1.75;
-      color: var(--fg-muted);
-      margin-bottom: 16px;
-    }
-    .legal-content ul, .legal-content ol {
-      padding-left: 24px;
-      margin-bottom: 16px;
-    }
-    .legal-content li {
-      font-size: 15px;
-      line-height: 1.75;
-      color: var(--fg-muted);
-      margin-bottom: 8px;
-    }
-    .legal-content ul li { list-style: disc; }
-    .legal-content ol li { list-style: decimal; }
-    .legal-content strong { color: var(--fg); font-weight: 600; }
-    .legal-content a {
-      color: var(--brand-periwinkle);
-      text-decoration: underline;
-      text-underline-offset: 2px;
-    }
-    .legal-meta {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 14px;
-      border-radius: 999px;
-      background: var(--bg-alt);
-      border: 1px solid var(--border);
-      font-size: 12.5px;
-      color: var(--fg-muted);
-      margin-bottom: 32px;
-    }
-    .legal-note {
-      padding: 16px 20px;
-      border-left: 3px solid var(--brand-periwinkle);
-      background: var(--bg-alt);
-      border-radius: 0 var(--radius) var(--radius) 0;
-      margin: 20px 0;
-    }
-    .legal-note p { margin: 0; font-size: 14px; }
-    .legal-warn {
-      padding: 16px 20px;
-      border-left: 3px solid var(--warn);
-      background: var(--warn-bg);
-      border-radius: 0 var(--radius) var(--radius) 0;
-      margin: 20px 0;
-    }
-    [data-theme="dark"] .legal-warn { background: rgba(245, 158, 11, .1); }
-    .legal-warn p { margin: 0; font-size: 14px; color: var(--fg); }
-    @media (max-width: 900px) {
-      .legal-layout { grid-template-columns: 1fr; gap: 24px; }
-      .legal-nav { position: static; border-right: none; border-bottom: 1px solid var(--border); padding-bottom: 16px; }
-      .legal-nav a { display: inline-block; padding: 6px 12px; border-left: none; border-radius: 6px; }
-      .legal-content h2 { margin-top: 48px; }
-    }
-  </style>
 </head>
-<body>
 
-<!-- HEADER -->
+<body data-page="legal">
+
+<!-- ═══════════════════════════════════════════════════════════
+     HEADER
+     ═══════════════════════════════════════════════════════════ -->
 <header class="site-header">
   <div class="container site-header__inner">
+
     <a href="index.html" class="site-header__brand">
       <span class="site-header__brand-mark">
-        <svg class="icon icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1M5.6 18.4l2.1-2.1m8.6-8.6 2.1-2.1"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1M5.6 18.4l2.1-2.1m8.6-8.6 2.1-2.1"/>
+        </svg>
       </span>
       Numination
     </a>
+
     <nav class="site-header__nav">
       <a href="index.html" class="site-header__link">Inicio</a>
       <a href="chat.html" class="site-header__link">Chat IA</a>
+      <a href="precio.html" class="site-header__link">Precios</a>
+      <a href="terminos.html" class="site-header__link is-active">Términos</a>
     </nav>
+
     <div class="site-header__actions">
+      <button class="site-header__toggle" data-theme-toggle type="button" aria-label="Cambiar tema">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/>
+        </svg>
+      </button>
       <a href="login.html" class="btn btn--ghost btn--sm">Iniciar sesión</a>
+      <a href="login.html" class="btn btn--primary btn--sm">Comenzar gratis</a>
     </div>
+
+    <button class="site-header__toggle" data-menu-toggle type="button" aria-label="Abrir menú" aria-expanded="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <line x1="4" y1="6" x2="20" y2="6"/>
+        <line x1="4" y1="12" x2="20" y2="12"/>
+        <line x1="4" y1="18" x2="20" y2="18"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="container site-header__mobile" data-menu>
+    <nav>
+      <a href="index.html">Inicio</a>
+      <a href="chat.html">Chat IA</a>
+      <a href="precio.html">Precios</a>
+      <a href="terminos.html">Términos</a>
+      <a href="login.html" class="btn btn--secondary">Iniciar sesión</a>
+      <a href="login.html" class="btn btn--primary">Comenzar gratis</a>
+    </nav>
   </div>
 </header>
 
 <main>
 
-  <!-- HERO -->
+  <!-- ═══════════════════════════════════════════════════════════
+       HERO
+       ═══════════════════════════════════════════════════════════ -->
   <section class="section section--tight section--alt">
     <div class="container">
       <div style="max-width:720px">
         <span class="badge badge--brand">Legal</span>
-        <h1 style="font-size:clamp(32px,5vw,48px);margin-top:16px;margin-bottom:16px;">
+        <h1 style="font-size:clamp(32px,5vw,48px);margin-top:16px;margin-bottom:16px;letter-spacing:-.02em;">
           Términos y privacidad
         </h1>
-        <p style="font-size:17px;line-height:1.7;color:var(--fg-muted);margin-bottom:24px;">
+        <p style="font-size:var(--fs-md);line-height:1.7;color:var(--fg-muted);margin-bottom:24px;">
           Aquí explicamos cómo funciona Numination, qué puedes esperar de nosotros y cómo
           tratamos tus datos personales conforme a la legislación colombiana.
         </p>
         <div class="legal-meta">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          Última actualización: 19 de septiembre de 2026
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          Última actualización: 23 de septiembre de 2026
         </div>
       </div>
     </div>
   </section>
 
-  <!-- CONTENIDO -->
+  <!-- ═══════════════════════════════════════════════════════════
+       CONTENIDO
+       ═══════════════════════════════════════════════════════════ -->
   <section class="section">
     <div class="container">
       <div class="legal-layout">
@@ -187,28 +118,29 @@
         <!-- CONTENIDO PRINCIPAL -->
         <article class="legal-content">
 
-          <!-- ══════════════════════════════════════════════════ -->
+          <!-- ═══════════ 1. TÉRMINOS ═══════════ -->
           <h2 id="terminos">1. Términos de uso</h2>
 
           <h3>1.1 Aceptación</h3>
           <p>
             Al usar Numination aceptas estos términos. Numination es una plataforma educativa
-            colombiana que ofrece práctica para el ICFES Saber 11 y un chat con inteligencia
-            artificial. Si no estás de acuerdo, no uses la plataforma.
+            colombiana que ofrece un tutor con inteligencia artificial y generación de
+            imágenes educativas. Si no estás de acuerdo, no uses la plataforma.
           </p>
 
           <h3>1.2 Qué es Numination</h3>
           <p>
-            Numination es una herramienta de apoyo al estudio. Combina un banco de preguntas
-            tipo ICFES con tres motores de inteligencia artificial (Gemini, Groq y Kimi K3)
-            para generar explicaciones adaptadas al contexto colombiano.
+            Numination es una herramienta de apoyo al estudio. Combina un chat con tres
+            motores de inteligencia artificial (Gemini, Groq y Kimi K3) para dar
+            explicaciones adaptadas al contexto colombiano, y un generador de imágenes
+            para ilustrar conceptos.
           </p>
 
           <h3>1.3 Qué NO es Numination</h3>
           <ul>
             <li>No reemplaza la educación formal del colegio ni a tus docentes.</li>
             <li>No sustituye atención médica, psicológica, legal ni financiera profesional.</li>
-            <li>No garantiza puntajes específicos en el ICFES ni en ningún examen.</li>
+            <li>No garantiza puntajes específicos en exámenes ni en ninguna evaluación.</li>
             <li>No es una herramienta para hacer trampa. Está diseñada para enseñarte, no para resolver tus tareas.</li>
           </ul>
 
@@ -224,26 +156,36 @@
 
           <h3>1.5 Cuenta de usuario</h3>
           <p>
-            Eres responsable de mantener la seguridad de tu cuenta. Si detectas un acceso no
+            Para acceder a Numination inicias sesión con tu cuenta de Google. Eres
+            responsable de mantener la seguridad de esa cuenta. Si detectas un acceso no
             autorizado, escríbenos de inmediato a
             <a href="mailto:hola@numination.co">hola@numination.co</a>.
           </p>
 
-          <h3>1.6 Limitación de responsabilidad</h3>
+          <h3>1.6 Planes y pagos</h3>
+          <p>
+            Numination ofrece dos planes: <strong>Coder Free</strong> (gratuito y permanente)
+            y <strong>Coder</strong> ($75 COP/mes). El plan Coder se cobra de forma mensual
+            y puede cancelarse en cualquier momento desde el panel de perfil. No hay
+            contratos ni penalizaciones por cancelación. Si subimos el precio, los usuarios
+            que ya estén pagando mantienen su tarifa actual.
+          </p>
+
+          <h3>1.7 Limitación de responsabilidad</h3>
           <p>
             Numination se ofrece <strong>"tal cual"</strong>. La inteligencia artificial puede
             cometer errores. Verifica siempre la información importante. No nos hacemos
             responsables por decisiones tomadas en base a las respuestas de la plataforma.
           </p>
 
-          <h3>1.7 Cambios a los términos</h3>
+          <h3>1.8 Cambios a los términos</h3>
           <p>
             Podemos actualizar estos términos. Si hay cambios importantes, te avisaremos por
             correo o dentro de la aplicación. La fecha de la última actualización aparece
             al inicio de esta página.
           </p>
 
-          <!-- ══════════════════════════════════════════════════ -->
+          <!-- ═══════════ 2. PRIVACIDAD ═══════════ -->
           <h2 id="privacidad">2. Política de privacidad</h2>
 
           <h3>2.1 Principios</h3>
@@ -251,11 +193,12 @@
             <li><strong>Mínimos datos:</strong> solo pedimos lo necesario para que la plataforma funcione.</li>
             <li><strong>Sin venta:</strong> nunca vendemos tus datos a terceros.</li>
             <li><strong>Sin publicidad:</strong> no mostramos anuncios ni te perfilamos para marketing.</li>
+            <li><strong>Sin entrenamiento:</strong> tus conversaciones no se usan para entrenar modelos de IA.</li>
             <li><strong>Transparencia:</strong> puedes pedirnos qué datos tenemos sobre ti y eliminarlos cuando quieras.</li>
           </ul>
 
           <h3>2.2 Qué datos recopilamos</h3>
-          <p>Cuando te registras con Google, recibimos:</p>
+          <p>Cuando inicias sesión con Google, recibimos:</p>
           <ul>
             <li>Correo electrónico.</li>
             <li>Nombre para mostrar.</li>
@@ -263,8 +206,9 @@
           </ul>
           <p>Cuando usas la plataforma, guardamos:</p>
           <ul>
-            <li>Conversaciones con la IA (asociadas a tu cuenta).</li>
-            <li>Progreso en las prácticas y simulacros.</li>
+            <li>El texto de cada mensaje que envías a la IA.</li>
+            <li>Imágenes que adjuntes voluntariamente (máx. 10 MB).</li>
+            <li>Las respuestas generadas por la IA.</li>
             <li>Preferencias de la interfaz (tema, tamaño de texto, etc.).</li>
             <li>Fecha de último ingreso.</li>
           </ul>
@@ -272,31 +216,48 @@
           <h3>2.3 Qué NO recopilamos</h3>
           <ul>
             <li>Ubicación precisa (GPS).</li>
-            <li>Contactos, fotos, archivos del dispositivo.</li>
+            <li>Contactos, fotos, archivos del dispositivo sin tu permiso explícito.</li>
             <li>Datos biométricos.</li>
-            <li>Información financiera (no procesamos pagos todavía).</li>
+            <li>Información financiera (no procesamos pagos con tarjeta directamente).</li>
+            <li>Historial de navegación fuera de Numination.</li>
           </ul>
 
           <h3>2.4 Cómo usamos los datos</h3>
           <ul>
             <li>Para que puedas iniciar sesión y acceder a tus conversaciones.</li>
-            <li>Para generar respuestas personalizadas de la IA.</li>
-            <li>Para mostrarte tu progreso y estadísticas.</li>
-            <li>Para mejorar la plataforma con estadísticas agregadas y anónimas.</li>
+            <li>Para generar las respuestas de la IA.</li>
+            <li>Para guardar tu historial y preferencias.</li>
+            <li>Para detectar patrones de uso agregados y anónimos (mejorar la plataforma).</li>
+            <li>Para prevenir abuso: detectar cuentas que intentan saturar el servicio.</li>
           </ul>
 
           <h3>2.5 Con quién compartimos</h3>
           <p>
-            Tus conversaciones se procesan en servidores de nuestros proveedores de IA:
-            Google (Gemini), Groq y NVIDIA (Kimi K3). Estos proveedores reciben el texto
-            de tus mensajes para generar respuestas, pero no reciben tu identidad ni tu correo.
+            Tus conversaciones se procesan en servidores de nuestros proveedores de IA.
+            Usamos tres motores en cascada:
           </p>
+          <ol>
+            <li>
+              <strong>Google Gemini</strong> (motor principal) —
+              <a href="https://ai.google.dev/gemini-api/terms" target="_blank" rel="noopener noreferrer">términos</a>.
+            </li>
+            <li>
+              <strong>Groq</strong> (respaldo rápido) —
+              <a href="https://groq.com/privacy-policy/" target="_blank" rel="noopener noreferrer">privacidad</a>.
+            </li>
+            <li>
+              <strong>NVIDIA Kimi K3</strong> (último recurso) —
+              <a href="https://www.nvidia.com/en-us/about-nvidia/privacy-policy/" target="_blank" rel="noopener noreferrer">privacidad</a>.
+            </li>
+          </ol>
           <p>
-            También usamos Pollinations para generar imágenes. <strong>No compartimos datos
-            con fines publicitarios ni de marketing.</strong>
+            Estos proveedores reciben únicamente el texto de tu mensaje — <strong>nunca</strong>
+            tu correo, nombre ni foto de perfil. También usamos Pollinations para generar
+            imágenes y Vercel para el hosting. <strong>No compartimos datos con fines
+            publicitarios ni de marketing.</strong>
           </p>
 
-          <!-- ══════════════════════════════════════════════════ -->
+          <!-- ═══════════ 3. TRATAMIENTO ═══════════ -->
           <h2 id="tratamiento">3. Tratamiento de datos personales</h2>
 
           <div class="legal-note">
@@ -319,6 +280,7 @@
             <li>Gestión de la cuenta de usuario.</li>
             <li>Generación de contenidos con inteligencia artificial.</li>
             <li>Análisis estadístico agregado para mejora del servicio.</li>
+            <li>Prevención de abuso y control de límites de uso.</li>
           </ul>
 
           <h3>3.3 Derechos del titular</h3>
@@ -347,11 +309,11 @@
             salvo obligación legal de conservarlos.
           </p>
 
-          <!-- ══════════════════════════════════════════════════ -->
+          <!-- ═══════════ 4. COOKIES ═══════════ -->
           <h2 id="cookies">4. Cookies y almacenamiento local</h2>
 
           <h3>4.1 Qué usamos</h3>
-          <p>Numination usa dos mecanismos para guardar información:</p>
+          <p>Numination usa tres mecanismos para guardar información:</p>
           <ul>
             <li>
               <strong>Cookies httpOnly:</strong> una sola cookie llamada
@@ -360,8 +322,12 @@
             </li>
             <li>
               <strong>localStorage:</strong> guardamos preferencias de interfaz
-              (tema, tamaño de texto, panel de configuración) en tu navegador.
-              No contiene datos personales.
+              (tema, tamaño de texto, conversaciones locales del chat) en tu navegador.
+            </li>
+            <li>
+              <strong>Upstash Redis:</strong> contador de límites diarios por usuario.
+              Almacenamos un identificador anónimo (hash del correo) para contar mensajes.
+              No guardamos el contenido de tus mensajes.
             </li>
           </ul>
 
@@ -375,10 +341,10 @@
           <h3>4.3 Cómo desactivar</h3>
           <p>
             Puedes borrar las cookies desde la configuración de tu navegador. Si borras
-            <code>numination_session</code>, tendrás que volver a iniciar sesión.
+            <code>numination_session</code>, tendrás que volver a iniciar sesión con Google.
           </p>
 
-          <!-- ══════════════════════════════════════════════════ -->
+          <!-- ═══════════ 5. MENORES ═══════════ -->
           <h2 id="menores">5. Consentimiento de menores</h2>
 
           <div class="legal-warn">
@@ -392,8 +358,8 @@
           <h3>5.1 Autorización parental</h3>
           <p>
             Si eres menor de 18 años, necesitas autorización de tu padre, madre o acudiente
-            legal para crear una cuenta. En el registro te pedimos marcar la casilla
-            <em>"Mi acudiente autoriza mi registro (Ley 1581 de 2012)"</em>.
+            legal para usar la plataforma. Al iniciar sesión con Google, entendemos que
+            cuentas con dicha autorización.
           </p>
 
           <h3>5.2 Datos sensibles</h3>
@@ -404,9 +370,7 @@
           </p>
 
           <h3>5.3 Derecho de los padres</h3>
-          <p>
-            Los padres o acudientes pueden en cualquier momento:
-          </p>
+          <p>Los padres o acudientes pueden en cualquier momento:</p>
           <ul>
             <li>Solicitar acceso a los datos de su hijo/a.</li>
             <li>Solicitar la eliminación de la cuenta y todos los datos asociados.</li>
@@ -418,13 +382,13 @@
             desde el correo registrado en la cuenta del menor.
           </p>
 
-          <!-- ══════════════════════════════════════════════════ -->
+          <!-- ═══════════ 6. DERECHOS ═══════════ -->
           <h2 id="derechos">6. Tus derechos en resumen</h2>
 
           <p>Como usuario de Numination, puedes en cualquier momento:</p>
           <ul>
             <li><strong>Acceder</strong> a tus datos desde el panel de perfil.</li>
-            <li><strong>Exportar</strong> tus conversaciones y tu progreso en formato JSON.</li>
+            <li><strong>Exportar</strong> tus conversaciones en formato JSON, Markdown o HTML.</li>
             <li><strong>Eliminar</strong> conversaciones individuales o todas a la vez.</li>
             <li><strong>Eliminar tu cuenta</strong> completa y todos los datos asociados.</li>
             <li><strong>Solicitar corrección</strong> de cualquier dato inexacto.</li>
@@ -439,7 +403,7 @@
             </p>
           </div>
 
-          <!-- ══════════════════════════════════════════════════ -->
+          <!-- ═══════════ 7. CONTACTO ═══════════ -->
           <h2 id="contacto">7. Contacto legal</h2>
 
           <p>Para cualquier asunto relacionado con estos términos o con tus datos personales:</p>
@@ -451,8 +415,8 @@
             <li><strong>País:</strong> Colombia</li>
           </ul>
 
-          <p style="margin-top:40px;padding-top:24px;border-top:1px solid var(--border);font-size:13px;color:var(--fg-subtle);">
-            Estos términos entran en vigencia el <strong>19 de septiembre de 2026</strong>
+          <p style="margin-top:40px;padding-top:24px;border-top:1px solid var(--border);font-size:var(--fs-xs);color:var(--fg-subtle);">
+            Estos términos entran en vigencia el <strong>23 de septiembre de 2026</strong>
             y permanecerán vigentes hasta que sean modificados. La versión más reciente
             siempre estará disponible en esta página.
           </p>
@@ -463,23 +427,33 @@
     </div>
   </section>
 
-  <!-- CTA FINAL -->
+  <!-- ═══════════════════════════════════════════════════════════
+       CTA FINAL
+       ═══════════════════════════════════════════════════════════ -->
   <section class="section">
     <div class="container">
       <div class="cta-final">
         <div class="cta-final__inner">
+          <p class="eyebrow">Sin excusas</p>
           <h2 class="cta-final__title">¿Listo para empezar?</h2>
           <p class="cta-final__subtitle">
-            Ahora que sabes cómo cuidamos tus datos, empieza a practicar.
+            Ahora que sabes cómo cuidamos tus datos, empieza a aprender con Numination.
           </p>
           <div class="cta-final__actions">
-            <a href="login.html" class="btn btn--brand btn--lg">
+            <a href="login.html" class="btn btn--primary btn--lg">
               Crear cuenta gratis
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+                <line x1="5" y1="12" x2="19" y2="12"/>
+                <polyline points="12 5 19 12 12 19"/>
+              </svg>
             </a>
-            <a href="chat.html" class="btn btn--secondary btn--lg">
-              Probar el chat
+            <a href="precio.html" class="btn btn--secondary btn--lg">
+              Ver precios
             </a>
           </div>
+          <p class="cta-final__meta">
+            Sin tarjeta · Sin contratos · Cancelas cuando quieras
+          </p>
         </div>
       </div>
     </div>
@@ -487,21 +461,25 @@
 
 </main>
 
-<!-- FOOTER -->
+<!-- ═══════════════════════════════════════════════════════════
+     FOOTER
+     ═══════════════════════════════════════════════════════════ -->
 <footer class="site-footer">
   <div class="container">
     <div class="site-footer__row">
       <a href="index.html" class="site-footer__brand">
         <span class="site-footer__brand-mark">
-          <svg class="icon icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1M5.6 18.4l2.1-2.1m8.6-8.6 2.1-2.1"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1M5.6 18.4l2.1-2.1m8.6-8.6 2.1-2.1"/>
+          </svg>
         </span>
         Numination
       </a>
       <nav class="site-footer__nav">
         <a href="index.html">Inicio</a>
         <a href="chat.html">Chat IA</a>
+        <a href="precio.html">Precios</a>
         <a href="terminos.html">Términos</a>
-        <a href="contacto.html">Contacto</a>
       </nav>
     </div>
     <p class="site-footer__copy">
@@ -509,6 +487,8 @@
     </p>
   </div>
 </footer>
+
+<script src="assets/js/main.js"></script>
 
 </body>
 </html>

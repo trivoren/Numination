@@ -34,7 +34,15 @@ export async function* streamGemini(gemini, systemPrompt, message, file) {
   const stream = await gemini.models.generateContentStream({
     model: 'gemini-3.6-flash',
     contents: [{ role: 'user', parts }],
-    config: { systemInstruction: systemPrompt },
+    config: {
+      systemInstruction: systemPrompt,
+      // 🚀 Desactiva el "thinking mode" → baja latencia de ~30s a ~1s
+      thinkingConfig: { thinkingBudget: 0 },
+      // Temperatura para respuestas más naturales (opcional)
+      temperature: 0.7,
+      // Límite de tokens de salida (opcional, evita respuestas kilométricas)
+      maxOutputTokens: 2048,
+    },
   });
 
   for await (const chunk of stream) {

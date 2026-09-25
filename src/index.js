@@ -1,8 +1,10 @@
 /* ══════════════════════════════════════════════════════════════
-   NUMINATION — Backend v3.0
+   NUMINATION — Backend v3.1
    ----------------------------------------------------------------
-   Chat IA con 3 motores en cascada.
-   Auth: Google OAuth + JWT
+   Chat IA con routing inteligente por tipo de contenido.
+   Texto    → Groq (2-3s) → Gemini → Kimi K3
+   Archivos → Gemini (multimodal) → Kimi K3 → Groq
+   Auth: Google OAuth + JWT sobre Supabase
    DB: Supabase (Postgres)
    Límites: Upstash Redis
    Imágenes: Pollinations
@@ -50,7 +52,7 @@ if (!KEYS.NVIDIA_API_KEY) console.warn('⚠️  NVIDIA_API_KEY no configurada');
 if (!KEYS.GROQ_API_KEY)   console.warn('⚠️  GROQ_API_KEY no configurada');
 
 /* ══════════════════════════════════════════════════════════════
-   POOL DE GEMINI
+   POOL DE GEMINI (con rotación y cooldown)
    ══════════════════════════════════════════════════════════════ */
 
 const GEMINI_KEY_LIST = [
@@ -89,7 +91,7 @@ function isRateLimitError(err) {
 }
 
 const gemini = geminiPool[0]?.client ?? null;
-const groq = new Groq({ apiKey: KEYS.GROQ_API_KEY });
+const groq   = new Groq({ apiKey: KEYS.GROQ_API_KEY });
 const nvidia = new OpenAI({
   apiKey: KEYS.NVIDIA_API_KEY,
   baseURL: 'https://integrate.api.nvidia.com/v1',
@@ -132,8 +134,8 @@ Cuando uses ejemplos, habla de:
 - Usa **negrita** solo para términos clave (máximo 3 por respuesta).
 - Usa listas con guiones cuando enumeres.
 - Usa pasos numerados cuando sea un procedimiento.
-- NO uses emojis decorativos. Cero 🚀 🎯 ✨ 📚.
-- Puedes usar a lo sumo 1 emoji si aporta (ej. ✅ al final de un paso resuelto).
+- CERO emojis. Ni decorativos ni de check. Solo texto plano.
+- Puedes usar signos de puntuación normales.
 
 ## Tono
 - Directo, claro, sin relleno.
@@ -171,7 +173,7 @@ function buildSystemPrompt(role = 'student') {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   LLAMADAS A MOTORES
+   LLAMADAS A MOTORES (no-streaming)
    ══════════════════════════════════════════════════════════════ */
 
 async function callGemini(systemPrompt, message, file) {
@@ -182,7 +184,10 @@ async function callGemini(systemPrompt, message, file) {
   const response = await gemini.models.generateContent({
     model: 'gemini-3.6-flash',
     contents: [{ role: 'user', parts }],
-    config: { systemInstruction: systemPrompt },
+    config: {
+      systemInstruction: systemPrompt,
+      thinkingConfig: { thinkingBudget: 0 },
+    },
   });
   return response.text ?? '';
 }
@@ -230,7 +235,7 @@ async function callGroq(systemPrompt, message, file) {
   return response.choices?.[0]?.message?.content ?? '';
 }
 
-const PROVIDERS = ['groq', 'gemini', 'nvidia'];
+const PROVIDERS = ['gemini', 'nvidia', 'groq'];
 const PROVIDER_NAMES = { gemini: 'Gemini', nvidia: 'Kimi K3', groq: 'Groq' };
 
 const callers = {
@@ -254,6 +259,18 @@ function isRetryable(err) {
     msg.includes('UNAVAILABLE') || msg.includes('Rate limit') ||
     msg.includes('high demand') || msg.includes('overloaded')
   );
+}
+
+/**
+ * Routing inteligente por tipo de contenido.
+ * - Con archivo (imagen/PDF): Gemini primero (multimodal), luego Kimi, luego Groq.
+ * - Sin archivo (texto): Groq primero (rápido), luego Gemini, luego Kimi.
+ */
+function ordenarMotores(file) {
+  const tieneArchivo = file && file.data;
+  return tieneArchivo
+    ? ['gemini', 'nvidia', 'groq']
+    : ['groq', 'gemini', 'nvidia'];
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -313,7 +330,7 @@ app.use(express.json({ limit: '15mb' }));
 app.use(cookieParser());
 app.use(attachUser);
 
-/* ── Protección de rutas privadas ── */
+/* ── Protección de rutas privadas (HTML) ── */
 app.use((req, res, next) => {
   const privadas = ['/chat.html'];
   if (privadas.includes(req.path) && !req.user) {
@@ -322,9 +339,10 @@ app.use((req, res, next) => {
   next();
 });
 
+/* ── Static ── */
 app.use(express.static(publicDir));
 
-/* ── Rutas de auth y chats ── */
+/* ── Rutas auth y chats ── */
 mountAuthRoutes(app);
 mountChatRoutes(app, requireAuth);
 
@@ -342,7 +360,7 @@ app.get('/api/health', (req, res) => {
   res.json({
     ok: true,
     service: 'numination',
-    version: '3.0',
+    version: '3.1',
     motors: PROVIDERS,
     images: 'pollinations',
     auth: {
@@ -375,6 +393,7 @@ app.get('/api/health', (req, res) => {
    ══════════════════════════════════════════════════════════════ */
 
 app.post('/api/chat/stream', async (req, res) => {
+  /* ─── Límite de uso ─── */
   const lim = await verificarLimite(req);
   if (!lim.permitido) {
     return res.status(429).json({
@@ -395,12 +414,14 @@ app.post('/api/chat/stream', async (req, res) => {
     return res.status(400).json({ error: 'Falta el mensaje o archivo' });
   }
 
+  /* ─── Headers SSE ─── */
   res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
   res.setHeader('Cache-Control', 'no-cache, no-transform');
   res.setHeader('Connection', 'keep-alive');
   res.setHeader('X-Accel-Buffering', 'no');
   res.flushHeaders?.();
 
+  /* ─── Meta inicial ─── */
   if (lim.restanteDia != null) {
     res.write('data: ' + JSON.stringify({
       meta: {
@@ -411,6 +432,7 @@ app.post('/api/chat/stream', async (req, res) => {
     }) + '\n\n');
   }
 
+  /* ─── Heartbeat cada 15s ─── */
   const heartbeat = setInterval(() => {
     try { res.write(': ping\n\n'); } catch {}
   }, 15000);
@@ -423,15 +445,18 @@ app.post('/api/chat/stream', async (req, res) => {
   let responded = false;
 
   try {
-    const orden = ['gemini', 'groq', 'nvidia'];
+    /* ─── Routing inteligente según tipo de contenido ─── */
+    const orden = ordenarMotores(file);
+
     for (const prov of orden) {
       if (prov === 'gemini') {
         const candidates = geminiCandidates();
         if (!candidates.length) {
-          console.warn('[stream] Todas las keys de Gemini en cooldown, paso a Groq');
+          console.warn('[stream] Todas las keys de Gemini en cooldown, siguiente motor');
           continue;
         }
         let ok = false;
+
         for (const entry of candidates) {
           try {
             console.log('[stream] Gemini #' + entry.id + ' -> streaming...');
@@ -511,11 +536,12 @@ app.post('/api/chat/stream', async (req, res) => {
 });
 
 /* ══════════════════════════════════════════════════════════════
-   CHAT NORMAL (con imágenes)
+   CHAT NORMAL (con detección de imagen)
    ══════════════════════════════════════════════════════════════ */
 
 app.post('/api/chat', async (req, res) => {
   try {
+    /* ─── Límite ─── */
     const lim = await verificarLimite(req);
     if (!lim.permitido) {
       return res.status(429).json({
@@ -537,7 +563,7 @@ app.post('/api/chat', async (req, res) => {
     }
 
     /* ─── Detección de generación de imágenes ─── */
-    if (hasText && detectImageIntent(message)) {
+    if (hasText && !hasFile && detectImageIntent(message)) {
       const imagePrompt = extractImagePrompt(message);
 
       if (imagePrompt.length > 3) {
@@ -551,7 +577,7 @@ app.post('/api/chat', async (req, res) => {
         });
 
         return res.json({
-          reply: `🎨 Listo, aquí está tu imagen de: **${imagePrompt}**\n\nGenerada con inteligencia artificial. Si quieres otra versión, pídeme "otra imagen de..." y crearé una variación.`,
+          reply: `Listo, aquí está tu imagen de: **${imagePrompt}**\n\nGenerada con inteligencia artificial. Si quieres otra versión, pídeme "otra imagen de..." y crearé una variación.`,
           imageUrl,
           imagePrompt,
           type: 'image',
@@ -561,7 +587,7 @@ app.post('/api/chat', async (req, res) => {
 
     /* ─── Respuesta normal con IA ─── */
     const systemPrompt = buildSystemPrompt(role);
-    const ordered = PROVIDERS;
+    const ordered = ordenarMotores(file);
 
     const attempts = [
       { provider: ordered[0], delay: 0 },
@@ -602,9 +628,12 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
-/* ─────────── FALLBACK SPA ─────────── */
+/* ─────────── CATCH-ALL SPA (excluye /api/*) ─────────── */
 
-app.get('*', (_req, res) => {
+app.get('*', (req, res) => {
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'Endpoint no encontrado: ' + req.path });
+  }
   res.sendFile(path.join(publicDir, 'index.html'));
 });
 
@@ -620,8 +649,8 @@ if (process.env.VERCEL !== '1') {
     );
     const dbOn = supabaseDisponible();
 
-    console.log(`🇨🇴 Numination v3.0 escuchando en http://localhost:${PORT}`);
-    console.log(`🤖 Motores: Gemini → Groq → Kimi K3`);
+    console.log(`🇨🇴 Numination v3.1 escuchando en http://localhost:${PORT}`);
+    console.log(`🤖 Motores: Groq → Gemini → Kimi K3 (texto) | Gemini → Kimi → Groq (archivos)`);
     console.log(`🎨 Imágenes: Pollinations`);
     console.log(`🔐 Auth: Google OAuth`);
     console.log(`🚦 Límites: ${limitsOn ? 'activos' : 'desactivados'}`);

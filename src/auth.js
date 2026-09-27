@@ -217,6 +217,76 @@ export function requireAuth(req, res, next) {
 }
 
 /* ══════════════════════════════════════════════════════════════
+   EMAIL REAL DE GITHUB
+   ══════════════════════════════════════════════════════════════ */
+
+/**
+ * Resuelve el email real de una persona que entra con GitHub.
+ *
+ * POR QUÉ EXISTE ESTA FUNCIÓN:
+ * GitHub oculta el email cuando la persona lo tiene en privado. En ese caso
+ * `profile.emails` llega vacío y antes usábamos `usuario@github.local`.
+ * El problema: si esa misma persona después entraba con Google usando su
+ * email real, Supabase no encontraba el perfil (busca por email) y creaba
+ * una SEGUNDA cuenta. Quedabas con dos perfiles y los chats partidos en dos.
+ *
+ * PASOS (de mejor a peor):
+ *   1. GET https://api.github.com/user/emails con el access_token
+ *      → elegir el que sea primary:true Y verified:true
+ *   2. Si no hay, el primer email verificado
+ *   3. Si no hay, el email público del perfil
+ *   4. Si no hay nada, usuario@github.local (último recurso)
+ *
+ * IMPORTANTE: si GitHub falla, NO se tumba el login. Caemos al fallback.
+ *
+ * @param {string} accessToken  Token que GitHub entrega tras el login
+ * @param {object} profile      Perfil que entrega passport-github
+ * @returns {Promise<string>}   Email en minúsculas
+ */
+async function resolverEmailGitHub(accessToken, profile) {
+  const fallback = () =>
+    String(profile?.emails?.[0]?.value || `${profile?.username}@github.local`)
+      .toLowerCase();
+
+  // Sin token no hay nada que consultar con la API de GitHub
+  if (!accessToken) return fallback();
+
+  try {
+    const res = await fetch('https://api.github.com/user/emails', {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        'User-Agent': 'Numination',
+      },
+      signal: AbortSignal.timeout(5000),
+    });
+
+    if (!res.ok) {
+      console.warn(
+        `[auth/github] /user/emails respondió ${res.status} → uso el fallback`
+      );
+      return fallback();
+    }
+
+    const emails = await res.json();
+    if (!Array.isArray(emails) || emails.length === 0) return fallback();
+
+    const elegido =
+      emails.find((e) => e.primary && e.verified) ||
+      emails.find((e) => e.verified) ||
+      emails.find((e) => e.primary) ||
+      emails[0];
+
+    const email = String(elegido?.email || '').trim().toLowerCase();
+    return email || fallback();
+  } catch (e) {
+    console.warn('[auth/github] no pude leer /user/emails:', e.message);
+    return fallback();
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
    ESTRATEGIA GITHUB (Passport)
    ══════════════════════════════════════════════════════════════ */
 
@@ -232,12 +302,10 @@ if (GITHUB_ENABLED) {
         // (nuestra auth ya usa JWT en cookie httpOnly)
         state: false,
       },
-      async (_accessToken, _refreshToken, profile, done) => {
+      async (accessToken, _refreshToken, profile, done) => {
         try {
-          // GitHub puede no compartir el email si es privado
-          const email =
-            profile.emails?.[0]?.value ||
-            `${profile.username}@github.local`;
+          // GitHub puede ocultar el email si es privado → lo consultamos por API
+          const email = await resolverEmailGitHub(accessToken, profile);
 
           const user = await findOrCreateUser({
             email,

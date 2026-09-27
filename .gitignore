@@ -56,6 +56,7 @@ coverage/
 
 # ─── Otros ───
 *.bak
+*.backup
 *.orig
 .vercel
 

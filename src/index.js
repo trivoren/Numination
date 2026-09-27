@@ -836,6 +836,16 @@ app.use((req, res) => {
   if (req.path.startsWith('/api/')) {
     return res.status(404).json({ error: 'Endpoint no encontrado: ' + req.path });
   }
+
+  /* Si la ruta parece un ARCHIVO (tiene extensión: .js, .css, .png, .ico…),
+     NO la disfrazamos de landing. Antes mandábamos index.html con estado 200 y
+     el navegador recibía HTML donde esperaba JavaScript, produciendo un
+     "Uncaught SyntaxError: Unexpected token '<'" imposible de depurar.
+     Un 404 honesto dice exactamente qué archivo falta. */
+  if (path.extname(req.path)) {
+    return res.status(404).json({ error: 'Archivo no encontrado: ' + req.path });
+  }
+
   res.sendFile(path.join(publicDir, 'index.html'));
 });
 
@@ -844,6 +854,19 @@ app.use((req, res) => {
    ══════════════════════════════════════════════════════════════ */
 
 app.use((err, req, res, _next) => {
+  /* body-parser lanza SyntaxError cuando el JSON del cuerpo está mal formado.
+     La culpa es del cliente que envió la petición, no del servidor, así que
+     respondemos 400 y no 500. Antes un typo en el body tumbaba la ruta entera
+     con un "Error interno del servidor" que no decía nada. */
+  const jsonInvalido =
+    err?.type === 'entity.parse.failed' || err instanceof SyntaxError;
+
+  if (jsonInvalido) {
+    LOG.warn(`[${req.id || '?'}] JSON inválido en el body:`, err.message);
+    if (res.headersSent) return;
+    return res.status(400).json({ error: 'JSON inválido en el cuerpo de la petición' });
+  }
+
   LOG.error(`[${req.id || '?'}] Error no manejado:`, err.message);
   if (res.headersSent) return;
   res.status(500).json({ error: 'Error interno del servidor' });

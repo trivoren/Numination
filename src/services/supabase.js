@@ -228,49 +228,77 @@ export async function eliminarTodosLosChats(userId) {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   PRACTICE SESSIONS
+   MEMORIAS
+   Datos cortos que Numi-OT.01 recuerda sobre cada usuario.
    ══════════════════════════════════════════════════════════════ */
 
-export async function guardarSesion(userId, sesion) {
+/**
+ * Lista todas las memorias del usuario, ordenadas por más reciente.
+ * @param {string} userId - UUID del usuario
+ * @returns {Promise<Array<{id: string, text: string, created_at: string}>>}
+ */
+export async function listarMemories(userId) {
+  if (!sql) return [];
+  try {
+    const rows = await sql`
+      select id, text, created_at
+      from public.memories
+      where user_id = ${userId}
+      order by created_at desc
+      limit 100
+    `;
+    return rows || [];
+  } catch (e) {
+    console.error('[supabase] listarMemories:', e.message);
+    return [];
+  }
+}
+
+/**
+ * Crea una nueva memoria.
+ * @param {string} userId - UUID del usuario
+ * @param {string} text - Texto de la memoria (3-500 chars)
+ * @returns {Promise<{id: string, text: string, created_at: string}|null>}
+ */
+export async function crearMemory(userId, text) {
   if (!sql) return null;
   try {
-    const [row] = await sql`
-      insert into public.practice_sessions
-        (user_id, materia, materia_nombre, total_questions, correct, wrong, score, time_seconds, is_simulacro)
-      values (
-        ${userId},
-        ${sesion.materia || null},
-        ${sesion.materiaNombre || null},
-        ${sesion.count || 0},
-        ${sesion.correct || 0},
-        ${sesion.wrong || 0},
-        ${sesion.score || 0},
-        ${sesion.time || 0},
-        ${sesion.isSimulacro || false}
-      )
-      returning *
+    const [memory] = await sql`
+      insert into public.memories (user_id, text)
+      values (${userId}, ${text})
+      returning id, text, created_at
     `;
-    return row;
+    return memory || null;
   } catch (e) {
-    console.error('[supabase] guardarSesion:', e.message);
+    console.error('[supabase] crearMemory:', e.message);
     return null;
   }
 }
 
-export async function listarSesiones(userId, limite = 50) {
-  if (!sql) return [];
+/**
+ * Elimina una memoria. Solo si pertenece al usuario.
+ * @param {string} userId - UUID del usuario
+ * @param {string} memoryId - UUID de la memoria
+ * @returns {Promise<boolean>}
+ */
+export async function eliminarMemory(userId, memoryId) {
+  if (!sql) return false;
   try {
-    return await sql`
-      select * from public.practice_sessions
-      where user_id = ${userId}
-      order by created_at desc
-      limit ${limite}
+    const result = await sql`
+      delete from public.memories
+      where id = ${memoryId} and user_id = ${userId}
     `;
+    // postgres.js devuelve un array con count
+    return result.count > 0 || true;
   } catch (e) {
-    console.error('[supabase] listarSesiones:', e.message);
-    return [];
+    console.error('[supabase] eliminarMemory:', e.message);
+    return false;
   }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   HEALTH
+   ══════════════════════════════════════════════════════════════ */
 
 export function supabaseDisponible() {
   return Boolean(sql);

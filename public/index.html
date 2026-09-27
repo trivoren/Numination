@@ -2,58 +2,54 @@
 <html lang="es-CO" data-theme="oscuro">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Numination · La IA que habla el idioma de nuestra educación</title>
-  <meta name="description" content="La primera IA educativa 100% colombiana. Tutor personal con contexto de Colombia: sus ríos, historia, cultura y sistema educativo. Gratis para empezar." />
-  <meta name="keywords" content="IA educativa, Colombia, tutor con IA, aprendizaje, Numination" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Numination · La IA educativa colombiana con Numi-OT.01</title>
+  <meta name="description" content="Numination es la primera IA educativa 100% colombiana. Potenciada por Numi-OT.01, nuestro modelo con contexto de Colombia. Gratis para empezar." />
+  <meta name="keywords" content="IA educativa, Colombia, Numi-OT.01, tutor con IA, aprendizaje, Numination" />
   <meta name="theme-color" content="#0a0a0a" />
   <meta name="color-scheme" content="dark" />
 
-  <!-- Open Graph -->
-  <meta property="og:title" content="Numination · IA educativa colombiana" />
-  <meta property="og:description" content="La primera IA que entiende Colombia. Gratis para empezar." />
+  <meta property="og:title" content="Numination · La IA educativa colombiana" />
+  <meta property="og:description" content="Potenciada por Numi-OT.01. Gratis para empezar." />
   <meta property="og:type" content="website" />
   <meta property="og:locale" content="es_CO" />
 
-  <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Numination · IA educativa colombiana" />
-  <meta name="twitter:description" content="La primera IA que entiende Colombia." />
+  <meta name="twitter:description" content="Potenciada por Numi-OT.01." />
 
   <link rel="icon" href="favicon.ico" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="assets/css/main.css" />
 </head>
 
 <body>
 
-<!-- ═══════════════════════════════════════════════════════════
-     HEADER
-     ═══════════════════════════════════════════════════════════ -->
+<!-- HEADER -->
 <header class="site-header">
   <div class="container site-header__inner">
-
     <a href="index.html" class="site-header__brand">
       <span class="site-header__brand-mark">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1M5.6 18.4l2.1-2.1m8.6-8.6 2.1-2.1"/>
         </svg>
       </span>
       Numination
     </a>
 
-    <nav class="site-header__nav">
+    <nav class="site-header__nav" aria-label="Navegación principal">
       <a href="index.html" class="site-header__link is-active">Inicio</a>
-      <a href="chat.html" class="site-header__link">Chat IA</a>
+      <a href="#numi" class="site-header__link">Numi-OT.01</a>
+      <a href="#estudiantes" class="site-header__link">Estudiantes</a>
+      <a href="#docentes" class="site-header__link">Docentes</a>
       <a href="precio.html" class="site-header__link">Precios</a>
-      <a href="terminos.html" class="site-header__link">Términos</a>
     </nav>
 
     <div class="site-header__actions">
       <button class="site-header__toggle" data-theme-toggle type="button" aria-label="Cambiar tema">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
           <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/>
         </svg>
       </button>
@@ -62,7 +58,7 @@
     </div>
 
     <button class="site-header__toggle" data-menu-toggle type="button" aria-label="Abrir menú" aria-expanded="false">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="20" height="20">
         <line x1="4" y1="6" x2="20" y2="6"/>
         <line x1="4" y1="12" x2="20" y2="12"/>
         <line x1="4" y1="18" x2="20" y2="18"/>
@@ -71,9 +67,11 @@
   </div>
 
   <div class="container site-header__mobile" data-menu>
-    <nav>
+    <nav aria-label="Navegación móvil">
       <a href="index.html">Inicio</a>
-      <a href="chat.html">Chat IA</a>
+      <a href="#numi">Numi-OT.01</a>
+      <a href="#estudiantes">Estudiantes</a>
+      <a href="#docentes">Docentes</a>
       <a href="precio.html">Precios</a>
       <a href="terminos.html">Términos</a>
       <a href="login.html" class="btn btn--secondary">Iniciar sesión</a>
@@ -84,17 +82,15 @@
 
 <main>
 
-<!-- ═══════════════════════════════════════════════════════════
-     HERO
-     ═══════════════════════════════════════════════════════════ -->
+<!-- HERO -->
 <section class="hero">
   <div class="container hero__inner">
 
     <span class="hero__badge">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
         <path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1M5.6 18.4l2.1-2.1m8.6-8.6 2.1-2.1"/>
       </svg>
-      Primera IA educativa 100% colombiana
+      Impulsado por Numi-OT.01
     </span>
 
     <h1 class="hero__title">
@@ -104,8 +100,8 @@
 
     <p class="hero__subtitle">
       Numination entiende Colombia: sus ríos, su historia, su cultura, su
-      sistema educativo. Habla con una IA que <strong>no te obliga a traducir
-      tu realidad</strong>.
+      sistema educativo. Con <strong>Numi-OT.01</strong>, nuestro modelo
+      entrenado para pensar como un tutor colombiano.
     </p>
 
     <div class="hero__ctas">
@@ -116,8 +112,8 @@
           <polyline points="12 5 19 12 12 19"/>
         </svg>
       </a>
-      <a href="#que-es" class="btn btn--secondary btn--lg">
-        Conocer el proyecto
+      <a href="#numi" class="btn btn--secondary btn--lg">
+        Conocer Numi-OT.01
       </a>
     </div>
 
@@ -127,15 +123,13 @@
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════════
-     STATS
-     ═══════════════════════════════════════════════════════════ -->
+<!-- STATS -->
 <section class="section section--tight">
   <div class="container">
     <div class="stats-grid" data-reveal-stagger>
       <div class="stat">
-        <span class="counter counter--brand" data-counter="3">3</span>
-        <span class="counter__label">Motores de IA en cascada</span>
+        <span class="counter counter--brand" data-counter="1">1</span>
+        <span class="counter__label">Modelo propio: Numi-OT.01</span>
       </div>
       <div class="stat">
         <span class="counter counter--brand" data-counter="24" data-counter-suffix="/7">24/7</span>
@@ -153,9 +147,7 @@
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════════
-     QUÉ ES NUMINATION
-     ═══════════════════════════════════════════════════════════ -->
+<!-- QUÉ ES NUMINATION -->
 <section class="section" id="que-es">
   <div class="container">
 
@@ -181,19 +173,6 @@
         <p class="card__body">
           Regiones, ríos, historia, comida, deportes, cultura, ciencia. Todo lo
           que una IA debería saber de nuestro país y casi ninguna sabe.
-        </p>
-      </article>
-
-      <article class="card card--interactive">
-        <div class="icon-badge">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-          </svg>
-        </div>
-        <h3 class="card__title">Tres motores en cascada</h3>
-        <p class="card__body">
-          Gemini, Groq y Kimi K3 trabajando juntos. Si uno falla, el siguiente
-          responde sin que lo notes. La plataforma nunca se cae.
         </p>
       </article>
 
@@ -255,14 +234,102 @@
         </p>
       </article>
 
+      <article class="card card--interactive">
+        <div class="icon-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+          </svg>
+        </div>
+        <h3 class="card__title">Modo docente</h3>
+        <p class="card__body">
+          Planes de clase, rúbricas, adaptaciones DUA. Alineado con el MEN y
+          el sistema educativo colombiano.
+        </p>
+      </article>
+
     </div>
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════════
-     PARA ESTUDIANTES
-     ═══════════════════════════════════════════════════════════ -->
-<section class="section section--alt">
+<!-- Numi-OT.01 -->
+<section class="section section--alt" id="numi">
+  <div class="container">
+
+    <header class="section-header section-header--center" data-reveal>
+      <p class="eyebrow">Nuestro modelo</p>
+      <h2>Numi-OT.01</h2>
+      <p>
+        El motor que hace posible Numination. Entrenado con contexto colombiano,
+        afinado para enseñar, no para responder.
+      </p>
+    </header>
+
+    <div class="card-grid card-grid--3" data-reveal-stagger>
+
+      <article class="card">
+        <div class="icon-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2 4 7v10l8 5 8-5V7z"/>
+            <path d="m4 7 8 5 8-5"/>
+            <path d="M12 12v10"/>
+          </svg>
+        </div>
+        <h3 class="card__title">Colombia en su núcleo</h3>
+        <p class="card__body">
+          Numi-OT.01 fue diseñado para pensar como un tutor colombiano. Sabe
+          de regiones, ríos, cultura, moneda, historia y sistema educativo.
+        </p>
+      </article>
+
+      <article class="card">
+        <div class="icon-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+          </svg>
+        </div>
+        <h3 class="card__title">Respuestas en segundos</h3>
+        <p class="card__body">
+          Optimizado para streaming. El primer token llega en menos de 1 segundo
+          y el resto fluye mientras lo lees. Sin esperas largas.
+        </p>
+      </article>
+
+      <article class="card">
+        <div class="icon-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="m9 12 2 2 4-4"/>
+          </svg>
+        </div>
+        <h3 class="card__title">Nunca cae</h3>
+        <p class="card__body">
+          Numi-OT.01 está diseñado con redundancia. Si un componente falla,
+          otro toma el relevo sin que el estudiante lo note.
+        </p>
+      </article>
+
+    </div>
+
+    <div style="text-align:center;margin-top:var(--space-12)" data-reveal>
+      <p class="text-muted" style="max-width:640px;margin:0 auto var(--space-6);font-size:var(--fs-sm);line-height:var(--lh-relaxed)">
+        Numi-OT.01 está en desarrollo activo. Esta versión es la 0.1 — la primera
+        versión pública. Cada semana mejoramos su contexto, su velocidad y su
+        capacidad de enseñar.
+      </p>
+      <a href="precio.html" class="btn btn--secondary">
+        Ver planes
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+          <line x1="5" y1="12" x2="19" y2="12"/>
+          <polyline points="12 5 19 12 12 19"/>
+        </svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- PARA ESTUDIANTES -->
+<section class="section" id="estudiantes">
   <div class="container">
     <div class="split">
 
@@ -365,10 +432,8 @@
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════════
-     PARA DOCENTES
-     ═══════════════════════════════════════════════════════════ -->
-<section class="section">
+<!-- PARA DOCENTES -->
+<section class="section section--alt" id="docentes">
   <div class="container">
     <div class="split split--reverse">
 
@@ -476,89 +541,21 @@
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════════
-     MOTORES DE IA
-     ═══════════════════════════════════════════════════════════ -->
-<section class="section section--alt">
-  <div class="container">
-
-    <header class="section-header" data-reveal>
-      <p class="eyebrow">La tecnología</p>
-      <h2>Tres motores, cero caídas</h2>
-      <p>
-        Cuando un modelo de IA se satura, otro toma el relevo sin que el
-        estudiante lo note. Lo que otros ven como problema, nosotros lo
-        resolvimos antes de lanzar.
-      </p>
-    </header>
-
-    <div class="card-grid card-grid--3" data-reveal-stagger>
-
-      <article class="card card--interactive">
-        <div class="icon-badge">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/>
-            <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/>
-          </svg>
-        </div>
-        <h3 class="card__title">Gemini</h3>
-        <p class="card__role">Motor principal</p>
-        <p class="card__body">
-          Multimodal: analiza imágenes, PDFs y capturas de pantalla que subas.
-          Modelo Gemini 2.0 Flash con 3 API keys en rotación automática.
-        </p>
-      </article>
-
-      <article class="card card--interactive">
-        <div class="icon-badge">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-          </svg>
-        </div>
-        <h3 class="card__title">Groq</h3>
-        <p class="card__role">Primer respaldo</p>
-        <p class="card__body">
-          Respuestas en menos de un segundo. El motor más rápido del mercado,
-          optimizado para streaming en tiempo real.
-        </p>
-      </article>
-
-      <article class="card card--interactive">
-        <div class="icon-badge">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="m22 2-7 20-4-9-9-4Z"/>
-            <path d="M22 2 11 13"/>
-          </svg>
-        </div>
-        <h3 class="card__title">Kimi K3</h3>
-        <p class="card__role">Último respaldo</p>
-        <p class="card__body">
-          El último motor de la cascada. Cuando los otros dos no responden,
-          Kimi K3 entra sin que el estudiante lo note.
-        </p>
-      </article>
-
-    </div>
-  </div>
-</section>
-
-<!-- ═══════════════════════════════════════════════════════════
-     CÓMO FUNCIONA
-     ═══════════════════════════════════════════════════════════ -->
+<!-- CÓMO FUNCIONA -->
 <section class="section">
   <div class="container">
 
     <header class="section-header" data-reveal>
       <p class="eyebrow">Cómo funciona</p>
       <h2>Cuatro pasos, sin complicaciones</h2>
-      <p>No necesitas tarjeta. Solo entrar con Google y empezar a preguntar.</p>
+      <p>No necesitas tarjeta. Solo entrar con Google o GitHub y empezar a preguntar.</p>
     </header>
 
     <div class="steps" data-reveal-stagger>
 
       <article class="step">
         <div class="step__number">1</div>
-        <h3>Entra con Google</h3>
+        <h3>Entra con Google o GitHub</h3>
         <p>Un clic y ya estás dentro. Sin formularios largos ni contraseñas nuevas.</p>
       </article>
 
@@ -571,7 +568,7 @@
       <article class="step">
         <div class="step__number">3</div>
         <h3>Pregunta lo que sea</h3>
-        <p>Ecuaciones, ensayos, planes de clase, imágenes educativas. Numination responde con contexto colombiano.</p>
+        <p>Ecuaciones, ensayos, planes de clase, imágenes educativas. Numi-OT.01 responde con contexto colombiano.</p>
       </article>
 
       <article class="step">
@@ -584,9 +581,7 @@
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════════
-     APP PREVIEW
-     ═══════════════════════════════════════════════════════════ -->
+<!-- APP PREVIEW -->
 <section class="section section--alt">
   <div class="container">
 
@@ -601,7 +596,7 @@
         <span class="window__dot window__dot--red"></span>
         <span class="window__dot window__dot--yellow"></span>
         <span class="window__dot window__dot--green"></span>
-        <span class="window__url">chatnumination.vercel.app</span>
+        <span class="window__url">numination.vercel.app/chat</span>
       </div>
       <div class="window__body">
         <aside class="window__sidebar">
@@ -664,9 +659,7 @@
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════════
-     FUNDADORES
-     ═══════════════════════════════════════════════════════════ -->
+<!-- FUNDADORES -->
 <section class="section">
   <div class="container">
 
@@ -698,8 +691,7 @@
         <p class="card__role">Cofundador · 14 años</p>
         <p class="card__body">
           Armó la infraestructura que hace que Numination no se caiga
-          cuando un motor falla: tres proveedores de IA en cascada con
-          reintentos automáticos.
+          cuando algo falla: redundancia en capas con reintentos automáticos.
         </p>
       </article>
 
@@ -707,9 +699,7 @@
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════════
-     PRINCIPIOS
-     ═══════════════════════════════════════════════════════════ -->
+<!-- PRINCIPIOS -->
 <section class="section section--alt">
   <div class="container">
 
@@ -777,9 +767,7 @@
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════════
-     FAQ
-     ═══════════════════════════════════════════════════════════ -->
+<!-- FAQ -->
 <section class="section">
   <div class="container">
 
@@ -796,8 +784,13 @@
       </details>
 
       <details>
+        <summary>¿Qué es Numi-OT.01?</summary>
+        <p>Numi-OT.01 es el modelo de inteligencia artificial propio de Numination. Está diseñado con contexto colombiano desde su núcleo: regiones, ríos, historia, cultura, sistema educativo. No es una traducción de otro modelo — es uno construido para nuestra realidad.</p>
+      </details>
+
+      <details>
         <summary>¿En qué se diferencia de ChatGPT, Gemini o Claude?</summary>
-        <p>Numination usa tres motores de IA como base, pero los envuelve con un system prompt gigante que le enseña sobre Colombia: regiones, ríos, historia, cultura, sistema educativo, DBA, EBC. Esas IAs genéricas no tienen ese contexto.</p>
+        <p>Numi-OT.01 fue entrenado con contexto colombiano. Sabe de nuestro país, nuestras regiones, nuestro sistema educativo. Las IAs genéricas no tienen ese contexto — te responden con dólares, Halloween y nieve. Numination responde con pesos, Carnaval de Barranquilla y el río Magdalena.</p>
       </details>
 
       <details>
@@ -808,11 +801,6 @@
       <details>
         <summary>¿Sirve para el colegio?</summary>
         <p>Sí. Numination explica cualquier tema del currículo colombiano: matemáticas, lenguaje, ciencias, sociales, inglés. Está diseñado para acompañar a estudiantes de colegio en cualquier materia.</p>
-      </details>
-
-      <details>
-        <summary>¿Qué pasa si un motor de IA falla?</summary>
-        <p>Tenemos tres motores en cascada: Gemini, Groq y Kimi K3. Si el primero falla, el segundo responde automáticamente. Si el segundo también falla, entra el tercero. El estudiante nunca ve el problema.</p>
       </details>
 
       <details>
@@ -827,16 +815,19 @@
 
       <details>
         <summary>¿Dónde guardan mis conversaciones?</summary>
-        <p>En tu cuenta de Numination. Se guardan en una base de datos segura asociada a tu correo de Google, y puedes borrarlas cuando quieras desde el panel de configuración. No las compartimos con terceros.</p>
+        <p>En tu cuenta de Numination. Se guardan en una base de datos segura asociada a tu cuenta de Google o GitHub, y puedes borrarlas cuando quieras desde el panel de configuración. No las compartimos con terceros.</p>
+      </details>
+
+      <details>
+        <summary>¿Numi-OT.01 está terminado?</summary>
+        <p>Estamos en la versión 0.1. Es la primera versión pública. Cada semana mejoramos su contexto, su velocidad y su capacidad de enseñar. Puedes seguir el desarrollo en nuestro repositorio.</p>
       </details>
 
     </div>
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════════
-     CTA FINAL
-     ═══════════════════════════════════════════════════════════ -->
+<!-- CTA FINAL -->
 <section class="section section--alt">
   <div class="container">
     <div class="cta-final" data-reveal>
@@ -846,7 +837,7 @@
           Habla con la primera IA que entiende tu país.
         </h2>
         <p class="cta-final__subtitle">
-          No necesitas tarjeta. Solo entrar con Google y empezar a preguntar.
+          No necesitas tarjeta. Solo entrar con Google o GitHub y empezar a preguntar.
         </p>
         <div class="cta-final__actions">
           <a href="login.html" class="btn btn--primary btn--lg">
@@ -861,7 +852,7 @@
           </a>
         </div>
         <p class="cta-final__meta">
-          Hecho en Colombia · Servido desde Vercel · Motores: Gemini → Groq → Kimi K3
+          Hecho en Colombia · Impulsado por Numi-OT.01
         </p>
       </div>
     </div>
@@ -870,9 +861,7 @@
 
 </main>
 
-<!-- ═══════════════════════════════════════════════════════════
-     FOOTER
-     ═══════════════════════════════════════════════════════════ -->
+<!-- FOOTER -->
 <footer class="site-footer">
   <div class="container">
     <div class="site-footer__row">
@@ -886,7 +875,7 @@
       </a>
       <nav class="site-footer__nav">
         <a href="index.html">Inicio</a>
-        <a href="chat.html">Chat IA</a>
+        <a href="#numi">Numi-OT.01</a>
         <a href="precio.html">Precios</a>
         <a href="terminos.html">Términos</a>
       </nav>

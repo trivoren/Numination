@@ -2,22 +2,33 @@
 <html lang="es-CO" data-theme="medianoche">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Ingresar · Numination</title>
-  <meta name="description" content="Ingresa a Numination, la IA educativa colombiana." />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0a0a1a" />
   <meta name="color-scheme" content="dark" />
-  <meta name="robots" content="noindex" />
-  <link rel="icon" href="favicon.ico" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
 
+  <title>Ingresar · Numination</title>
+  <meta name="description" content="Ingresa a Numination, la IA educativa colombiana." />
+
+  <link rel="icon" href="/favicon.ico" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://accounts.google.com" />
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    media="print"
+    onload="this.media='all'"
+  />
+  <noscript>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+  </noscript>
 
   <style>
-    /* ================================================================
-       VARIABLES
-       ================================================================ */
+    /* ══════════════════════════════════════════════════════════════
+       DESIGN TOKENS
+       ══════════════════════════════════════════════════════════════ */
     :root {
       --c-bg: #0a0a1a;
       --c-bg-alt: #101023;
@@ -33,11 +44,23 @@
       --c-primary-glow: rgba(124, 94, 255, 0.35);
       --c-danger: #ff4d4d;
       --c-success: #4dff88;
+      --c-warn: #ffb44d;
+
       --radius-sm: 8px;
       --radius-md: 12px;
       --radius-lg: 16px;
-      --transition: 180ms cubic-bezier(0.4, 0, 0.2, 1);
-      --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --radius-full: 999px;
+
+      --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-base: 220ms cubic-bezier(0.4, 0, 0.2, 1);
+
+      --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.35);
+      --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.45);
+
+      --z-toast: 9999;
     }
 
     [data-theme="oscuro"] {
@@ -52,21 +75,9 @@
       --c-text-subtle: #5a5a6a;
     }
 
-    [data-theme="medianoche"] {
-      --c-bg: #0a0a1a;
-      --c-bg-alt: #101023;
-      --c-bg-elevated: #16162b;
-      --c-bg-hover: #1c1c36;
-      --c-border: #24243e;
-      --c-border-strong: #34345a;
-      --c-text: #e0e0ff;
-      --c-text-muted: #8888aa;
-      --c-text-subtle: #5a5a7a;
-    }
-
-    /* ================================================================
+    /* ══════════════════════════════════════════════════════════════
        RESET
-       ================================================================ */
+       ══════════════════════════════════════════════════════════════ */
     *, *::before, *::after {
       box-sizing: border-box;
       margin: 0;
@@ -79,7 +90,7 @@
     }
 
     body {
-      font-family: var(--font-body);
+      font-family: var(--font-sans);
       background: var(--c-bg);
       color: var(--c-text);
       font-size: 15px;
@@ -95,32 +106,29 @@
       border: none;
       background: none;
       color: inherit;
+      -webkit-tap-highlight-color: transparent;
     }
 
-    input {
-      font-family: inherit;
-      color: inherit;
-      background: none;
-      border: none;
-      outline: none;
-      width: 100%;
-      font-size: 15px;
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
     }
 
     a {
       color: var(--c-primary);
       text-decoration: none;
-      transition: color var(--transition);
+      transition: color var(--transition-fast);
     }
+
     a:hover { text-decoration: underline; }
 
     ::-webkit-scrollbar { width: 8px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--c-border); border-radius: 4px; }
 
-    /* ================================================================
+    /* ══════════════════════════════════════════════════════════════
        LAYOUT
-       ================================================================ */
+       ══════════════════════════════════════════════════════════════ */
     .auth-app {
       display: grid;
       grid-template-columns: 1.15fr 1fr;
@@ -128,7 +136,6 @@
       min-height: 100dvh;
     }
 
-    /* ═══════════ HERO (izquierda) ═══════════ */
     .auth-hero {
       position: relative;
       display: flex;
@@ -186,7 +193,6 @@
       margin-bottom: 20px;
       display: flex;
       align-items: center;
-      color: var(--c-text);
     }
 
     .auth-hero__dot {
@@ -228,7 +234,6 @@
       align-items: flex-start;
       gap: 14px;
       font-size: 15px;
-      color: var(--c-text);
       line-height: 1.5;
     }
 
@@ -245,14 +250,12 @@
       margin-top: 1px;
     }
 
-    /* ═══════════ PANEL (derecha) ═══════════ */
     .auth-panel {
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 48px;
       background: var(--c-bg);
-      position: relative;
       overflow-y: auto;
     }
 
@@ -280,7 +283,7 @@
       font-weight: 800;
       color: #fff;
       box-shadow: 0 8px 28px var(--c-primary-glow);
-      letter-spacing: -0.02em;
+      user-select: none;
     }
 
     .auth-title {
@@ -303,10 +306,16 @@
       font-weight: 500;
     }
 
-    /* ================================================================
-       BOTÓN GOOGLE CUSTOM (SVG)
-       ================================================================ */
-    .auth-google-btn {
+    /* ══════════════════════════════════════════════════════════════
+       BOTONES DE AUTH (Google + GitHub)
+       ══════════════════════════════════════════════════════════════ */
+    .auth-methods {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .auth-btn {
       width: 100%;
       display: flex;
       align-items: center;
@@ -319,52 +328,55 @@
       color: var(--c-text);
       font-size: 14.5px;
       font-weight: 500;
-      font-family: inherit;
-      cursor: pointer;
-      transition: all var(--transition);
+      transition: all var(--transition-fast);
       position: relative;
       overflow: hidden;
+      min-height: 48px;
+      text-decoration: none;
     }
 
-    .auth-google-btn:hover:not(:disabled) {
+    .auth-btn:hover:not(:disabled) {
       background: var(--c-bg-hover);
-      border-color: var(--c-border-strong);
       transform: translateY(-1px);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+      box-shadow: var(--shadow-md);
+      text-decoration: none;
+      color: var(--c-text);
     }
 
-    .auth-google-btn:active:not(:disabled) {
+    .auth-btn:active:not(:disabled) {
       transform: translateY(0);
-      box-shadow: none;
     }
 
-    .auth-google-btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
+    .auth-btn:focus-visible {
+      outline: 2px solid var(--c-primary);
+      outline-offset: 2px;
     }
 
-    .auth-google-btn svg {
+    .auth-btn svg {
       width: 18px;
       height: 18px;
       flex-shrink: 0;
     }
 
-    .auth-google-btn.is-loading {
-      pointer-events: none;
+    .auth-btn__label {
+      transition: opacity var(--transition-fast);
     }
 
-    .auth-google-btn.is-loading .auth-google-btn__label {
-      opacity: 0.5;
+    .auth-btn.is-loading .auth-btn__label,
+    .auth-btn.is-loading svg {
+      opacity: 0;
     }
 
-    .auth-google-btn.is-loading::after {
+    .auth-btn.is-loading::after {
       content: '';
       position: absolute;
       top: 50%;
       left: 50%;
       width: 18px;
       height: 18px;
-      margin: -9px 0 0 -9px;
+      margin: -9px -9px 0 0;
+      margin-left: -9px;
+      margin-top: -9px;
       border: 2px solid var(--c-primary);
       border-top-color: transparent;
       border-radius: 50%;
@@ -375,214 +387,34 @@
       to { transform: rotate(360deg); }
     }
 
-    /* ================================================================
-       SEPARADOR
-       ================================================================ */
-    .auth-divider {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      margin: 24px 0;
-      color: var(--c-text-subtle);
-      font-size: 11.5px;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
+    /* GitHub icono específico — tamaño ajustado */
+    .auth-btn--github svg {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+      stroke: none;
     }
 
-    .auth-divider::before,
-    .auth-divider::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--c-border);
-    }
-
-    /* ================================================================
-       BOTÓN EMAIL
-       ================================================================ */
-    .auth-email-btn {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      padding: 13px 20px;
-      background: transparent;
-      border: 1px solid var(--c-border-strong);
-      border-radius: var(--radius-md);
-      color: var(--c-text);
-      font-size: 14.5px;
-      font-weight: 500;
-      font-family: inherit;
-      cursor: pointer;
-      transition: all var(--transition);
-    }
-
-    .auth-email-btn:hover {
-      background: var(--c-bg-elevated);
-      border-color: var(--c-primary);
-      transform: translateY(-1px);
-    }
-
-    .auth-email-btn svg {
-      width: 18px;
-      height: 18px;
-      color: var(--c-primary);
-    }
-
-    /* ================================================================
-       FORMULARIO EMAIL
-       ================================================================ */
-    .auth-form {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      animation: fadeIn 0.3s ease;
-    }
-
-    .auth-field {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .auth-label {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--c-text);
-      letter-spacing: 0.01em;
-    }
-
-    .auth-input-wrap {
-      position: relative;
-      display: flex;
-      align-items: center;
-      background: var(--c-bg-elevated);
-      border: 1px solid var(--c-border-strong);
-      border-radius: var(--radius-md);
-      transition: all var(--transition);
-    }
-
-    .auth-input-wrap:focus-within {
-      border-color: var(--c-primary);
-      box-shadow: 0 0 0 3px var(--c-primary-glow);
-    }
-
-    .auth-input-wrap.is-invalid {
-      border-color: var(--c-danger);
-    }
-
-    .auth-input-icon {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0 12px;
-      color: var(--c-text-muted);
-      flex-shrink: 0;
-    }
-
-    .auth-input-icon svg {
-      width: 16px;
-      height: 16px;
-    }
-
-    .auth-input {
-      padding: 12px 0;
-      font-size: 14.5px;
-    }
-
-    .auth-input::placeholder { color: var(--c-text-subtle); }
-
-    .auth-input-action {
-      padding: 0 12px;
-      color: var(--c-text-muted);
-      display: flex;
-      align-items: center;
-      transition: color var(--transition);
-    }
-
-    .auth-input-action:hover { color: var(--c-text); }
-    .auth-input-action svg { width: 16px; height: 16px; }
-
-    .auth-error-msg {
+    /* ══════════════════════════════════════════════════════════════
+       FOOTER LEGAL
+       ══════════════════════════════════════════════════════════════ */
+    .auth-legal-note {
       font-size: 12px;
-      color: var(--c-danger);
-      display: none;
-      margin-top: 2px;
-    }
-
-    .auth-input-wrap.is-invalid ~ .auth-error-msg { display: block; }
-
-    .auth-submit {
-      width: 100%;
-      padding: 13px 20px;
-      background: var(--c-primary);
-      color: #fff;
-      border-radius: var(--radius-md);
-      font-size: 14.5px;
-      font-weight: 600;
-      font-family: inherit;
-      cursor: pointer;
-      transition: all var(--transition);
-      margin-top: 6px;
-      position: relative;
-    }
-
-    .auth-submit:hover:not(:disabled) {
-      background: var(--c-primary-hover);
-      transform: translateY(-1px);
-      box-shadow: 0 8px 20px var(--c-primary-glow);
-    }
-
-    .auth-submit:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    .auth-submit.is-loading {
-      color: transparent;
-      pointer-events: none;
-    }
-
-    .auth-submit.is-loading::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 16px;
-      height: 16px;
-      margin: -8px 0 0 -8px;
-      border: 2px solid #fff;
-      border-top-color: transparent;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-
-    .auth-back {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 13px;
       color: var(--c-text-muted);
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 8px 0;
-      margin-top: 4px;
-      transition: color var(--transition);
-      align-self: center;
+      text-align: center;
+      margin-top: 24px;
+      line-height: 1.55;
     }
 
-    .auth-back:hover { color: var(--c-text); }
-    .auth-back svg { width: 14px; height: 14px; }
+    .auth-legal-note a {
+      color: var(--c-text-muted);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      transition: color var(--transition-fast);
+    }
 
-    /* Vista oculta */
-    .auth-view[hidden] { display: none; }
+    .auth-legal-note a:hover { color: var(--c-primary); }
 
-    /* ================================================================
-       FOOTER NAV
-       ================================================================ */
     .auth-footer-nav {
       display: flex;
       justify-content: center;
@@ -598,7 +430,7 @@
 
     .auth-footer-nav a {
       color: var(--c-text-muted);
-      transition: color var(--transition);
+      transition: color var(--transition-fast);
     }
 
     .auth-footer-nav a:hover {
@@ -606,7 +438,7 @@
       text-decoration: none;
     }
 
-    .auth-footer-nav__dot { opacity: 0.4; }
+    .auth-footer-nav__dot { opacity: 0.4; user-select: none; }
 
     .auth-copyright {
       text-align: center;
@@ -616,30 +448,9 @@
       opacity: 0.75;
     }
 
-    .auth-legal-note {
-      font-size: 12px;
-      color: var(--c-text-muted);
-      text-align: center;
-      margin-top: 24px;
-      line-height: 1.55;
-    }
-
-    .auth-legal-note a {
-      color: var(--c-text-muted);
-      text-decoration: underline;
-      text-underline-offset: 2px;
-      text-decoration-color: var(--c-border);
-      transition: all var(--transition);
-    }
-
-    .auth-legal-note a:hover {
-      color: var(--c-primary);
-      text-decoration-color: var(--c-primary);
-    }
-
-    /* ================================================================
+    /* ══════════════════════════════════════════════════════════════
        TOASTS
-       ================================================================ */
+       ══════════════════════════════════════════════════════════════ */
     .nm-toasts {
       position: fixed;
       bottom: 24px;
@@ -647,8 +458,9 @@
       display: flex;
       flex-direction: column;
       gap: 8px;
-      z-index: 1000;
+      z-index: var(--z-toast);
       pointer-events: none;
+      max-width: 400px;
     }
 
     .nm-toast {
@@ -658,45 +470,73 @@
       border-radius: var(--radius-md);
       font-size: 14px;
       color: var(--c-text);
-      animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      animation: slideInToast 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       display: flex;
       align-items: center;
       gap: 10px;
       min-width: 260px;
-      max-width: 380px;
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+      box-shadow: var(--shadow-lg);
       pointer-events: auto;
       line-height: 1.4;
+      word-break: break-word;
     }
 
     .nm-toast--ok { border-left: 3px solid var(--c-success); }
     .nm-toast--err { border-left: 3px solid var(--c-danger); }
     .nm-toast--info { border-left: 3px solid var(--c-primary); }
+    .nm-toast--warn { border-left: 3px solid var(--c-warn); }
 
-    @keyframes slideIn {
+    @keyframes slideInToast {
       from { transform: translateX(120%); opacity: 0; }
       to { transform: translateX(0); opacity: 1; }
     }
 
-    /* GSI oculto */
+    /* ══════════════════════════════════════════════════════════════
+       GSI HIDDEN CONTAINER
+       ══════════════════════════════════════════════════════════════ */
     .gsi-hidden {
-      position: absolute;
-      width: 0;
-      height: 0;
-      overflow: hidden;
+      position: fixed;
+      width: 1px;
+      height: 1px;
       opacity: 0;
       pointer-events: none;
+      overflow: hidden;
       top: -9999px;
       left: -9999px;
     }
 
-    /* ================================================================
+    /* ══════════════════════════════════════════════════════════════
+       FALLBACK
+       ══════════════════════════════════════════════════════════════ */
+    .auth-fallback {
+      margin-top: 16px;
+      padding: 14px 16px;
+      background: rgba(255, 180, 77, 0.08);
+      border: 1px solid rgba(255, 180, 77, 0.25);
+      border-radius: var(--radius-md);
+      color: var(--c-warn);
+      font-size: 13px;
+      line-height: 1.5;
+      text-align: center;
+      display: none;
+    }
+
+    .auth-fallback.is-visible {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    /* ══════════════════════════════════════════════════════════════
        RESPONSIVE
-       ================================================================ */
+       ══════════════════════════════════════════════════════════════ */
     @media (max-width: 960px) {
       .auth-app { grid-template-columns: 1fr; }
       .auth-hero { display: none; }
-      .auth-panel { padding: 40px 24px; min-height: 100vh; min-height: 100dvh; }
+      .auth-panel {
+        padding: 40px 24px;
+        min-height: 100vh;
+        min-height: 100dvh;
+      }
       .auth-inner { max-width: 400px; }
     }
 
@@ -708,446 +548,571 @@
       }
       .auth-logo { width: 46px; height: 46px; font-size: 22px; margin-bottom: 24px; }
       .auth-title { font-size: 22px; }
-      .nm-toasts { left: 12px; right: 12px; bottom: 12px; }
+      .nm-toasts { left: 12px; right: 12px; bottom: 12px; max-width: none; }
       .nm-toast { max-width: none; width: 100%; }
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       ACCESIBILIDAD
+       ══════════════════════════════════════════════════════════════ */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
     }
 
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
         animation-duration: 0.01ms !important;
         transition-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
       }
     }
   </style>
 </head>
 
 <body>
+  <main class="auth-app">
+    <!-- ═══════════════════════════════════════════════════════════
+         HERO
+         ═══════════════════════════════════════════════════════════ -->
+    <aside class="auth-hero" aria-hidden="true">
+      <div class="auth-hero__pattern"></div>
+      <div class="auth-hero__content">
+        <h1 class="auth-hero__wordmark">
+          Numination<span class="auth-hero__dot"></span>
+        </h1>
+        <p class="auth-hero__tagline">
+          La IA que habla el idioma<br />
+          de nuestra educación.
+        </p>
+        <ul class="auth-hero__features">
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            <span>Pregunta lo que quieras, en tus palabras</span>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2 4 7v10l8 5 8-5V7z" />
+              <path d="m4 7 8 5 8-5" />
+              <path d="M12 12v10" />
+            </svg>
+            <span>Aprende a tu ritmo, con ejemplos de Colombia</span>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+            <span>Respuestas en segundos con Groq y Gemini</span>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              <path d="m9 12 2 2 4-4" />
+            </svg>
+            <span>Tus datos están seguros y nunca se venden</span>
+          </li>
+        </ul>
+      </div>
+    </aside>
 
-<main class="auth-app">
+    <!-- ═══════════════════════════════════════════════════════════
+         PANEL
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="auth-panel">
+      <div class="auth-inner">
+        <div class="auth-logo" aria-hidden="true">N</div>
 
-  <!-- ═══════════════════════════════════════════════════════════
-       HERO
-       ═══════════════════════════════════════════════════════════ -->
-  <aside class="auth-hero">
-    <div class="auth-hero__pattern" aria-hidden="true"></div>
+        <h2 class="auth-title">Bienvenido a Numination</h2>
+        <p class="auth-subtitle">
+          Tu tutor con IA, hecho en Colombia.<br />
+          <strong>Gratis para empezar.</strong>
+        </p>
 
-    <div class="auth-hero__content">
-      <h1 class="auth-hero__wordmark">
-        Numination<span class="auth-hero__dot" aria-hidden="true"></span>
-      </h1>
+        <div class="auth-methods">
+          <!-- Botón Google (dispara GSI oculto) -->
+          <button
+            type="button"
+            class="auth-btn"
+            data-google-btn
+            aria-label="Continuar con Google"
+            aria-busy="false"
+          >
+            <svg viewBox="0 0 48 48" aria-hidden="true">
+              <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+              <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+              <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+              <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+            </svg>
+            <span class="auth-btn__label">Continuar con Google</span>
+          </button>
 
-      <p class="auth-hero__tagline">
-        La IA que habla el idioma<br />
-        de nuestra educación.
-      </p>
+          <!-- Botón GitHub (redirige al server OAuth) -->
+          <a
+            href="/api/auth/github"
+            class="auth-btn auth-btn--github"
+            data-github-btn
+            aria-label="Continuar con GitHub"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z" />
+            </svg>
+            <span class="auth-btn__label">Continuar con GitHub</span>
+          </a>
+        </div>
 
-      <ul class="auth-hero__features">
-        <li>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-          </svg>
-          <span>Pregunta lo que quieras, en tus palabras</span>
-        </li>
-        <li>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M12 2 4 7v10l8 5 8-5V7z"/>
-            <path d="m4 7 8 5 8-5"/>
-            <path d="M12 12v10"/>
-          </svg>
-          <span>Aprende a tu ritmo, con ejemplos de Colombia</span>
-        </li>
-        <li>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M12 2v4"/>
-            <path d="m16.24 7.76 2.83-2.83"/>
-            <path d="M18 12h4"/>
-            <path d="m16.24 16.24 2.83 2.83"/>
-            <path d="M12 18v4"/>
-            <path d="m4.93 19.07 2.83-2.83"/>
-            <path d="M2 12h4"/>
-            <path d="m4.93 4.93 2.83 2.83"/>
-            <circle cx="12" cy="12" r="3"/>
-          </svg>
-          <span>Tres motores de IA trabajando sin parar</span>
-        </li>
-        <li>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            <path d="m9 12 2 2 4-4"/>
-          </svg>
-          <span>Tus datos están seguros y nunca se venden</span>
-        </li>
-      </ul>
-    </div>
-  </aside>
-
-  <!-- ═══════════════════════════════════════════════════════════
-       PANEL
-       ═══════════════════════════════════════════════════════════ -->
-  <div class="auth-panel">
-    <div class="auth-inner">
-
-      <div class="auth-logo" aria-hidden="true">N</div>
-
-      <h2 class="auth-title">Bienvenido a Numination</h2>
-      <p class="auth-subtitle">
-        Tu tutor con IA, hecho en Colombia.<br />
-        <strong>Gratis para empezar.</strong>
-      </p>
-
-      <!-- ═══════════ VISTA 1: MÉTODOS DE LOGIN ═══════════ -->
-      <div class="auth-view" data-view="methods">
-
-        <!-- Botón Google custom con SVG -->
-        <button type="button" class="auth-google-btn" data-google-btn>
-          <svg viewBox="0 0 48 48" aria-hidden="true">
-            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-          </svg>
-          <span class="auth-google-btn__label">Continuar con Google</span>
-        </button>
-
-        <div class="auth-divider"><span>o</span></div>
-
-        <!-- Botón email -->
-        <button type="button" class="auth-email-btn" data-show-email>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-            <polyline points="22,6 12,13 2,6"/>
-          </svg>
-          <span>Continuar con correo</span>
-        </button>
+        <!-- Fallback si GSI no carga -->
+        <div class="auth-fallback" data-auth-fallback role="alert">
+          No pudimos cargar Google. Verifica tu conexión y
+          <button type="button" data-retry-google style="color: var(--c-warn); text-decoration: underline; padding: 0; font: inherit">
+            reintenta aquí
+          </button>.
+        </div>
 
         <p class="auth-legal-note">
           Al continuar aceptas nuestros
-          <a href="terminos.html">términos</a> y la
-          <a href="terminos.html">política de privacidad</a>.
+          <a href="/terminos.html">términos</a> y la
+          <a href="/terminos.html">política de privacidad</a>.
         </p>
+
+        <nav class="auth-footer-nav" aria-label="Enlaces">
+          <a href="/index.html">Inicio</a>
+          <span class="auth-footer-nav__dot">·</span>
+          <a href="/precio.html">Precios</a>
+          <span class="auth-footer-nav__dot">·</span>
+          <a href="/terminos.html">Términos</a>
+        </nav>
+
+        <p class="auth-copyright">© 2026 Numination · Hecho en Colombia 🇨🇴</p>
       </div>
-
-      <!-- ═══════════ VISTA 2: FORM CORREO ═══════════ -->
-      <div class="auth-view" data-view="email" hidden>
-        <form class="auth-form" data-email-form novalidate>
-
-          <div class="auth-field">
-            <label class="auth-label" for="email">Correo electrónico</label>
-            <div class="auth-input-wrap" data-field="email">
-              <span class="auth-input-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                  <polyline points="22,6 12,13 2,6"/>
-                </svg>
-              </span>
-              <input type="email" id="email" class="auth-input" placeholder="tu@correo.com" autocomplete="email" required />
-            </div>
-            <span class="auth-error-msg">Ingresa un correo válido.</span>
-          </div>
-
-          <div class="auth-field">
-            <label class="auth-label" for="password">Contraseña</label>
-            <div class="auth-input-wrap" data-field="password">
-              <span class="auth-input-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="3" y="11" width="18" height="11" rx="2"/>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
-              </span>
-              <input type="password" id="password" class="auth-input" placeholder="••••••••" autocomplete="current-password" minlength="6" required />
-              <button type="button" class="auth-input-action" data-toggle-pass aria-label="Mostrar contraseña">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-icon="eye">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                  <circle cx="12" cy="12" r="3"/>
-                </svg>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-icon="eye-off" style="display:none">
-                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
-                  <line x1="1" y1="1" x2="23" y2="23"/>
-                </svg>
-              </button>
-            </div>
-            <span class="auth-error-msg">La contraseña debe tener al menos 6 caracteres.</span>
-          </div>
-
-          <button type="submit" class="auth-submit" data-email-submit>
-            Ingresar
-          </button>
-
-          <button type="button" class="auth-back" data-back-to-methods>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="19" y1="12" x2="5" y2="12"/>
-              <polyline points="12 19 5 12 12 5"/>
-            </svg>
-            <span>Volver a métodos de ingreso</span>
-          </button>
-        </form>
-      </div>
-
-      <!-- Footer -->
-      <nav class="auth-footer-nav" aria-label="Enlaces">
-        <a href="index.html">Inicio</a>
-        <span class="auth-footer-nav__dot" aria-hidden="true">·</span>
-        <a href="precio.html">Precios</a>
-        <span class="auth-footer-nav__dot" aria-hidden="true">·</span>
-        <a href="terminos.html">Términos</a>
-      </nav>
-
-      <p class="auth-copyright">
-        © 2026 Numination · Hecho en Colombia 🇨🇴
-      </p>
-
     </div>
+  </main>
+
+  <!-- Toasts -->
+  <div class="nm-toasts" id="nm-toasts" role="status" aria-live="polite" aria-atomic="false"></div>
+
+  <!-- GSI oculto -->
+  <div class="gsi-hidden" aria-hidden="true">
+    <div
+      id="g_id_onload"
+      data-client_id="815847930264-hqlpgm37slhbbtqotv4uv9erla4sdl6d.apps.googleusercontent.com"
+      data-callback="handleGoogleCredential"
+      data-auto_prompt="false"
+      data-context="signin"
+      data-ux_mode="popup"
+      data-use_fedcm_for_prompt="false"
+    ></div>
+    <div
+      class="g_id_signin"
+      data-type="standard"
+      data-size="large"
+      data-theme="filled_black"
+      data-text="continue_with"
+      data-shape="rectangular"
+      data-logo_alignment="center"
+      data-width="340"
+    ></div>
   </div>
 
-</main>
+  <!-- ═══════════════════════════════════════════════════════════════
+       BOOTSTRAP
+       ═══════════════════════════════════════════════════════════════ -->
+  <script>
+    (function () {
+      'use strict';
 
-<!-- GSI oculto (para el flujo OAuth real) -->
-<div class="gsi-hidden" aria-hidden="true">
-  <div id="g_id_onload"
-       data-client_id="815847930264-hqlpgm37slhbbtqotv4uv9erla4sdl6d.apps.googleusercontent.com"
-       data-callback="handleGoogleCredential"
-       data-auto_prompt="false"
-       data-context="signin"
-       data-ux_mode="popup"></div>
-  <div class="g_id_signin"
-       data-type="standard"
-       data-size="large"
-       data-theme="filled_black"
-       data-text="continue_with"
-       data-shape="rectangular"
-       data-logo_alignment="center"
-       data-width="340"></div>
-</div>
-
-<!-- Toasts -->
-<div class="nm-toasts" id="nm-toasts" aria-live="polite" role="status"></div>
-
-<!-- ═══════════════════════════════════════════════════════════
-     Callback de Google — ANTES de cargar GSI
-     ═══════════════════════════════════════════════════════════ -->
-<script>
-(function () {
-  'use strict';
-
-  /* ── Toasts ── */
-  const Toasts = {
-    _push(kind, msg) {
-      const host = document.getElementById('nm-toasts');
-      if (!host) return;
-      const t = document.createElement('div');
-      t.className = 'nm-toast nm-toast--' + kind;
-      const ico = { ok: '✓', err: '✕', info: 'ⓘ' }[kind] || '';
-      t.innerHTML = `<span>${ico}</span><span>${msg}</span>`;
-      host.appendChild(t);
-      setTimeout(() => {
-        t.style.transition = 'opacity .3s, transform .3s';
-        t.style.opacity = '0';
-        t.style.transform = 'translateX(20px)';
-        setTimeout(() => t.remove(), 320);
-      }, 3400);
-    },
-    ok(m)   { this._push('ok', m); },
-    err(m)  { this._push('err', m); },
-    info(m) { this._push('info', m); },
-  };
-
-  window.__numination = window.__numination || {};
-  window.__numination.Toasts = Toasts;
-
-  /* ── Tema guardado ── */
-  try {
-    const saved = localStorage.getItem('numination-theme');
-    if (saved) document.documentElement.dataset.theme = saved;
-  } catch (e) {}
-
-  /* ══════════════════════════════════════════════════════════════
-     CALLBACK GOOGLE
-     ══════════════════════════════════════════════════════════════ */
-  window.handleGoogleCredential = async function (response) {
-    const credential = response && response.credential;
-
-    if (!credential) {
-      console.error('[auth] sin credential');
-      Toasts.err('Google no devolvió credenciales. Intenta de nuevo.');
-      setGoogleLoading(false);
-      return;
-    }
-
-    Toasts.info('Verificando con Google…');
-
-    try {
-      const res = await fetch('/api/auth/google', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ credential: credential, remember: true }),
+      /* ═══════════════════════════════════════════════════════════
+         CONFIG
+         ═══════════════════════════════════════════════════════════ */
+      const Config = Object.freeze({
+        GSI_TIMEOUT_MS: 8000,
+        SESSION_TIMEOUT_MS: 5000,
+        SESSION_RETRIES: 3,
+        RETRY_BASE_MS: 600,
+        TOAST_DEFAULT_MS: 3400,
+        TOAST_ERROR_MS: 5000,
+        MAX_TOASTS: 4,
+        SAFE_REDIRECTS: ['/chat.html', '/index.html', '/login.html'],
+        DEFAULT_REDIRECT: '/chat.html',
       });
 
-      const data = await res.json();
-
-      if (!res.ok || !data.ok) {
-        throw new Error((data && data.error) || 'Error de autenticación');
-      }
-
-      Toasts.ok('¡Bienvenido, ' + (data.user.name || data.user.email) + '!');
-
-      setTimeout(() => { location.href = '/chat.html'; }, 700);
-    } catch (err) {
-      console.error('[auth]', err);
-      setGoogleLoading(false);
-      Toasts.err('No pudimos iniciar sesión. Intenta de nuevo.');
-    }
-  };
-
-  /* ══════════════════════════════════════════════════════════════
-     BOTÓN GOOGLE CUSTOM → CLICK PROGRAMÁTICO AL GSI
-     ══════════════════════════════════════════════════════════════ */
-  function setGoogleLoading(loading) {
-    const btn = document.querySelector('[data-google-btn]');
-    if (!btn) return;
-    btn.classList.toggle('is-loading', loading);
-    btn.disabled = loading;
-  }
-
-  document.querySelector('[data-google-btn]')?.addEventListener('click', function () {
-    setGoogleLoading(true);
-
-    // Buscar el botón renderizado por Google dentro del div oculto
-    const gsiBtn = document.querySelector('.gsi-hidden [role="button"], .gsi-hidden button, .gsi-hidden div[tabindex]');
-
-    if (gsiBtn) {
-      gsiBtn.click();
-    } else {
-      // Si GSI aún no renderizó, esperar y reintentar
-      setTimeout(() => {
-        const retryBtn = document.querySelector('.gsi-hidden [role="button"], .gsi-hidden button, .gsi-hidden div[tabindex]');
-        if (retryBtn) retryBtn.click();
-        else {
-          setGoogleLoading(false);
-          Toasts.err('Google no está listo. Recarga la página.');
-        }
-      }, 500);
-    }
-  });
-
-  /* ══════════════════════════════════════════════════════════════
-     ROUTER DE VISTAS (methods ↔ email)
-     ══════════════════════════════════════════════════════════════ */
-  function showView(name) {
-    document.querySelectorAll('[data-view]').forEach((v) => {
-      v.hidden = v.dataset.view !== name;
-    });
-  }
-
-  document.querySelector('[data-show-email]')?.addEventListener('click', () => {
-    showView('email');
-    setTimeout(() => document.getElementById('email')?.focus(), 80);
-  });
-
-  document.querySelector('[data-back-to-methods]')?.addEventListener('click', () => {
-    showView('methods');
-  });
-
-  /* ══════════════════════════════════════════════════════════════
-     TOGGLE PASSWORD
-     ══════════════════════════════════════════════════════════════ */
-  document.querySelector('[data-toggle-pass]')?.addEventListener('click', function () {
-    const input = document.getElementById('password');
-    const eye = this.querySelector('[data-icon="eye"]');
-    const eyeOff = this.querySelector('[data-icon="eye-off"]');
-    if (!input) return;
-
-    const showing = input.type === 'text';
-    input.type = showing ? 'password' : 'text';
-    if (eye) eye.style.display = showing ? '' : 'none';
-    if (eyeOff) eyeOff.style.display = showing ? 'none' : '';
-  });
-
-  /* ══════════════════════════════════════════════════════════════
-     VALIDACIÓN + SUBMIT FORM CORREO
-     ══════════════════════════════════════════════════════════════ */
-  const emailForm = document.querySelector('[data-email-form]');
-  if (emailForm) {
-    const emailInput = document.getElementById('email');
-    const passInput = document.getElementById('password');
-
-    const setInvalid = (name, invalid) => {
-      const wrap = document.querySelector(`[data-field="${name}"]`);
-      if (wrap) wrap.classList.toggle('is-invalid', invalid);
-    };
-
-    emailInput?.addEventListener('input', () => {
-      if (emailInput.value.length > 0) setInvalid('email', false);
-    });
-    passInput?.addEventListener('input', () => {
-      if (passInput.value.length > 0) setInvalid('password', false);
-    });
-
-    emailForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const email = emailInput.value.trim();
-      const password = passInput.value;
-      const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-      const passOk = password.length >= 6;
-
-      setInvalid('email', !emailOk);
-      setInvalid('password', !passOk);
-
-      if (!emailOk || !passOk) return;
-
-      const submitBtn = emailForm.querySelector('[data-email-submit]');
-      submitBtn.classList.add('is-loading');
-      submitBtn.disabled = true;
-
-      try {
-        const res = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ email, password, remember: true }),
-        });
-
-        const data = await res.json().catch(() => ({}));
-
-        if (!res.ok || !data.ok) {
-          // Si el backend no soporta email/password todavía
-          if (res.status === 404 || res.status === 501) {
-            throw new Error('El ingreso con correo todavía no está disponible. Usa Google.');
+      /* ═══════════════════════════════════════════════════════════
+         UTILS
+         ═══════════════════════════════════════════════════════════ */
+      const Utils = {
+        isPlainObject(v) {
+          return Object.prototype.toString.call(v) === '[object Object]';
+        },
+        isNonEmptyString(v) {
+          return typeof v === 'string' && v.trim().length > 0;
+        },
+        sleep(ms) {
+          return new Promise((r) => setTimeout(r, ms));
+        },
+        async fetchWithTimeout(url, opts = {}, timeoutMs = 10000) {
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), timeoutMs);
+          try {
+            return await fetch(url, { ...opts, signal: controller.signal });
+          } finally {
+            clearTimeout(timer);
           }
-          throw new Error(data.error || 'Credenciales incorrectas.');
+        },
+        async safeJson(res) {
+          try {
+            return await res.json();
+          } catch {
+            return null;
+          }
+        },
+        safeRedirect(path, fallback = Config.DEFAULT_REDIRECT) {
+          const target = Config.SAFE_REDIRECTS.includes(path) ? path : fallback;
+          window.location.replace(target);
+        },
+        uid() {
+          return 't_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+        },
+      };
+
+      /* ═══════════════════════════════════════════════════════════
+         TOASTS
+         ═══════════════════════════════════════════════════════════ */
+      const Toasts = (() => {
+        const host = document.getElementById('nm-toasts');
+        const active = new Map();
+
+        function dismiss(id) {
+          const entry = active.get(id);
+          if (!entry) return;
+          const { el, timer } = entry;
+          clearTimeout(timer);
+          el.style.transition = 'opacity .3s, transform .3s';
+          el.style.opacity = '0';
+          el.style.transform = 'translateX(20px)';
+          setTimeout(() => el.remove(), 320);
+          active.delete(id);
         }
 
-        Toasts.ok('¡Bienvenido!');
-        setTimeout(() => { location.href = '/chat.html'; }, 700);
-      } catch (err) {
-        console.error('[auth/email]', err);
-        Toasts.err(err.message || 'No pudimos iniciar sesión.');
-        submitBtn.classList.remove('is-loading');
-        submitBtn.disabled = false;
-      }
-    });
-  }
+        function push(kind, message, durationMs) {
+          if (!host) return;
+          if (active.size >= Config.MAX_TOASTS) {
+            const firstKey = active.keys().next().value;
+            dismiss(firstKey);
+          }
 
-  /* ══════════════════════════════════════════════════════════════
-     SESIÓN ACTIVA → REDIRIGIR
-     ══════════════════════════════════════════════════════════════ */
-  (async function checkSession() {
-    try {
-      const res = await fetch('/api/auth/me', { credentials: 'include' });
-      const data = await res.json();
-      if (data && data.ok && data.user) {
-        if (!new URLSearchParams(location.search).has('stay')) {
-          location.href = '/chat.html';
+          const id = Utils.uid();
+          const el = document.createElement('div');
+          el.className = `nm-toast nm-toast--${kind}`;
+          el.dataset.toastId = id;
+
+          const icon = { ok: '✓', err: '✕', info: 'ⓘ', warn: '⚠' }[kind] || '';
+          const iconSpan = document.createElement('span');
+          iconSpan.textContent = icon;
+
+          const msgSpan = document.createElement('span');
+          msgSpan.textContent = String(message);
+
+          el.appendChild(iconSpan);
+          el.appendChild(msgSpan);
+          host.appendChild(el);
+
+          requestAnimationFrame(() => el.classList.add('is-visible'));
+
+          const ttl =
+            durationMs ??
+            (kind === 'err' ? Config.TOAST_ERROR_MS : Config.TOAST_DEFAULT_MS);
+          const timer = setTimeout(() => dismiss(id), ttl);
+
+          el.addEventListener('click', () => dismiss(id), { once: true });
+          active.set(id, { el, timer });
         }
+
+        return {
+          ok: (m, d) => push('ok', m, d),
+          err: (m, d) => push('err', m, d),
+          info: (m, d) => push('info', m, d),
+          warn: (m, d) => push('warn', m, d),
+        };
+      })();
+
+      /* ═══════════════════════════════════════════════════════════
+         STATE
+         ═══════════════════════════════════════════════════════════ */
+      const state = {
+        busy: false,
+        googleReady: false,
+        sessionChecked: false,
+      };
+
+      /* ═══════════════════════════════════════════════════════════
+         UI
+         ═══════════════════════════════════════════════════════════ */
+      const UI = (() => {
+        const googleBtn = document.querySelector('[data-google-btn]');
+        const githubBtn = document.querySelector('[data-github-btn]');
+        const fallback = document.querySelector('[data-auth-fallback]');
+
+        function setGoogleLoading(loading) {
+          if (!googleBtn) return;
+          googleBtn.classList.toggle('is-loading', loading);
+          googleBtn.disabled = loading;
+          googleBtn.setAttribute('aria-busy', String(loading));
+        }
+
+        function setBusy(busy) {
+          state.busy = busy;
+          if (githubBtn) {
+            githubBtn.style.pointerEvents = busy ? 'none' : '';
+            githubBtn.style.opacity = busy ? '0.6' : '';
+          }
+        }
+
+        function showFallback() {
+          if (fallback) fallback.classList.add('is-visible');
+        }
+
+        function hideFallback() {
+          if (fallback) fallback.classList.remove('is-visible');
+        }
+
+        return {
+          googleBtn,
+          githubBtn,
+          setGoogleLoading,
+          setBusy,
+          showFallback,
+          hideFallback,
+        };
+      })();
+
+      /* ═══════════════════════════════════════════════════════════
+         SESSION
+         ═══════════════════════════════════════════════════════════ */
+      const Session = (() => {
+        async function check(retries = Config.SESSION_RETRIES) {
+          for (let attempt = 1; attempt <= retries; attempt++) {
+            try {
+              const res = await Utils.fetchWithTimeout(
+                '/api/auth/me',
+                { credentials: 'include', headers: { Accept: 'application/json' } },
+                Config.SESSION_TIMEOUT_MS
+              );
+              if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+              const data = await Utils.safeJson(res);
+              if (!Utils.isPlainObject(data)) throw new Error('Respuesta inválida');
+
+              return data.ok === true && Utils.isPlainObject(data.user) ? data.user : null;
+            } catch (err) {
+              const isLast = attempt === retries;
+              console.warn(`[auth] session check ${attempt}/${retries} falló:`, err.message);
+              if (isLast) return null;
+              await Utils.sleep(Config.RETRY_BASE_MS * Math.pow(2, attempt - 1));
+            }
+          }
+          return null;
+        }
+
+        return { check };
+      })();
+
+      /* ═══════════════════════════════════════════════════════════
+         GOOGLE OAUTH
+         ═══════════════════════════════════════════════════════════ */
+      const Google = (() => {
+        async function exchangeCredential(credential) {
+          const res = await Utils.fetchWithTimeout(
+            '/api/auth/google',
+            {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+              body: JSON.stringify({ credential, remember: true }),
+            },
+            15000
+          );
+
+          const data = await Utils.safeJson(res);
+
+          if (!res.ok) {
+            const msg =
+              Utils.isPlainObject(data) && Utils.isNonEmptyString(data.error)
+                ? data.error
+                : `Error ${res.status}`;
+            throw new Error(msg);
+          }
+
+          if (!Utils.isPlainObject(data) || data.ok !== true) {
+            throw new Error('Respuesta de autenticación inválida');
+          }
+
+          return data.user || null;
+        }
+
+        function waitForGSI() {
+          return new Promise((resolve) => {
+            const start = Date.now();
+            const check = () => {
+              const rendered = document.querySelector(
+                '.gsi-hidden [role="button"], .gsi-hidden button, .gsi-hidden div[tabindex]'
+              );
+              if (rendered) return resolve(true);
+              if (Date.now() - start > Config.GSI_TIMEOUT_MS) return resolve(false);
+              setTimeout(check, 150);
+            };
+            check();
+          });
+        }
+
+        function clickHiddenButton() {
+          const btn = document.querySelector(
+            '.gsi-hidden [role="button"], .gsi-hidden button, .gsi-hidden div[tabindex]'
+          );
+          if (!btn) return false;
+          btn.click();
+          return true;
+        }
+
+        return { exchangeCredential, waitForGSI, clickHiddenButton };
+      })();
+
+      /* ═══════════════════════════════════════════════════════════
+         HANDLE GOOGLE CREDENTIAL · global
+         ═══════════════════════════════════════════════════════════ */
+      window.handleGoogleCredential = async function (response) {
+        if (state.busy) return;
+        UI.setBusy(true);
+
+        const credential = response && response.credential;
+
+        if (!Utils.isNonEmptyString(credential)) {
+          UI.setGoogleLoading(false);
+          UI.setBusy(false);
+          Toasts.err('Google no devolvió credenciales. Intenta de nuevo.');
+          return;
+        }
+
+        UI.setGoogleLoading(true);
+        Toasts.info('Verificando con Google…');
+
+        try {
+          const user = await Google.exchangeCredential(credential);
+          const name =
+            (Utils.isPlainObject(user) && (user.name || user.email)) || 'usuario';
+
+          Toasts.ok(`¡Bienvenido, ${name}!`);
+          await Utils.sleep(700);
+          Utils.safeRedirect('/chat.html');
+        } catch (err) {
+          console.error('[auth/google]', err);
+          UI.setGoogleLoading(false);
+          UI.setBusy(false);
+          Toasts.err(err.message || 'No pudimos iniciar sesión. Intenta de nuevo.');
+        }
+      };
+
+      /* ═══════════════════════════════════════════════════════════
+         BOOT
+         ═══════════════════════════════════════════════════════════ */
+      async function boot() {
+        // 1) Tema guardado
+        try {
+          const saved = localStorage.getItem('numination-theme');
+          if (saved) document.documentElement.dataset.theme = saved;
+        } catch { /* storage bloqueado, ignorar */ }
+
+        // 2) Detectar query params de GitHub OAuth (errores)
+        const params = new URLSearchParams(location.search);
+        if (params.has('error')) {
+          const errorCode = params.get('error');
+          const messages = {
+            github: 'No pudimos iniciar sesión con GitHub. Intenta de nuevo.',
+            access_denied: 'Cancelaste el inicio de sesión con GitHub.',
+            session: 'Tu sesión expiró. Vuelve a entrar.',
+          };
+          Toasts.err(messages[errorCode] || 'Ocurrió un error al iniciar sesión.');
+          // Limpiar query params para que no queden en la URL
+          history.replaceState(null, '', location.pathname);
+        }
+
+        // 3) Verificar sesión existente (si hay, redirige)
+        if (!params.has('stay')) {
+          const user = await Session.check();
+          state.sessionChecked = true;
+          if (user) {
+            Utils.safeRedirect('/chat.html');
+            return;
+          }
+        }
+
+        // 4) Conectar click del botón Google con GSI oculto
+        if (UI.googleBtn) {
+          UI.googleBtn.addEventListener('click', async () => {
+            if (state.busy) return;
+            if (!state.googleReady) {
+              UI.setGoogleLoading(true);
+              const ready = await Google.waitForGSI();
+              state.googleReady = ready;
+              UI.setGoogleLoading(false);
+
+              if (!ready) {
+                UI.showFallback();
+                Toasts.err('Google no cargó. Revisa tu conexión.');
+                return;
+              }
+            }
+
+            if (!Google.clickHiddenButton()) {
+              UI.showFallback();
+              Toasts.err('Google no está disponible.');
+            }
+          });
+        }
+
+        // 5) Marcar GitHub como "cargando" al hacer click (antes de la redirección)
+        if (UI.githubBtn) {
+          UI.githubBtn.addEventListener('click', () => {
+            if (state.busy) {
+              event.preventDefault();
+              return;
+            }
+            UI.setBusy(true);
+            Toasts.info('Conectando con GitHub…');
+            // No preventDefault: dejamos que el navegador navegue a /api/auth/github
+          });
+        }
+
+        // 6) Retry manual si GSI falla
+        const retryBtn = document.querySelector('[data-retry-google]');
+        if (retryBtn) {
+          retryBtn.addEventListener('click', () => window.location.reload());
+        }
+
+        // 7) Detectar GSI listo en background
+        Google.waitForGSI().then((ready) => {
+          state.googleReady = ready;
+          if (ready) UI.hideFallback();
+          else UI.showFallback();
+        });
       }
-    } catch (e) { /* sin sesión */ }
-  })();
-})();
-</script>
 
-<!-- Google Identity Services -->
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', boot, { once: true });
+      } else {
+        boot();
+      }
+    })();
+  </script>
 
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </body>
 </html>

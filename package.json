@@ -1,28 +1,25 @@
 {
   "name": "numination",
-  "version": "1.0.0",
+  "version": "3.3.0",
   "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "scripts": {
     "dev": "node --watch src/index.js",
     "start": "node src/index.js"
   },
   "dependencies": {
-    "@google/genai": "^2.22.0",
-    "@mistralai/mistralai": "^2.7.0",
-    "@supabase/ssr": "^0.12.7",
-    "@supabase/supabase-js": "^2.117.1",
-    "@upstash/ratelimit": "^2.1.0",
-    "@upstash/redis": "^1.39.0",
+    "@google/genai": "^2.24.0",
+    "@supabase/supabase-js": "^2.117.2",
     "cookie-parser": "^1.4.7",
-    "dotenv": "^16.6.1",
-    "express": "^4.21.2",
+    "express": "^5.2.1",
     "google-auth-library": "^11.1.0",
     "groq-sdk": "^1.6.0",
     "jsonwebtoken": "^9.0.3",
-    "openai": "^7.15.0",
+    "openai": "^7.23.0",
+    "passport": "^0.7.0",
+    "passport-github": "^1.1.0",
     "postgres": "^3.4.9"
-  },
-  "engines": {
-    "node": ">=20"
   }
 }

@@ -1,21 +1,49 @@
 /* ============================================================
    Streaming de respuestas IA
    Emite tokens en tiempo real vía async generator.
+   Soporta modo razonamiento (envuelve la respuesta en <thinking>).
    ============================================================ */
 
-export async function* streamGroq(groq, systemPrompt, message, file) {
+const REASONING_PREFIX = `INSTRUCCIÓN ESPECIAL — MODO RAZONAMIENTO:
+
+Piensa paso a paso ANTES de responder. Todo tu proceso mental DEBE ir envuelto exactamente entre las etiquetas <thinking> y </thinking>. Después del cierre </thinking>, escribe la respuesta final limpia y directa para el estudiante.
+
+Formato EXACTO:
+<thinking>
+1. Primero identifico...
+2. Luego considero...
+3. Finalmente concluyo...
+</thinking>
+
+[Tu respuesta final aquí, sin repetir el razonamiento]
+
+REGLAS:
+- NO repitas el contenido del razonamiento en la respuesta final.
+- Sé breve en la respuesta final, detallado en el razonamiento.
+- Usa ejemplos de Colombia cuando aplique.
+- Nunca hagas la tarea por el estudiante — guíalo.
+
+PREGUNTA DEL ESTUDIANTE:
+`;
+
+export async function* streamGroq(groq, systemPrompt, message, file, opts = {}) {
   const note = file && file.data
     ? '\n\n[El usuario adjuntó un archivo. Responde con la información disponible.]'
     : '';
+
+  const base = message || (opts.reasoning ? '' : '(sin texto)');
+  const userContent = opts.reasoning
+    ? REASONING_PREFIX + base + note
+    : base + note;
 
   const stream = await groq.chat.completions.create({
     model: 'openai/gpt-oss-120b',
     messages: [
       { role: 'system', content: systemPrompt },
-      { role: 'user', content: (message || '(sin texto)') + note },
+      { role: 'user', content: userContent },
     ],
-    temperature: 0.7,
-    max_tokens: 2048,
+    temperature: opts.reasoning ? 0.5 : 0.7,
+    max_tokens: opts.reasoning ? 4096 : 2048,
     stream: true,
   });
 
@@ -25,8 +53,10 @@ export async function* streamGroq(groq, systemPrompt, message, file) {
   }
 }
 
-export async function* streamGemini(gemini, systemPrompt, message, file) {
-  const parts = [{ text: message || '(analiza el archivo adjunto)' }];
+export async function* streamGemini(gemini, systemPrompt, message, file, opts = {}) {
+  const baseText = message || (file && file.data ? '(analiza el archivo adjunto)' : '');
+  const parts = [{ text: opts.reasoning ? REASONING_PREFIX + baseText : baseText }];
+
   if (file && file.data) {
     parts.push({ inlineData: { mimeType: file.mimeType, data: file.data } });
   }
@@ -36,12 +66,12 @@ export async function* streamGemini(gemini, systemPrompt, message, file) {
     contents: [{ role: 'user', parts }],
     config: {
       systemInstruction: systemPrompt,
-      // 🚀 Desactiva el "thinking mode" → baja latencia de ~30s a ~1s
-      thinkingConfig: { thinkingBudget: 0 },
-      // Temperatura para respuestas más naturales (opcional)
-      temperature: 0.7,
-      // Límite de tokens de salida (opcional, evita respuestas kilométricas)
-      maxOutputTokens: 2048,
+      // En modo razonamiento SÍ activamos el thinking nativo de Gemini
+      thinkingConfig: opts.reasoning
+        ? { thinkingBudget: 2000 }
+        : { thinkingBudget: 0 },
+      temperature: opts.reasoning ? 0.5 : 0.7,
+      maxOutputTokens: opts.reasoning ? 4096 : 2048,
     },
   });
 

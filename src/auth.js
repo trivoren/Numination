@@ -1,19 +1,23 @@
 /* ================================================================
    NUMINATION · auth.js
    ----------------------------------------------------------------
-   Autenticación con Google OAuth + sesiones JWT en cookies httpOnly.
-   Persiste usuarios en Supabase (tabla profiles).
+   Autenticación con Google OAuth + GitHub OAuth + sesiones JWT en
+   cookies httpOnly. Persiste usuarios en Supabase (tabla profiles).
    ----------------------------------------------------------------
    Endpoints:
-     POST /api/auth/google   → verifica credential de Google, crea usuario
-     GET  /api/auth/me       → devuelve usuario de la sesión activa
-     POST /api/auth/logout   → cierra sesión (borra cookie)
-     GET  /api/auth/check    → ¿hay sesión activa?
+     POST /api/auth/google         → Google Identity Services (popup)
+     GET  /api/auth/github         → inicia OAuth GitHub (redirect)
+     GET  /api/auth/github/callback → callback OAuth GitHub
+     GET  /api/auth/me             → usuario de la sesión activa
+     POST /api/auth/logout         → cierra sesión
+     GET  /api/auth/check          → ¿hay sesión activa?
    ================================================================ */
 
 import { OAuth2Client } from 'google-auth-library';
 import jwt from 'jsonwebtoken';
 import crypto from 'node:crypto';
+import passport from 'passport';
+import { Strategy as GitHubStrategy } from 'passport-github';
 
 import {
   getProfile,
@@ -36,12 +40,20 @@ const CLIENT_ID     = process.env.GOOGLE_CLIENT_ID     ?? TEST_KEYS.GOOGLE_CLIEN
 const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET ?? TEST_KEYS.GOOGLE_CLIENT_SECRET;
 const JWT_SECRET    = process.env.JWT_SECRET           ?? TEST_KEYS.JWT_SECRET;
 
+const GITHUB_CLIENT_ID     = process.env.GITHUB_CLIENT_ID     ?? TEST_KEYS.GITHUB_CLIENT_ID;
+const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET ?? TEST_KEYS.GITHUB_CLIENT_SECRET;
+
 const COOKIE_NAME  = 'numination_session';
 const SESSION_DAYS = 30;
 
 if (!CLIENT_ID)     console.warn('⚠️  GOOGLE_CLIENT_ID no configurado');
 if (!CLIENT_SECRET) console.warn('⚠️  GOOGLE_CLIENT_SECRET no configurado');
 if (!JWT_SECRET)    console.warn('⚠️  JWT_SECRET no configurado');
+
+const GITHUB_ENABLED = Boolean(GITHUB_CLIENT_ID && GITHUB_CLIENT_SECRET);
+if (!GITHUB_ENABLED) {
+  console.warn('⚠️  GitHub OAuth no configurado (GITHUB_CLIENT_ID/SECRET faltantes)');
+}
 
 const googleClient = new OAuth2Client(CLIENT_ID);
 
@@ -68,11 +80,22 @@ function publicUser(user) {
   };
 }
 
+/**
+ * Deriva la URL de callback OAuth desde el request.
+ * Funciona en local (http://localhost:8080/...) y en Vercel (https://...)
+ * siempre que la URL esté registrada en la GitHub OAuth App.
+ */
+function getCallbackUrl(req) {
+  const proto = req.get('x-forwarded-proto') || req.protocol || 'http';
+  const host  = req.get('host') || 'localhost:8080';
+  return `${proto}://${host}/api/auth/github/callback`;
+}
+
 /* ══════════════════════════════════════════════════════════════
    BÚSQUEDA / CREACIÓN DE USUARIO
    ══════════════════════════════════════════════════════════════ */
 
-async function findOrCreateUser({ email, name, picture }) {
+async function findOrCreateUser({ email, name, picture, provider = 'google' }) {
   const key = String(email).toLowerCase();
 
   // 1) Buscar en Supabase por email
@@ -100,12 +123,13 @@ async function findOrCreateUser({ email, name, picture }) {
     name: name || key.split('@')[0],
     picture: picture || null,
     role: 'student',
+    provider,
   };
 
   try {
     profile = await createProfile(nuevo);
     if (profile) {
-      console.log('[auth] nuevo usuario creado:', key);
+      console.log(`[auth] nuevo usuario (${provider}):`, key);
       return profile;
     }
   } catch (e) {
@@ -192,17 +216,44 @@ export function requireAuth(req, res, next) {
   next();
 }
 
-/** Carga el perfil completo desde Supabase (opcional) */
-export async function loadProfile(req, _res, next) {
-  if (req.user?.id) {
-    try {
-      const profile = await getProfile(req.user.id);
-      if (profile) req.user = { ...req.user, ...profile };
-    } catch (e) {
-      console.warn('[auth] loadProfile falló:', e.message);
-    }
-  }
-  next();
+/* ══════════════════════════════════════════════════════════════
+   ESTRATEGIA GITHUB (Passport)
+   ══════════════════════════════════════════════════════════════ */
+
+if (GITHUB_ENABLED) {
+  passport.use(
+    new GitHubStrategy(
+      {
+        clientID: GITHUB_CLIENT_ID,
+        clientSecret: GITHUB_CLIENT_SECRET,
+        // callbackURL se pasa por request (para soportar local + Vercel)
+        scope: ['user:email'],
+        // Sin sessions en el server → desactivamos el state de CSRF
+        // (nuestra auth ya usa JWT en cookie httpOnly)
+        state: false,
+      },
+      async (_accessToken, _refreshToken, profile, done) => {
+        try {
+          // GitHub puede no compartir el email si es privado
+          const email =
+            profile.emails?.[0]?.value ||
+            `${profile.username}@github.local`;
+
+          const user = await findOrCreateUser({
+            email,
+            name: profile.displayName || profile.username || 'Usuario GitHub',
+            picture: profile.photos?.[0]?.value || null,
+            provider: 'github',
+          });
+
+          return done(null, user);
+        } catch (err) {
+          console.error('[auth/github] verify falló:', err.message);
+          return done(err, null);
+        }
+      }
+    )
+  );
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -211,9 +262,11 @@ export async function loadProfile(req, _res, next) {
 
 export function mountAuthRoutes(app) {
 
+  // Inicializa passport (ligero, sin sesiones)
+  app.use(passport.initialize());
+
   /* ─────────────────────────────────────────────────────────────
      POST /api/auth/google
-     Recibe el credential de Google (JWT) y crea/verifica sesión.
      ───────────────────────────────────────────────────────────── */
   app.post('/api/auth/google', async (req, res) => {
     try {
@@ -223,7 +276,6 @@ export function mountAuthRoutes(app) {
         return res.status(400).json({ error: 'Falta el credential de Google' });
       }
 
-      // Verificar el ID token de Google
       const ticket = await googleClient.verifyIdToken({
         idToken: credential,
         audience: CLIENT_ID,
@@ -238,19 +290,17 @@ export function mountAuthRoutes(app) {
         return res.status(400).json({ error: 'El correo de Google no está verificado' });
       }
 
-      // Crear o recuperar usuario en Supabase
       const user = await findOrCreateUser({
         email: payload.email,
         name: payload.name,
         picture: payload.picture,
+        provider: 'google',
       });
 
-      // Firmar JWT y setear cookie
       const token = signSession(user, remember);
       setSessionCookie(res, token, remember);
 
       console.log('[auth] login Google OK:', user.email);
-
       return res.json({ ok: true, user: publicUser(user) });
     } catch (err) {
       console.error('[auth] error en Google:', err.message);
@@ -259,8 +309,62 @@ export function mountAuthRoutes(app) {
   });
 
   /* ─────────────────────────────────────────────────────────────
+     GET /api/auth/github
+     Inicia el flujo OAuth → redirige a GitHub
+     ───────────────────────────────────────────────────────────── */
+  if (GITHUB_ENABLED) {
+    app.get('/api/auth/github', (req, res, next) => {
+      passport.authenticate('github', {
+        session: false,
+        callbackURL: getCallbackUrl(req),
+      })(req, res, next);
+    });
+
+    /* ───────────────────────────────────────────────────────────
+       GET /api/auth/github/callback
+       GitHub devuelve aquí con el code → verificamos → sesión
+       ─────────────────────────────────────────────────────────── */
+    app.get('/api/auth/github/callback', (req, res, next) => {
+      passport.authenticate(
+        'github',
+        {
+          session: false,
+          callbackURL: getCallbackUrl(req),
+        },
+        (err, user, info) => {
+          // ── Error de red o verificación
+          if (err) {
+            console.error('[auth/github] callback error:', err.message);
+            return res.redirect('/login.html?error=github');
+          }
+
+          // ── Usuario canceló o falló el flujo
+          if (!user) {
+            const reason = info?.message === 'access_denied'
+              ? 'access_denied'
+              : 'github';
+            console.warn('[auth/github] sin user:', reason);
+            return res.redirect('/login.html?error=' + reason);
+          }
+
+          // ── Éxito: firmar JWT y redirigir al chat
+          const token = signSession(user, true);
+          setSessionCookie(res, token, true);
+
+          console.log('[auth] login GitHub OK:', user.email);
+          return res.redirect('/chat.html');
+        }
+      )(req, res, next);
+    });
+  } else {
+    // Si GitHub no está configurado, el endpoint responde 503
+    app.get('/api/auth/github', (_req, res) => {
+      res.status(503).json({ error: 'GitHub login no configurado en el server' });
+    });
+  }
+
+  /* ─────────────────────────────────────────────────────────────
      GET /api/auth/me
-     Devuelve el usuario de la sesión activa.
      ───────────────────────────────────────────────────────────── */
   app.get('/api/auth/me', async (req, res) => {
     const token = req.cookies?.[COOKIE_NAME];
@@ -269,7 +373,6 @@ export function mountAuthRoutes(app) {
     const payload = verifySession(token);
     if (!payload) return res.json({ ok: false, user: null });
 
-    // Intentar cargar perfil completo desde Supabase
     let profile = null;
     try {
       profile = await getProfile(payload.sub);
@@ -288,7 +391,6 @@ export function mountAuthRoutes(app) {
 
   /* ─────────────────────────────────────────────────────────────
      POST /api/auth/logout
-     Cierra sesión (borra cookie).
      ───────────────────────────────────────────────────────────── */
   app.post('/api/auth/logout', (_req, res) => {
     clearSessionCookie(res);
@@ -297,12 +399,13 @@ export function mountAuthRoutes(app) {
 
   /* ─────────────────────────────────────────────────────────────
      GET /api/auth/check
-     ¿Hay sesión activa? (sin detalles del usuario)
      ───────────────────────────────────────────────────────────── */
   app.get('/api/auth/check', (req, res) => {
     const token = req.cookies?.[COOKIE_NAME];
     return res.json({ authenticated: Boolean(token && verifySession(token)) });
   });
 
-  console.log('[auth] rutas montadas (Supabase)');
+  console.log(
+    `[auth] rutas montadas (Supabase) · Google: ✓ · GitHub: ${GITHUB_ENABLED ? '✓' : '✗'}`
+  );
 }

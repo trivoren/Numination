@@ -1,16 +1,11 @@
 {
   "version": 2,
+  "rewrites": [
+    { "source": "/", "destination": "/login.html" }
+  ],
   "functions": {
     "api/index.js": {
-      "includeFiles": "src/**",
-      "maxDuration": 300,
-      "memory": 1024
+      "includeFiles": "src/**"
     }
-  },
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/api/index.js"
-    }
-  ]
+  }
 }

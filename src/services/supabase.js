@@ -1,10 +1,13 @@
-/* ================================================================
+/* ═══════════════════════════════════════════════════════════════════════════
    NUMINATION · supabase.js
-   Cliente de Supabase + helpers de base de datos.
-   ================================================================ */
+   Cliente Postgres + helpers.
+   ───────────────────────────────────────────────────────────────────────────
+   Adaptado a las tablas PascalCase (Chat, Message, Memory) y a profiles.
+   La API pública devuelve objetos en snake_case para no romper el frontend.
+   ═══════════════════════════════════════════════════════════════════════════ */
 
-import { createClient } from '@supabase/supabase-js';
 import postgres from 'postgres';
+import crypto from 'node:crypto';
 
 let TEST_KEYS = {};
 try {
@@ -12,40 +15,106 @@ try {
   TEST_KEYS = mod.TEST_KEYS ?? {};
 } catch {}
 
-const SUPABASE_URL = process.env.SUPABASE_URL ?? TEST_KEYS.SUPABASE_URL;
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY ?? TEST_KEYS.SUPABASE_SERVICE_KEY;
 const DATABASE_URL = process.env.DATABASE_URL ?? TEST_KEYS.DATABASE_URL;
 
-if (!SUPABASE_URL) console.warn('⚠️  SUPABASE_URL no configurada');
-if (!SUPABASE_SERVICE_KEY) console.warn('⚠️  SUPABASE_SERVICE_KEY no configurada');
-if (!DATABASE_URL) console.warn('⚠️  DATABASE_URL no configurada');
+let sql = null;
 
-export const supabase = SUPABASE_URL && SUPABASE_SERVICE_KEY
-  ? createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    })
-  : null;
-
-export const sql = DATABASE_URL
-  ? postgres(DATABASE_URL, {
-      max: 1,
+if (DATABASE_URL) {
+  try {
+    sql = postgres(DATABASE_URL, {
+      ssl: 'require',
+      prepare: false,
+      max: 10,
       idle_timeout: 20,
       connect_timeout: 10,
-      prepare: false,
-    })
-  : null;
+    });
+  } catch (e) {
+    console.warn('[supabase] No se pudo crear el cliente:', e.message);
+  }
+} else {
+  console.warn('[supabase] DATABASE_URL no configurada');
+}
 
-/* ══════════════════════════════════════════════════════════════
+export function supabaseDisponible() {
+  return Boolean(sql);
+}
+
+export { sql };
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   NORMALIZADORES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+function normalizeChat(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    title: row.title || 'Sin título',
+    created_at: row.created_at || row.createdAt || null,
+    updated_at: row.updated_at || row.updatedAt || null,
+  };
+}
+
+function normalizeMessage(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    chat_id: row.chat_id || row.chatId || null,
+    role: row.role,
+    content: row.content,
+    created_at: row.created_at || row.createdAt || null,
+  };
+}
+
+function normalizeMemory(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    user_id: row.user_id || row.userId || null,
+    text: row.text || row.content || '',
+    created_at: row.created_at || row.createdAt || null,
+  };
+}
+
+function normalizeProfile(row) {
+  if (!row) return null;
+
+  const tierRaw = String(row.tier || 'FREE').toUpperCase();
+  let plan = 'free';
+  if (tierRaw === 'PRO') plan = 'pro-coder';
+  else if (tierRaw === 'PREMIUM') plan = 'pro-plus';
+  else if (tierRaw === 'MADMAX') plan = 'pro-mad-max';
+
+  return {
+    id: row.id,
+    email: row.email,
+    name:
+      row.name ||
+      row.displayName ||
+      (row.email ? row.email.split('@')[0] : 'Usuario'),
+    picture: row.picture || row.avatarUrl || null,
+    plan: plan,
+    created_at: row.created_at || row.createdAt || null,
+    updated_at: row.updated_at || row.updatedAt || null,
+  };
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    PROFILES
-   ══════════════════════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════════════════════════════ */
 
 export async function getProfile(userId) {
-  if (!sql) return null;
+  if (!sql || !userId) return null;
   try {
-    const [profile] = await sql`
-      select * from public.profiles where id = ${userId} limit 1
+    const [row] = await sql`
+      select id, email, "displayName", "avatarUrl", tier,
+             "createdAt" as created_at,
+             "updatedAt" as updated_at
+      from public.profiles
+      where id = ${userId}::uuid
+      limit 1
     `;
-    return profile || null;
+    return normalizeProfile(row);
   } catch (e) {
     console.error('[supabase] getProfile:', e.message);
     return null;
@@ -53,160 +122,259 @@ export async function getProfile(userId) {
 }
 
 export async function getProfileByEmail(email) {
-  if (!sql) return null;
+  if (!sql || !email) return null;
   try {
-    const [profile] = await sql`
-      select * from public.profiles where email = ${email.toLowerCase()} limit 1
+    const [row] = await sql`
+      select id, email, "displayName", "avatarUrl", tier,
+             "createdAt" as created_at,
+             "updatedAt" as updated_at
+      from public.profiles
+      where lower(email) = lower(${email})
+      limit 1
     `;
-    return profile || null;
+    return normalizeProfile(row);
   } catch (e) {
     console.error('[supabase] getProfileByEmail:', e.message);
     return null;
   }
 }
 
-export async function createProfile({ id, email, name, picture }) {
+/**
+ * Crea un perfil nuevo o lo actualiza si ya existe por id o email.
+ * Acepta dos formas:
+ *   createProfile({ id, email, name, picture })
+ *   createProfile(id, email, name, picture)
+ */
+export async function createProfile(arg1, arg2, arg3, arg4) {
   if (!sql) return null;
+
+  let payload;
+  if (arg1 && typeof arg1 === 'object') {
+    payload = arg1;
+  } else {
+    payload = { id: arg1, email: arg2, name: arg3, picture: arg4 };
+  }
+
+  const email = payload.email;
+  if (!email) {
+    console.error('[supabase] createProfile: falta email');
+    return null;
+  }
+
+  const id = payload.id || crypto.randomUUID();
+  const displayName =
+    payload.name ||
+    payload.displayName ||
+    email.split('@')[0] ||
+    'Usuario';
+  const avatarUrl = payload.picture || payload.avatarUrl || null;
+
   try {
-    const [profile] = await sql`
-      insert into public.profiles (id, email, name, picture)
-      values (${id}, ${email.toLowerCase()}, ${name}, ${picture})
-      on conflict (id) do update set
-        name = excluded.name,
-        picture = excluded.picture,
-        last_login = now()
-      returning *
+    // Si ya existe por email, devolver ese en vez de crear otro
+    const existing = await getProfileByEmail(email);
+    if (existing) {
+      await updateLastLogin(existing.id);
+      return existing;
+    }
+
+    const [row] = await sql`
+      insert into public.profiles
+        (id, email, "displayName", "avatarUrl", role, tier)
+      values
+        (${id}::uuid, ${email}, ${displayName}, ${avatarUrl}, 'USER', 'FREE')
+      returning id, email, "displayName", "avatarUrl", tier,
+                "createdAt" as created_at,
+                "updatedAt" as updated_at
     `;
-    return profile;
+    return normalizeProfile(row);
   } catch (e) {
     console.error('[supabase] createProfile:', e.message);
     return null;
   }
 }
 
-export async function updateLastLogin(userId) {
-  if (!sql) return;
+export async function updateProfile(userId, patch = {}) {
+  if (!sql || !userId) return null;
   try {
-    await sql`
-      update public.profiles set last_login = now() where id = ${userId}
-    `;
-  } catch (e) {
-    console.error('[supabase] updateLastLogin:', e.message);
-  }
-}
+    const displayName = patch.name || patch.displayName || null;
+    const avatarUrl = patch.picture || patch.avatarUrl || null;
 
-export async function updateProfile(userId, data) {
-  if (!sql) return null;
-  try {
-    const [profile] = await sql`
+    const [row] = await sql`
       update public.profiles
-      set name = ${data.name ?? null},
-          city = ${data.city ?? null},
-          grade = ${data.grade ?? null},
-          last_login = now()
-      where id = ${userId}
-      returning *
+      set
+        "displayName" = coalesce(${displayName}, "displayName"),
+        "avatarUrl"   = coalesce(${avatarUrl},   "avatarUrl"),
+        "updatedAt"   = now()
+      where id = ${userId}::uuid
+      returning id, email, "displayName", "avatarUrl", tier,
+                "createdAt" as created_at,
+                "updatedAt" as updated_at
     `;
-    return profile;
+    return normalizeProfile(row);
   } catch (e) {
     console.error('[supabase] updateProfile:', e.message);
     return null;
   }
 }
 
-/* ══════════════════════════════════════════════════════════════
-   CHATS
-   ══════════════════════════════════════════════════════════════ */
+/**
+ * Alias de getProfile. Lo usa auth.js en el callback de OAuth.
+ */
+export async function findOrCreateUser(profile) {
+  if (!sql || !profile || !profile.email) return null;
+  const existing = await getProfileByEmail(profile.email);
+  if (existing) {
+    await updateLastLogin(existing.id);
+    return existing;
+  }
+  return createProfile({
+    id: profile.id,
+    email: profile.email,
+    name: profile.name || profile.displayName,
+    picture: profile.picture || profile.avatarUrl,
+  });
+}
 
-export async function listarChats(userId) {
-  if (!sql) return [];
+export async function updateLastLogin(userId) {
+  if (!sql || !userId) return false;
   try {
-    return await sql`
-      select id, title, created_at, updated_at
-      from public.chats
-      where user_id = ${userId}
-      order by updated_at desc
-      limit 100
+    await sql`
+      update public.profiles
+      set "updatedAt" = now()
+      where id = ${userId}::uuid
     `;
+    return true;
   } catch (e) {
-    console.error('[supabase] listarChats:', e.message);
-    return [];
+    console.error('[supabase] updateLastLogin:', e.message);
+    return false;
   }
 }
 
-export async function crearChat(userId, title) {
-  if (!sql) return null;
+export async function actualizarPlan(userId, tier) {
+  if (!sql || !userId) return null;
   try {
-    const [chat] = await sql`
-      insert into public.chats (user_id, title)
-      values (${userId}, ${title || 'Sin título'})
-      returning *
+    const [row] = await sql`
+      update public.profiles
+      set tier = ${tier}, "updatedAt" = now()
+      where id = ${userId}::uuid
+      returning id, email, "displayName", "avatarUrl", tier,
+                "createdAt" as created_at,
+                "updatedAt" as updated_at
     `;
-    return chat;
+    return normalizeProfile(row);
+  } catch (e) {
+    console.error('[supabase] actualizarPlan:', e.message);
+    return null;
+  }
+}
+
+export async function deleteProfile(userId) {
+  if (!sql || !userId) return false;
+  try {
+    await sql`delete from "Memory" where "userId" = ${userId}::uuid`;
+
+    const chats = await sql`
+      select id from "Chat" where "userId" = ${userId}::uuid
+    `;
+    for (const c of chats) {
+      await sql`delete from "Message" where "chatId" = ${c.id}`;
+    }
+    await sql`delete from "Chat" where "userId" = ${userId}::uuid`;
+    await sql`delete from public.profiles where id = ${userId}::uuid`;
+    return true;
+  } catch (e) {
+    console.error('[supabase] deleteProfile:', e.message);
+    return false;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CHATS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+export async function crearChat(userId, title) {
+  if (!sql || !userId) return null;
+  try {
+    const id = crypto.randomUUID();
+    const [row] = await sql`
+      insert into "Chat" (id, "userId", title, mode, "isGhost")
+      values (${id}, ${userId}::uuid, ${title || 'Nuevo chat'}, 'chat', false)
+      returning id, title,
+                "createdAt" as created_at,
+                "updatedAt" as updated_at
+    `;
+    return normalizeChat(row);
   } catch (e) {
     console.error('[supabase] crearChat:', e.message);
     return null;
   }
 }
 
+export async function listarChats(userId) {
+  if (!sql || !userId) return [];
+  try {
+    const rows = await sql`
+      select id, title,
+             "createdAt" as created_at,
+             "updatedAt" as updated_at
+      from "Chat"
+      where "userId" = ${userId}::uuid
+        and "isGhost" = false
+      order by "updatedAt" desc
+      limit 100
+    `;
+    return rows.map(normalizeChat);
+  } catch (e) {
+    console.error('[supabase] listarChats:', e.message);
+    return [];
+  }
+}
+
 export async function obtenerChat(chatId, userId) {
-  if (!sql) return null;
+  if (!sql || !chatId || !userId) return null;
   try {
     const [chat] = await sql`
-      select * from public.chats
-      where id = ${chatId} and user_id = ${userId}
+      select id, title,
+             "createdAt" as created_at,
+             "updatedAt" as updated_at
+      from "Chat"
+      where id = ${chatId}
+        and "userId" = ${userId}::uuid
       limit 1
     `;
     if (!chat) return null;
 
-    const mensajes = await sql`
-      select * from public.messages
-      where chat_id = ${chatId}
-      order by created_at asc
+    const messages = await sql`
+      select id, "chatId" as chat_id, role, content,
+             "createdAt" as created_at
+      from "Message"
+      where "chatId" = ${chatId}
+      order by "createdAt" asc
     `;
 
-    return { ...chat, messages: mensajes };
+    return {
+      ...normalizeChat(chat),
+      messages: messages.map(normalizeMessage),
+    };
   } catch (e) {
     console.error('[supabase] obtenerChat:', e.message);
     return null;
   }
 }
 
-export async function agregarMensaje(chatId, msg) {
-  if (!sql) return null;
-  try {
-    const [mensaje] = await sql`
-      insert into public.messages (chat_id, role, content, attachment, image_url, provider, duration_ms)
-      values (
-        ${chatId},
-        ${msg.role},
-        ${msg.content},
-        ${msg.attachment || null},
-        ${msg.imageUrl || null},
-        ${msg.provider || null},
-        ${msg.durationMs || 0}
-      )
-      returning *
-    `;
-
-    await sql`
-      update public.chats set updated_at = now() where id = ${chatId}
-    `;
-
-    return mensaje;
-  } catch (e) {
-    console.error('[supabase] agregarMensaje:', e.message);
-    return null;
-  }
-}
-
 export async function eliminarChat(chatId, userId) {
-  if (!sql) return false;
+  if (!sql || !chatId || !userId) return false;
   try {
-    await sql`
-      delete from public.chats
-      where id = ${chatId} and user_id = ${userId}
+    const [chat] = await sql`
+      select id from "Chat"
+      where id = ${chatId}
+        and "userId" = ${userId}::uuid
+      limit 1
     `;
+    if (!chat) return false;
+
+    await sql`delete from "Message" where "chatId" = ${chatId}`;
+    await sql`delete from "Chat" where id = ${chatId}`;
     return true;
   } catch (e) {
     console.error('[supabase] eliminarChat:', e.message);
@@ -214,92 +382,101 @@ export async function eliminarChat(chatId, userId) {
   }
 }
 
-export async function eliminarTodosLosChats(userId) {
-  if (!sql) return false;
+export async function crearMensaje(chatId, { role, content }) {
+  if (!sql || !chatId) return null;
   try {
-    await sql`
-      delete from public.chats where user_id = ${userId}
+    const id = crypto.randomUUID();
+    const [row] = await sql`
+      insert into "Message" (id, "chatId", role, content)
+      values (${id}, ${chatId}, ${role}, ${String(content)})
+      returning id, "chatId" as chat_id, role, content,
+                "createdAt" as created_at
     `;
-    return true;
+
+    await sql`
+      update "Chat"
+      set "updatedAt" = now()
+      where id = ${chatId}
+    `;
+
+    return normalizeMessage(row);
   } catch (e) {
-    console.error('[supabase] eliminarTodosLosChats:', e.message);
-    return false;
+    console.error('[supabase] crearMensaje:', e.message);
+    return null;
   }
 }
 
-/* ══════════════════════════════════════════════════════════════
-   MEMORIAS
-   Datos cortos que Numi-OT.01 recuerda sobre cada usuario.
-   ══════════════════════════════════════════════════════════════ */
-
-/**
- * Lista todas las memorias del usuario, ordenadas por más reciente.
- * @param {string} userId - UUID del usuario
- * @returns {Promise<Array<{id: string, text: string, created_at: string}>>}
- */
-export async function listarMemories(userId) {
-  if (!sql) return [];
+export async function listarMensajes(chatId) {
+  if (!sql || !chatId) return [];
   try {
     const rows = await sql`
-      select id, text, created_at
-      from public.memories
-      where user_id = ${userId}
-      order by created_at desc
+      select id, "chatId" as chat_id, role, content,
+             "createdAt" as created_at
+      from "Message"
+      where "chatId" = ${chatId}
+      order by "createdAt" asc
+    `;
+    return rows.map(normalizeMessage);
+  } catch (e) {
+    console.error('[supabase] listarMensajes:', e.message);
+    return [];
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MEMORIES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+export async function listarMemories(userId) {
+  if (!sql || !userId) return [];
+  try {
+    const rows = await sql`
+      select id, "userId" as user_id, title, content,
+             "createdAt" as created_at
+      from "Memory"
+      where "userId" = ${userId}::uuid
+        and type = 'MEMORY'
+      order by "createdAt" desc
       limit 100
     `;
-    return rows || [];
+    return rows.map(normalizeMemory);
   } catch (e) {
     console.error('[supabase] listarMemories:', e.message);
     return [];
   }
 }
 
-/**
- * Crea una nueva memoria.
- * @param {string} userId - UUID del usuario
- * @param {string} text - Texto de la memoria (3-500 chars)
- * @returns {Promise<{id: string, text: string, created_at: string}|null>}
- */
 export async function crearMemory(userId, text) {
-  if (!sql) return null;
+  if (!sql || !userId || !text) return null;
   try {
-    const [memory] = await sql`
-      insert into public.memories (user_id, text)
-      values (${userId}, ${text})
-      returning id, text, created_at
+    const id = crypto.randomUUID();
+    const title =
+      text.length > 60 ? text.slice(0, 57).trimEnd() + '…' : text;
+
+    const [row] = await sql`
+      insert into "Memory" (id, "userId", title, content, type)
+      values (${id}, ${userId}::uuid, ${title}, ${text}, 'MEMORY')
+      returning id, "userId" as user_id, content,
+                "createdAt" as created_at
     `;
-    return memory || null;
+    return normalizeMemory(row);
   } catch (e) {
     console.error('[supabase] crearMemory:', e.message);
     return null;
   }
 }
 
-/**
- * Elimina una memoria. Solo si pertenece al usuario.
- * @param {string} userId - UUID del usuario
- * @param {string} memoryId - UUID de la memoria
- * @returns {Promise<boolean>}
- */
-export async function eliminarMemory(userId, memoryId) {
-  if (!sql) return false;
+export async function eliminarMemory(memoryId, userId) {
+  if (!sql || !memoryId || !userId) return false;
   try {
     const result = await sql`
-      delete from public.memories
-      where id = ${memoryId} and user_id = ${userId}
+      delete from "Memory"
+      where id = ${memoryId}
+        and "userId" = ${userId}::uuid
     `;
-    // postgres.js devuelve un array con count
-    return result.count > 0 || true;
+    return result.count > 0;
   } catch (e) {
     console.error('[supabase] eliminarMemory:', e.message);
     return false;
   }
-}
-
-/* ══════════════════════════════════════════════════════════════
-   HEALTH
-   ══════════════════════════════════════════════════════════════ */
-
-export function supabaseDisponible() {
-  return Boolean(sql);
 }

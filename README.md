@@ -20,7 +20,8 @@
 [Uso](#-guía-de-uso) ·
 [API](#-referencia-de-la-api) ·
 [Deploy](#-guía-de-deploy) ·
-[FAQ](#-preguntas-frecuentes)
+[FAQ](#-preguntas-frecuentes) ·
+[Documentación](docs/architecture.md)
 
 </div>
 

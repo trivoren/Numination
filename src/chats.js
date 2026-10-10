@@ -1,47 +1,50 @@
-/* ================================================================
+/* ═══════════════════════════════════════════════════════════════════════════
    NUMINATION · chats.js
-   Persistencia de conversaciones en Supabase.
-   ================================================================ */
+   Rutas CRUD para conversaciones y mensajes.
+   La API pública NO cambia — sólo por debajo consultamos las tablas
+   PascalCase ("Chat", "Message") vía los helpers de supabase.js.
+   ═══════════════════════════════════════════════════════════════════════════ */
 
 import {
-  listarChats,
   crearChat,
+  listarChats,
   obtenerChat,
-  agregarMensaje,
   eliminarChat,
-  eliminarTodosLosChats,
+  crearMensaje,
 } from './services/supabase.js';
 
 export function mountChatRoutes(app, requireAuth) {
-  /* Listar todas las conversaciones del usuario */
+  /* ─── GET /api/chats ─── */
   app.get('/api/chats', requireAuth, async (req, res) => {
     try {
       const chats = await listarChats(req.user.id);
       return res.json({ ok: true, chats });
     } catch (e) {
       console.error('[chats] listar:', e.message);
-      return res.status(500).json({ ok: false, error: e.message });
+      return res.status(500).json({
+        ok: false,
+        error: 'No se pudieron cargar las conversaciones.',
+      });
     }
   });
 
-  /* Obtener una conversación específica con sus mensajes */
-  app.get('/api/chats/:id', requireAuth, async (req, res) => {
-    try {
-      const chat = await obtenerChat(req.params.id, req.user.id);
-      if (!chat) return res.status(404).json({ ok: false, error: 'No encontrado' });
-      return res.json({ ok: true, chat });
-    } catch (e) {
-      console.error('[chats] obtener:', e.message);
-      return res.status(500).json({ ok: false, error: e.message });
-    }
-  });
-
-  /* Crear conversación */
+  /* ─── POST /api/chats ─── */
   app.post('/api/chats', requireAuth, async (req, res) => {
     try {
-      const title = req.body?.title || req.body?.chat?.title || 'Sin título';
+      const title =
+        req.body?.title ||
+        req.body?.chat?.title ||
+        'Nuevo chat';
+
       const chat = await crearChat(req.user.id, title);
-      if (!chat) return res.status(500).json({ ok: false, error: 'No se pudo crear' });
+
+      if (!chat) {
+        return res.status(500).json({
+          ok: false,
+          error: 'No se pudo crear la conversación.',
+        });
+      }
+
       return res.json({ ok: true, chat });
     } catch (e) {
       console.error('[chats] crear:', e.message);
@@ -49,36 +52,27 @@ export function mountChatRoutes(app, requireAuth) {
     }
   });
 
-  /* Añadir un mensaje */
-  app.post('/api/chats/:id/messages', requireAuth, async (req, res) => {
+  /* ─── GET /api/chats/:id ─── */
+  app.get('/api/chats/:id', requireAuth, async (req, res) => {
     try {
-      const raw = req.body?.message || req.body;
-      if (!raw || !raw.role || !raw.content) {
-        return res.status(400).json({ ok: false, error: 'Mensaje inválido' });
+      const chat = await obtenerChat(req.params.id, req.user.id);
+      if (!chat) {
+        return res.status(404).json({ ok: false, error: 'No encontrada.' });
       }
-
-      const msg = await agregarMensaje(req.params.id, {
-        role: raw.role === 'user' ? 'user' : 'ai',
-        content: String(raw.content),
-        attachment: raw.attachment || null,
-        imageUrl: raw.imageUrl || null,
-        provider: raw.provider || null,
-        durationMs: raw.durationMs || 0,
-      });
-
-      if (!msg) return res.status(500).json({ ok: false, error: 'No se pudo guardar' });
-      return res.json({ ok: true, message: msg });
+      return res.json({ ok: true, chat });
     } catch (e) {
-      console.error('[chats] mensaje:', e.message);
+      console.error('[chats] obtener:', e.message);
       return res.status(500).json({ ok: false, error: e.message });
     }
   });
 
-  /* Eliminar conversación */
+  /* ─── DELETE /api/chats/:id ─── */
   app.delete('/api/chats/:id', requireAuth, async (req, res) => {
     try {
       const ok = await eliminarChat(req.params.id, req.user.id);
-      if (!ok) return res.status(500).json({ ok: false, error: 'No se pudo eliminar' });
+      if (!ok) {
+        return res.status(404).json({ ok: false, error: 'No encontrada.' });
+      }
       return res.json({ ok: true });
     } catch (e) {
       console.error('[chats] eliminar:', e.message);
@@ -86,16 +80,62 @@ export function mountChatRoutes(app, requireAuth) {
     }
   });
 
-  /* Eliminar TODAS las conversaciones del usuario */
-  app.delete('/api/chats', requireAuth, async (req, res) => {
+  /* ─── POST /api/chats/:id/messages ─── */
+  app.post('/api/chats/:id/messages', requireAuth, async (req, res) => {
     try {
-      await eliminarTodosLosChats(req.user.id);
-      return res.json({ ok: true });
+      const body = req.body?.message || req.body || {};
+      const { role, content } = body;
+
+      if (!role || !content) {
+        return res.status(400).json({
+          ok: false,
+          error: 'Falta role o content.',
+        });
+      }
+
+      // Verificar que el chat pertenece al usuario
+      const chat = await obtenerChat(req.params.id, req.user.id);
+      if (!chat) {
+        return res.status(404).json({ ok: false, error: 'Chat no encontrado.' });
+      }
+
+      // Normalizar role: 'ai' → 'assistant' para consistencia
+      const normalizedRole = role === 'ai' ? 'assistant' : role;
+
+      const message = await crearMensaje(req.params.id, {
+        role: normalizedRole,
+        content: String(content),
+      });
+
+      if (!message) {
+        return res.status(500).json({
+          ok: false,
+          error: 'No se pudo guardar el mensaje.',
+        });
+      }
+
+      return res.json({ ok: true, message });
     } catch (e) {
-      console.error('[chats] eliminar todas:', e.message);
+      console.error('[chats] mensaje:', e.message);
       return res.status(500).json({ ok: false, error: e.message });
     }
   });
 
-  console.log('[chats] rutas montadas (Supabase)');
+  /* ─── DELETE /api/chats (eliminar todos) ─── */
+  app.delete('/api/chats', requireAuth, async (req, res) => {
+    try {
+      const chats = await listarChats(req.user.id);
+      let deleted = 0;
+
+      for (const c of chats) {
+        const ok = await eliminarChat(c.id, req.user.id);
+        if (ok) deleted++;
+      }
+
+      return res.json({ ok: true, deleted });
+    } catch (e) {
+      console.error('[chats] eliminar todos:', e.message);
+      return res.status(500).json({ ok: false, error: e.message });
+    }
+  });
 }

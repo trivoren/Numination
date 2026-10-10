@@ -1,1118 +1,1439 @@
 <!DOCTYPE html>
-<html lang="es-CO" data-theme="medianoche">
+<html lang="es-CO" data-theme="claro">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#0a0a1a" />
-  <meta name="color-scheme" content="dark" />
-  <meta name="robots" content="noindex, nofollow" />
-  <meta name="referrer" content="strict-origin-when-cross-origin" />
-
-  <title>Ingresar · Numination</title>
-  <meta name="description" content="Ingresa a Numination, la IA educativa colombiana." />
-
-  <link rel="icon" href="/favicon.ico" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="preconnect" href="https://accounts.google.com" />
-  <link
-    rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-    media="print"
-    onload="this.media='all'"
-  />
-  <noscript>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
-  </noscript>
-
-  <style>
-    /* ══════════════════════════════════════════════════════════════
-       DESIGN TOKENS
-       ══════════════════════════════════════════════════════════════ */
-    :root {
-      --c-bg: #0a0a1a;
-      --c-bg-alt: #101023;
-      --c-bg-elevated: #16162b;
-      --c-bg-hover: #1c1c36;
-      --c-border: #24243e;
-      --c-border-strong: #34345a;
-      --c-text: #e0e0ff;
-      --c-text-muted: #8888aa;
-      --c-text-subtle: #5a5a7a;
-      --c-primary: #7c5eff;
-      --c-primary-hover: #6b4eff;
-      --c-primary-glow: rgba(124, 94, 255, 0.35);
-      --c-danger: #ff4d4d;
-      --c-success: #4dff88;
-      --c-warn: #ffb44d;
-
-      --radius-sm: 8px;
-      --radius-md: 12px;
-      --radius-lg: 16px;
-      --radius-full: 999px;
-
-      --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-      --transition-base: 220ms cubic-bezier(0.4, 0, 0.2, 1);
-
-      --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-
-      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
-      --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.35);
-      --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.45);
-
-      --z-toast: 9999;
-    }
-
-    [data-theme="oscuro"] {
-      --c-bg: #0a0a0a;
-      --c-bg-alt: #141414;
-      --c-bg-elevated: #1a1a1f;
-      --c-bg-hover: #22222a;
-      --c-border: #2a2a30;
-      --c-border-strong: #3a3a42;
-      --c-text: #ececf1;
-      --c-text-muted: #8e8ea0;
-      --c-text-subtle: #5a5a6a;
-    }
-
-    /* ══════════════════════════════════════════════════════════════
-       RESET
-       ══════════════════════════════════════════════════════════════ */
-    *, *::before, *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    html, body {
-      height: 100%;
-      width: 100%;
-    }
-
-    body {
-      font-family: var(--font-sans);
-      background: var(--c-bg);
-      color: var(--c-text);
-      font-size: 15px;
-      line-height: 1.6;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      overflow-x: hidden;
-    }
-
-    button {
-      font-family: inherit;
-      cursor: pointer;
-      border: none;
-      background: none;
-      color: inherit;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    button:disabled {
-      cursor: not-allowed;
-      opacity: 0.6;
-    }
-
-    a {
-      color: var(--c-primary);
-      text-decoration: none;
-      transition: color var(--transition-fast);
-    }
-
-    a:hover { text-decoration: underline; }
-
-    ::-webkit-scrollbar { width: 8px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--c-border); border-radius: 4px; }
-
-    /* ══════════════════════════════════════════════════════════════
-       LAYOUT
-       ══════════════════════════════════════════════════════════════ */
-    .auth-app {
-      display: grid;
-      grid-template-columns: 1.15fr 1fr;
-      min-height: 100vh;
-      min-height: 100dvh;
-    }
-
-    .auth-hero {
-      position: relative;
-      display: flex;
-      align-items: center;
-      padding: 64px;
-      overflow: hidden;
-      background: var(--c-bg);
-      border-right: 1px solid var(--c-border);
-    }
-
-    .auth-hero::before {
-      content: '';
-      position: absolute;
-      top: 30%;
-      left: 40%;
-      transform: translate(-50%, -50%);
-      width: 700px;
-      height: 700px;
-      border-radius: 50%;
-      background: radial-gradient(circle, var(--c-primary-glow) 0%, transparent 55%);
-      pointer-events: none;
-      filter: blur(50px);
-      opacity: 0.35;
-    }
-
-    .auth-hero__pattern {
-      position: absolute;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
-      background-size: 44px 44px;
-      mask-image: radial-gradient(ellipse at 30% 50%, #000 20%, transparent 75%);
-      -webkit-mask-image: radial-gradient(ellipse at 30% 50%, #000 20%, transparent 75%);
-      pointer-events: none;
-    }
-
-    .auth-hero__content {
-      position: relative;
-      z-index: 1;
-      max-width: 560px;
-      animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .auth-hero__wordmark {
-      font-size: clamp(40px, 4.5vw, 56px);
-      font-weight: 800;
-      letter-spacing: -1.5px;
-      line-height: 1;
-      margin-bottom: 20px;
-      display: flex;
-      align-items: center;
-    }
-
-    .auth-hero__dot {
-      display: inline-block;
-      width: 10px;
-      height: 10px;
-      background: var(--c-primary);
-      border-radius: 50%;
-      margin-left: 8px;
-      box-shadow: 0 0 20px var(--c-primary-glow);
-      position: relative;
-      top: -0.6em;
-      animation: pulse 2.4s ease-in-out infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); box-shadow: 0 0 20px var(--c-primary-glow); }
-      50% { transform: scale(1.25); box-shadow: 0 0 32px var(--c-primary-glow); }
-    }
-
-    .auth-hero__tagline {
-      font-size: clamp(20px, 2.2vw, 26px);
-      line-height: 1.4;
-      color: var(--c-text-muted);
-      margin-bottom: 56px;
-      font-weight: 400;
-      letter-spacing: -0.01em;
-    }
-
-    .auth-hero__features {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-    }
-
-    .auth-hero__features li {
-      display: flex;
-      align-items: flex-start;
-      gap: 14px;
-      font-size: 15px;
-      line-height: 1.5;
-    }
-
-    .auth-hero__features svg {
-      width: 22px;
-      height: 22px;
-      color: var(--c-primary);
-      flex-shrink: 0;
-      padding: 5px;
-      background: rgba(124, 94, 255, 0.08);
-      border-radius: var(--radius-sm);
-      border: 1px solid rgba(124, 94, 255, 0.18);
-      box-sizing: content-box;
-      margin-top: 1px;
-    }
-
-    .auth-panel {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 48px;
-      background: var(--c-bg);
-      overflow-y: auto;
-    }
-
-    .auth-inner {
-      width: 100%;
-      max-width: 380px;
-      animation: fadeIn 0.9s ease 0.15s both;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    .auth-logo {
-      width: 52px;
-      height: 52px;
-      background: linear-gradient(135deg, var(--c-primary), #a78bfa);
-      border-radius: var(--radius-md);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 28px;
-      font-size: 24px;
-      font-weight: 800;
-      color: #fff;
-      box-shadow: 0 8px 28px var(--c-primary-glow);
-      user-select: none;
-    }
-
-    .auth-title {
-      font-size: 26px;
-      font-weight: 700;
-      margin-bottom: 8px;
-      letter-spacing: -0.02em;
-      line-height: 1.2;
-    }
-
-    .auth-subtitle {
-      font-size: 14.5px;
-      color: var(--c-text-muted);
-      margin-bottom: 32px;
-      line-height: 1.55;
-    }
-
-    .auth-subtitle strong {
-      color: var(--c-text);
-      font-weight: 500;
-    }
-
-    /* ══════════════════════════════════════════════════════════════
-       BOTONES DE AUTH (Google + GitHub)
-       ══════════════════════════════════════════════════════════════ */
-    .auth-methods {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .auth-btn {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      padding: 13px 20px;
-      background: var(--c-bg-elevated);
-      border: 1px solid var(--c-border-strong);
-      border-radius: var(--radius-md);
-      color: var(--c-text);
-      font-size: 14.5px;
-      font-weight: 500;
-      transition: all var(--transition-fast);
-      position: relative;
-      overflow: hidden;
-      min-height: 48px;
-      text-decoration: none;
-    }
-
-    .auth-btn:hover:not(:disabled) {
-      background: var(--c-bg-hover);
-      transform: translateY(-1px);
-      box-shadow: var(--shadow-md);
-      text-decoration: none;
-      color: var(--c-text);
-    }
-
-    .auth-btn:active:not(:disabled) {
-      transform: translateY(0);
-    }
-
-    .auth-btn:focus-visible {
-      outline: 2px solid var(--c-primary);
-      outline-offset: 2px;
-    }
-
-    .auth-btn svg {
-      width: 18px;
-      height: 18px;
-      flex-shrink: 0;
-    }
-
-    .auth-btn__label {
-      transition: opacity var(--transition-fast);
-    }
-
-    .auth-btn.is-loading .auth-btn__label,
-    .auth-btn.is-loading svg {
-      opacity: 0;
-    }
-
-    .auth-btn.is-loading::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 18px;
-      height: 18px;
-      margin: -9px -9px 0 0;
-      margin-left: -9px;
-      margin-top: -9px;
-      border: 2px solid var(--c-primary);
-      border-top-color: transparent;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    /* GitHub icono específico — tamaño ajustado */
-    .auth-btn--github svg {
-      width: 20px;
-      height: 20px;
-      fill: currentColor;
-      stroke: none;
-    }
-
-    /* ══════════════════════════════════════════════════════════════
-       FOOTER LEGAL
-       ══════════════════════════════════════════════════════════════ */
-    .auth-legal-note {
-      font-size: 12px;
-      color: var(--c-text-muted);
-      text-align: center;
-      margin-top: 24px;
-      line-height: 1.55;
-    }
-
-    .auth-legal-note a {
-      color: var(--c-text-muted);
-      text-decoration: underline;
-      text-underline-offset: 2px;
-      transition: color var(--transition-fast);
-    }
-
-    .auth-legal-note a:hover { color: var(--c-primary); }
-
-    .auth-footer-nav {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 10px;
-      margin-top: 40px;
-      padding-top: 24px;
-      border-top: 1px solid var(--c-border);
-      font-size: 12.5px;
-      color: var(--c-text-muted);
-      flex-wrap: wrap;
-    }
-
-    .auth-footer-nav a {
-      color: var(--c-text-muted);
-      transition: color var(--transition-fast);
-    }
-
-    .auth-footer-nav a:hover {
-      color: var(--c-primary);
-      text-decoration: none;
-    }
-
-    .auth-footer-nav__dot { opacity: 0.4; user-select: none; }
-
-    .auth-copyright {
-      text-align: center;
-      margin-top: 14px;
-      font-size: 11.5px;
-      color: var(--c-text-subtle);
-      opacity: 0.75;
-    }
-
-    /* ══════════════════════════════════════════════════════════════
-       TOASTS
-       ══════════════════════════════════════════════════════════════ */
-    .nm-toasts {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      z-index: var(--z-toast);
-      pointer-events: none;
-      max-width: 400px;
-    }
-
-    .nm-toast {
-      padding: 12px 18px;
-      background: var(--c-bg-elevated);
-      border: 1px solid var(--c-border);
-      border-radius: var(--radius-md);
-      font-size: 14px;
-      color: var(--c-text);
-      animation: slideInToast 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      min-width: 260px;
-      box-shadow: var(--shadow-lg);
-      pointer-events: auto;
-      line-height: 1.4;
-      word-break: break-word;
-    }
-
-    .nm-toast--ok { border-left: 3px solid var(--c-success); }
-    .nm-toast--err { border-left: 3px solid var(--c-danger); }
-    .nm-toast--info { border-left: 3px solid var(--c-primary); }
-    .nm-toast--warn { border-left: 3px solid var(--c-warn); }
-
-    @keyframes slideInToast {
-      from { transform: translateX(120%); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-
-    /* ══════════════════════════════════════════════════════════════
-       GSI HIDDEN CONTAINER
-       ══════════════════════════════════════════════════════════════ */
-    .gsi-hidden {
-      position: fixed;
-      width: 1px;
-      height: 1px;
-      opacity: 0;
-      pointer-events: none;
-      overflow: hidden;
-      top: -9999px;
-      left: -9999px;
-    }
-
-    /* ══════════════════════════════════════════════════════════════
-       FALLBACK
-       ══════════════════════════════════════════════════════════════ */
-    .auth-fallback {
-      margin-top: 16px;
-      padding: 14px 16px;
-      background: rgba(255, 180, 77, 0.08);
-      border: 1px solid rgba(255, 180, 77, 0.25);
-      border-radius: var(--radius-md);
-      color: var(--c-warn);
-      font-size: 13px;
-      line-height: 1.5;
-      text-align: center;
-      display: none;
-    }
-
-    .auth-fallback.is-visible {
-      display: block;
-      animation: fadeIn 0.3s ease;
-    }
-
-    /* ══════════════════════════════════════════════════════════════
-       RESPONSIVE
-       ══════════════════════════════════════════════════════════════ */
-    @media (max-width: 960px) {
-      .auth-app { grid-template-columns: 1fr; }
-      .auth-hero { display: none; }
-      .auth-panel {
-        padding: 40px 24px;
-        min-height: 100vh;
-        min-height: 100dvh;
-      }
-      .auth-inner { max-width: 400px; }
-    }
-
-    @media (max-width: 480px) {
-      .auth-panel {
-        padding: 32px 20px;
-        align-items: flex-start;
-        padding-top: 56px;
-      }
-      .auth-logo { width: 46px; height: 46px; font-size: 22px; margin-bottom: 24px; }
-      .auth-title { font-size: 22px; }
-      .nm-toasts { left: 12px; right: 12px; bottom: 12px; max-width: none; }
-      .nm-toast { max-width: none; width: 100%; }
-    }
-
-    /* ══════════════════════════════════════════════════════════════
-       ACCESIBILIDAD
-       ══════════════════════════════════════════════════════════════ */
-    .sr-only {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
-      margin: -1px;
-      overflow: hidden;
-      clip: rect(0, 0, 0, 0);
-      white-space: nowrap;
-      border: 0;
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        animation-duration: 0.01ms !important;
-        transition-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-      }
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#f0f0f2" />
+<meta name="color-scheme" content="light" />
+<meta name="robots" content="noindex, nofollow" />
+<meta name="referrer" content="strict-origin-when-cross-origin" />
+<title>Welcome · Numination</title>
+<meta name="description" content="Ingresa a Numination, la IA educativa colombiana." />
+
+<link rel="icon" href="/favicon.ico" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="preconnect" href="https://accounts.google.com" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
+
+<style>
+:root {
+  --c-bg:          #f0f0f2;
+  --c-bg-card:     #ffffff;
+  --c-border:      #e4e4e7;
+  --c-border-soft: #ececef;
+  --c-border-strong: #cbcbcf;
+  --c-text:        #0a0a0a;
+  --c-text-muted:  #6b6b6b;
+  --c-text-subtle: #a0a0a3;
+
+  --c-primary:       #1e3a5f;
+  --c-primary-hover: #162d4a;
+  --c-primary-active:#0f2138;
+  --c-accent:        #2b7fff;
+  --c-accent-soft:   #e8f1ff;
+  --c-danger:        #dc2626;
+  --c-danger-soft:   #fef2f2;
+
+  --radius-pill:  999px;
+  --radius-card:  20px;
+  --radius-lg:    16px;
+
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --shadow-card: 0 1px 2px rgba(0,0,0,.04), 0 1px 3px rgba(0,0,0,.03);
+  --shadow-btn:  0 4px 14px rgba(30,58,95,.18);
+  --shadow-modal: 0 24px 60px rgba(0,0,0,.20), 0 8px 20px rgba(0,0,0,.10);
+
+  --transition: 180ms cubic-bezier(.4,0,.2,1);
+  --z-toast: 9999;
+  --z-modal: 9000;
+}
+
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; width: 100%; }
+
+body {
+  font-family: var(--font-sans);
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; -webkit-tap-highlight-color: transparent; }
+button:disabled { cursor: not-allowed; }
+input { font-family: inherit; color: inherit; background: none; border: none; outline: none; }
+a { color: inherit; text-decoration: none; }
+
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-thumb { background: var(--c-border); border-radius: 4px; }
+
+/* ═══════════════════════════════════════════════════════════════
+   APP LAYOUT
+   ═══════════════════════════════════════════════════════════════ */
+.auth-app {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 32px 24px;
+  background: var(--c-bg);
+}
+
+.view {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+}
+.view[hidden] { display: none; }
+.view:not([hidden]) { animation: fadeIn .4s cubic-bezier(.4,0,.2,1); }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BACK BUTTON
+   ═══════════════════════════════════════════════════════════════ */
+.view__back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin-left: -8px;
+  margin-bottom: 24px;
+  border-radius: 50%;
+  color: var(--c-text);
+  transition: background var(--transition);
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+.view__back:hover { background: var(--c-bg-card); }
+.view__back:active { background: var(--c-border-soft); }
+.view__back svg { width: 24px; height: 24px; stroke-width: 2; }
+
+/* ═══════════════════════════════════════════════════════════════
+   TITLES / SUBTITLES
+   ═══════════════════════════════════════════════════════════════ */
+.login-title {
+  font-size: clamp(28px, 7vw, 36px);
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: -0.028em;
+  text-align: center;
+  color: var(--c-text);
+  margin-bottom: 14px;
+}
+
+.login-title--left {
+  text-align: left;
+  font-size: clamp(32px, 8vw, 40px);
+  line-height: 1.05;
+  letter-spacing: -0.032em;
+  margin-bottom: 10px;
+}
+
+.login-subtitle {
+  font-size: 15px;
+  color: var(--c-text-muted);
+  text-align: center;
+  line-height: 1.5;
+  letter-spacing: -0.005em;
+  margin-bottom: 36px;
+}
+
+.login-subtitle--left {
+  text-align: left;
+  margin-bottom: 32px;
+}
+
+.login-subtitle--tight {
+  margin-bottom: 20px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FORM
+   ═══════════════════════════════════════════════════════════════ */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 32px;
+}
+
+.login-field {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 20px;
+  height: 58px;
+  background: var(--c-bg-card);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-pill);
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.login-field:focus-within {
+  border-color: var(--c-border-strong);
+  box-shadow: 0 0 0 3px rgba(43,127,255,.08);
+}
+
+.login-field svg {
+  width: 20px;
+  height: 20px;
+  color: var(--c-text-subtle);
+  flex-shrink: 0;
+}
+
+.login-field input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--c-text);
+  letter-spacing: -0.005em;
+}
+
+.login-field input::placeholder {
+  color: var(--c-text-subtle);
+}
+
+.login-field__eye {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  margin-right: -8px;
+  border-radius: 50%;
+  color: var(--c-text-subtle);
+  transition: color var(--transition), background var(--transition);
+  flex-shrink: 0;
+}
+.login-field__eye:hover { color: var(--c-text); background: var(--c-border-soft); }
+.login-field__eye svg { width: 20px; height: 20px; }
+
+/* ═══════════════════════════════════════════════════════════════
+   PRIMARY BUTTON
+   ═══════════════════════════════════════════════════════════════ */
+.login-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 58px;
+  background: var(--c-primary);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  border-radius: var(--radius-pill);
+  transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
+  width: 100%;
+}
+
+.login-primary:hover:not(:disabled) {
+  background: var(--c-primary-hover);
+  box-shadow: var(--shadow-btn);
+}
+
+.login-primary:active:not(:disabled) {
+  background: var(--c-primary-active);
+  transform: scale(.985);
+}
+
+.login-primary:disabled {
+  background: var(--c-border-strong);
+  color: #fff;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.login-primary svg { width: 18px; height: 18px; }
+
+.login-primary.is-loading { position: relative; color: transparent; }
+.login-primary.is-loading::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 20px; height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 2.5px solid rgba(255,255,255,.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ═══════════════════════════════════════════════════════════════
+   SOCIALS (entry view)
+   ═══════════════════════════════════════════════════════════════ */
+.login-socials {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 32px;
+}
+
+.login-social {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 62px;
+  height: 62px;
+  background: var(--c-bg-card);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  transition: transform var(--transition), border-color var(--transition), box-shadow var(--transition);
+  position: relative;
+}
+
+.login-social:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: var(--c-border-soft);
+  box-shadow: 0 6px 18px rgba(0,0,0,.08);
+}
+
+.login-social:active:not(:disabled) {
+  transform: translateY(0) scale(.96);
+}
+
+.login-social svg { width: 26px; height: 26px; display: block; }
+.login-social--github svg { fill: #0a0a0a; stroke: none; }
+.login-social.is-loading svg { opacity: 0; }
+.login-social.is-loading::after {
+  content: '';
+  position: absolute;
+  width: 20px; height: 20px;
+  border: 2.5px solid rgba(30,58,95,.25);
+  border-top-color: var(--c-primary);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FOOTER / LINKS
+   ═══════════════════════════════════════════════════════════════ */
+.login-footer {
+  text-align: center;
+  font-size: 15px;
+  color: var(--c-text-muted);
+  font-weight: 400;
+  letter-spacing: -0.005em;
+  margin-bottom: 12px;
+}
+
+.login-footer a,
+.login-footer button {
+  color: var(--c-text);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1.5px;
+  transition: opacity var(--transition);
+  font: inherit;
+  font-weight: 700;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.login-footer a:hover,
+.login-footer button:hover { opacity: .7; }
+
+/* ═══════════════════════════════════════════════════════════════
+   LINKS (password view)
+   ═══════════════════════════════════════════════════════════════ */
+.login-links {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+}
+
+.login-link {
+  font-size: 15px;
+  color: var(--c-primary);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  transition: opacity var(--transition);
+  padding: 4px 8px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: inherit;
+}
+
+.login-link:hover { opacity: .7; }
+
+.login-link--muted {
+  color: var(--c-text-muted);
+  font-weight: 400;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+
+.login-link--center {
+  display: block;
+  text-align: center;
+  margin-top: 8px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   AGE CHECK CARD
+   ═══════════════════════════════════════════════════════════════ */
+.age-check {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+  background: var(--c-bg-card);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-card);
+  cursor: pointer;
+  transition: border-color var(--transition), box-shadow var(--transition);
+  margin-bottom: 16px;
+  user-select: none;
+}
+
+.age-check:hover { border-color: var(--c-border-strong); }
+
+.age-check input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 0;
+  height: 0;
+}
+
+.age-check__box {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--c-border-strong);
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all var(--transition);
+  background: transparent;
+}
+
+.age-check__box svg {
+  width: 14px;
+  height: 14px;
+  color: #fff;
+  opacity: 0;
+  transition: opacity var(--transition);
+  stroke-width: 3.5;
+}
+
+.age-check input:checked ~ .age-check__box {
+  background: var(--c-primary);
+  border-color: var(--c-primary);
+}
+
+.age-check input:checked ~ .age-check__box svg {
+  opacity: 1;
+}
+
+.age-check__text {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--c-text);
+  letter-spacing: -0.01em;
+  line-height: 1.4;
+  flex: 1;
+}
+
+.login-error {
+  font-size: 13.5px;
+  color: var(--c-danger);
+  text-align: center;
+  padding: 0 12px;
+  margin-bottom: 16px;
+  line-height: 1.4;
+  letter-spacing: -0.005em;
+}
+.login-error[hidden] { display: none; }
+
+/* ═══════════════════════════════════════════════════════════════
+   FALLBACK
+   ═══════════════════════════════════════════════════════════════ */
+.login-fallback {
+  margin-top: 18px;
+  padding: 12px 16px;
+  background: rgba(255,180,77,.10);
+  border: 1px solid rgba(255,180,77,.30);
+  border-radius: 14px;
+  color: #a06a1f;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+  display: none;
+}
+.login-fallback.is-visible { display: block; animation: fadeIn .3s ease; }
+
+/* ═══════════════════════════════════════════════════════════════
+   AGE BLOCKED MODAL
+   ═══════════════════════════════════════════════════════════════ */
+.age-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.35);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: modalFade .25s cubic-bezier(.4,0,.2,1);
+}
+.age-modal[hidden] { display: none; }
+
+@keyframes modalFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.age-modal__card {
+  width: 100%;
+  max-width: 380px;
+  background: var(--c-bg-card);
+  border-radius: 24px;
+  padding: 28px 26px 0;
+  box-shadow: var(--shadow-modal);
+  animation: modalIn .32s cubic-bezier(.16,1,.3,1);
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(.95) translateY(10px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.age-modal__title {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: var(--c-text);
+  text-align: center;
+  margin-bottom: 14px;
+  line-height: 1.2;
+}
+
+.age-modal__text {
+  font-size: 15px;
+  color: var(--c-text-muted);
+  text-align: center;
+  line-height: 1.55;
+  letter-spacing: -0.005em;
+  margin-bottom: 28px;
+}
+
+.age-modal__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid var(--c-border);
+  margin: 0 -26px;
+  padding: 18px 26px 22px;
+}
+
+.age-modal__btn {
+  padding: 12px 16px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  border-radius: 12px;
+  transition: background var(--transition), opacity var(--transition);
+  flex: 1;
+  text-align: center;
+}
+
+.age-modal__btn--cancel {
+  color: var(--c-text-muted);
+  font-weight: 500;
+}
+.age-modal__btn--cancel:hover { background: var(--c-border-soft); color: var(--c-text); }
+
+.age-modal__btn--block {
+  color: var(--c-danger);
+  font-weight: 700;
+}
+.age-modal__btn--block:hover { background: var(--c-danger-soft); }
+
+/* ═══════════════════════════════════════════════════════════════
+   GSI HIDDEN
+   ═══════════════════════════════════════════════════════════════ */
+.gsi-hidden {
+  position: fixed;
+  width: 1px; height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  overflow: hidden;
+  top: -9999px; left: -9999px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TOASTS
+   ═══════════════════════════════════════════════════════════════ */
+.nm-toasts {
+  position: fixed;
+  bottom: 20px; left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: var(--z-toast);
+  pointer-events: none;
+  width: calc(100% - 32px);
+  max-width: 400px;
+}
+
+.nm-toast {
+  padding: 12px 18px;
+  background: #1a1a1a;
+  color: #fff;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.18);
+  pointer-events: auto;
+  line-height: 1.4;
+  word-break: break-word;
+  animation: slideUpToast .3s cubic-bezier(.4,0,.2,1);
+}
+
+.nm-toast--ok   { background: #0f5132; }
+.nm-toast--err  { background: #842029; }
+.nm-toast--warn { background: #664d03; }
+.nm-toast--info { background: #1a1a1a; }
+
+@keyframes slideUpToast {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0);   opacity: 1; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════════════════ */
+@media (max-width: 380px) {
+  .login-title { font-size: 26px; }
+  .login-title--left { font-size: 28px; }
+  .login-social { width: 56px; height: 56px; }
+  .login-social svg { width: 24px; height: 24px; }
+  .age-modal__card { padding: 24px 22px 0; }
+  .age-modal__actions { margin: 0 -22px; padding: 16px 22px 20px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
+}
+</style>
 </head>
 
 <body>
-  <main class="auth-app">
-    <!-- ═══════════════════════════════════════════════════════════
-         HERO
-         ═══════════════════════════════════════════════════════════ -->
-    <aside class="auth-hero" aria-hidden="true">
-      <div class="auth-hero__pattern"></div>
-      <div class="auth-hero__content">
-        <h1 class="auth-hero__wordmark">
-          Numination<span class="auth-hero__dot"></span>
-        </h1>
-        <p class="auth-hero__tagline">
-          La IA que habla el idioma<br />
-          de nuestra educación.
-        </p>
-        <ul class="auth-hero__features">
-          <li>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-            </svg>
-            <span>Pregunta lo que quieras, en tus palabras</span>
-          </li>
-          <li>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 2 4 7v10l8 5 8-5V7z" />
-              <path d="m4 7 8 5 8-5" />
-              <path d="M12 12v10" />
-            </svg>
-            <span>Aprende a tu ritmo, con ejemplos de Colombia</span>
-          </li>
-          <li>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10" />
-              <polyline points="12 6 12 12 16 14" />
-            </svg>
-            <span>Respuestas en segundos con Groq y Gemini</span>
-          </li>
-          <li>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-              <path d="m9 12 2 2 4-4" />
-            </svg>
-            <span>Tus datos están seguros y nunca se venden</span>
-          </li>
-        </ul>
-      </div>
-    </aside>
+<main class="auth-app">
 
-    <!-- ═══════════════════════════════════════════════════════════
-         PANEL
-         ═══════════════════════════════════════════════════════════ -->
-    <div class="auth-panel">
-      <div class="auth-inner">
-        <div class="auth-logo" aria-hidden="true">N</div>
+  <!-- ═══════════════════════════════════════════════════════════
+       VIEW 1 · ENTRY — Welcome to Numination.
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="view" data-view="entry">
+    <h1 class="login-title">
+      Welcome to<br />Numination.
+    </h1>
 
-        <h2 class="auth-title">Bienvenido a Numination</h2>
-        <p class="auth-subtitle">
-          Tu tutor con IA, hecho en Colombia.<br />
-          <strong>Gratis para empezar.</strong>
-        </p>
+    <form class="login-form" data-login-form autocomplete="on" novalidate>
+      <label class="login-field">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="5" width="18" height="14" rx="2" />
+          <path d="m3 7 9 6 9-6" />
+        </svg>
+        <input type="email" name="email" inputmode="email" autocomplete="email" placeholder="Correo electrónico" data-email-input aria-label="Correo electrónico" />
+      </label>
 
-        <div class="auth-methods">
-          <!-- Botón Google (dispara GSI oculto) -->
-          <button
-            type="button"
-            class="auth-btn"
-            data-google-btn
-            aria-label="Continuar con Google"
-            aria-busy="false"
-          >
-            <svg viewBox="0 0 48 48" aria-hidden="true">
-              <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
-              <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
-              <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
-              <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
-            </svg>
-            <span class="auth-btn__label">Continuar con Google</span>
-          </button>
+      <button type="submit" class="login-primary" data-continue-btn>
+        <span>Continuar</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="5" y1="12" x2="19" y2="12" />
+          <polyline points="12 5 19 12 12 19" />
+        </svg>
+      </button>
+    </form>
 
-          <!-- Botón GitHub (redirige al server OAuth) -->
-          <a
-            href="/api/auth/github"
-            class="auth-btn auth-btn--github"
-            data-github-btn
-            aria-label="Continuar con GitHub"
-          >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z" />
-            </svg>
-            <span class="auth-btn__label">Continuar con GitHub</span>
-          </a>
-        </div>
+    <div class="login-socials">
+      <button type="button" class="login-social login-social--google" data-google-btn aria-label="Continuar con Google" aria-busy="false">
+        <svg viewBox="0 0 48 48" aria-hidden="true">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+        </svg>
+      </button>
 
-        <!-- Fallback si GSI no carga -->
-        <div class="auth-fallback" data-auth-fallback role="alert">
-          No pudimos cargar Google. Verifica tu conexión y
-          <button type="button" data-retry-google style="color: var(--c-warn); text-decoration: underline; padding: 0; font: inherit">
-            reintenta aquí
-          </button>.
-        </div>
-
-        <p class="auth-legal-note">
-          Al continuar aceptas nuestros
-          <a href="/terminos.html">términos</a> y la
-          <a href="/terminos.html">política de privacidad</a>.
-        </p>
-
-        <nav class="auth-footer-nav" aria-label="Enlaces">
-          <a href="/index.html">Inicio</a>
-          <span class="auth-footer-nav__dot">·</span>
-          <a href="/precio.html">Precios</a>
-          <span class="auth-footer-nav__dot">·</span>
-          <a href="/terminos.html">Términos</a>
-        </nav>
-
-        <p class="auth-copyright">© 2026 Numination · Hecho en Colombia 🇨🇴</p>
-      </div>
+      <a href="/api/auth/github" class="login-social login-social--github" data-github-btn aria-label="Continuar con GitHub">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
+        </svg>
+      </a>
     </div>
-  </main>
 
-  <!-- Toasts -->
-  <div class="nm-toasts" id="nm-toasts" role="status" aria-live="polite" aria-atomic="false"></div>
+    <p class="login-footer">
+      Don't have an account? <button type="button" data-go-signup>Sign up</button>
+    </p>
 
-  <!-- GSI oculto -->
-  <div class="gsi-hidden" aria-hidden="true">
-    <div
-      id="g_id_onload"
-      data-client_id="815847930264-hqlpgm37slhbbtqotv4uv9erla4sdl6d.apps.googleusercontent.com"
-      data-callback="handleGoogleCredential"
-      data-auto_prompt="false"
-      data-context="signin"
-      data-ux_mode="popup"
-      data-use_fedcm_for_prompt="false"
-    ></div>
-    <div
-      class="g_id_signin"
-      data-type="standard"
-      data-size="large"
-      data-theme="filled_black"
-      data-text="continue_with"
-      data-shape="rectangular"
-      data-logo_alignment="center"
-      data-width="340"
-    ></div>
+    <div class="login-fallback" data-auth-fallback role="alert">
+      No pudimos cargar Google. Verifica tu conexión y
+      <button type="button" data-retry-google style="color: inherit; text-decoration: underline; font: inherit; padding: 0;">reintenta aquí</button>.
+    </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════════════
-       BOOTSTRAP
-       ═══════════════════════════════════════════════════════════════ -->
-  <script>
-    (function () {
-      'use strict';
+  <!-- ═══════════════════════════════════════════════════════════
+       VIEW 2 · SIGNUP — Create your account
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="view" data-view="signup" hidden>
+    <button type="button" class="view__back" data-go-entry aria-label="Volver">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"/>
+        <polyline points="12 19 5 12 12 5"/>
+      </svg>
+    </button>
 
-      /* ═══════════════════════════════════════════════════════════
-         CONFIG
-         ═══════════════════════════════════════════════════════════ */
-      const Config = Object.freeze({
-        GSI_TIMEOUT_MS: 8000,
-        SESSION_TIMEOUT_MS: 5000,
-        SESSION_RETRIES: 3,
-        RETRY_BASE_MS: 600,
-        TOAST_DEFAULT_MS: 3400,
-        TOAST_ERROR_MS: 5000,
-        MAX_TOASTS: 4,
-        SAFE_REDIRECTS: ['/chat.html', '/index.html', '/login.html'],
-        DEFAULT_REDIRECT: '/chat.html',
-      });
+    <h1 class="login-title login-title--left">
+      Create your<br />account
+    </h1>
+    <p class="login-subtitle login-subtitle--left">
+      Join Numination in a few seconds
+    </p>
 
-      /* ═══════════════════════════════════════════════════════════
-         UTILS
-         ═══════════════════════════════════════════════════════════ */
-      const Utils = {
-        isPlainObject(v) {
-          return Object.prototype.toString.call(v) === '[object Object]';
-        },
-        isNonEmptyString(v) {
-          return typeof v === 'string' && v.trim().length > 0;
-        },
-        sleep(ms) {
-          return new Promise((r) => setTimeout(r, ms));
-        },
-        async fetchWithTimeout(url, opts = {}, timeoutMs = 10000) {
-          const controller = new AbortController();
-          const timer = setTimeout(() => controller.abort(), timeoutMs);
-          try {
-            return await fetch(url, { ...opts, signal: controller.signal });
-          } finally {
-            clearTimeout(timer);
-          }
-        },
-        async safeJson(res) {
-          try {
-            return await res.json();
-          } catch {
-            return null;
-          }
-        },
-        safeRedirect(path, fallback = Config.DEFAULT_REDIRECT) {
-          const target = Config.SAFE_REDIRECTS.includes(path) ? path : fallback;
-          window.location.replace(target);
-        },
-        uid() {
-          return 't_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-        },
-      };
+    <form class="login-form" data-signup-form autocomplete="on" novalidate>
+      <label class="login-field">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="5" width="18" height="14" rx="2" />
+          <path d="m3 7 9 6 9-6" />
+        </svg>
+        <input type="email" name="email" inputmode="email" autocomplete="email" placeholder="Correo electrónico" data-signup-email aria-label="Correo electrónico" />
+      </label>
 
-      /* ═══════════════════════════════════════════════════════════
-         TOASTS
-         ═══════════════════════════════════════════════════════════ */
-      const Toasts = (() => {
-        const host = document.getElementById('nm-toasts');
-        const active = new Map();
+      <label class="login-field">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="4" y="10" width="16" height="11" rx="2.5"/>
+          <path d="M8 10V7a4 4 0 0 1 8 0v3"/>
+        </svg>
+        <input type="password" name="password" autocomplete="new-password" placeholder="Contraseña" data-signup-password aria-label="Contraseña" />
+        <button type="button" class="login-field__eye" data-toggle-password="signup-password" aria-label="Mostrar contraseña">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+      </label>
 
-        function dismiss(id) {
-          const entry = active.get(id);
-          if (!entry) return;
-          const { el, timer } = entry;
-          clearTimeout(timer);
-          el.style.transition = 'opacity .3s, transform .3s';
-          el.style.opacity = '0';
-          el.style.transform = 'translateX(20px)';
-          setTimeout(() => el.remove(), 320);
-          active.delete(id);
-        }
+      <label class="login-field">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="4" y="10" width="16" height="11" rx="2.5"/>
+          <path d="M8 10V7a4 4 0 0 1 8 0v3"/>
+        </svg>
+        <input type="password" name="confirm" autocomplete="new-password" placeholder="Confirmar contraseña" data-signup-confirm aria-label="Confirmar contraseña" />
+        <button type="button" class="login-field__eye" data-toggle-password="signup-confirm" aria-label="Mostrar contraseña">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+      </label>
 
-        function push(kind, message, durationMs) {
-          if (!host) return;
-          if (active.size >= Config.MAX_TOASTS) {
-            const firstKey = active.keys().next().value;
-            dismiss(firstKey);
-          }
+      <button type="submit" class="login-primary" data-signup-submit>
+        <span>Create account</span>
+      </button>
+    </form>
 
-          const id = Utils.uid();
-          const el = document.createElement('div');
-          el.className = `nm-toast nm-toast--${kind}`;
-          el.dataset.toastId = id;
+    <p class="login-footer">
+      Already have an account? <button type="button" data-go-entry>Log in</button>
+    </p>
+  </div>
 
-          const icon = { ok: '✓', err: '✕', info: 'ⓘ', warn: '⚠' }[kind] || '';
-          const iconSpan = document.createElement('span');
-          iconSpan.textContent = icon;
+  <!-- ═══════════════════════════════════════════════════════════
+       VIEW 3 · PASSWORD — Enter your password to continue
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="view" data-view="password" hidden>
+    <h1 class="login-title">
+      Enter your password<br />to continue
+    </h1>
+    <p class="login-subtitle login-subtitle--tight" data-password-email>q@gmail.com</p>
 
-          const msgSpan = document.createElement('span');
-          msgSpan.textContent = String(message);
+    <form class="login-form" data-password-form autocomplete="on" novalidate>
+      <label class="login-field">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="4" y="10" width="16" height="11" rx="2.5"/>
+          <path d="M8 10V7a4 4 0 0 1 8 0v3"/>
+        </svg>
+        <input type="password" name="password" autocomplete="current-password" placeholder="" data-password-input aria-label="Contraseña" />
+        <button type="button" class="login-field__eye" data-toggle-password="password-input" aria-label="Mostrar contraseña">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+      </label>
 
-          el.appendChild(iconSpan);
-          el.appendChild(msgSpan);
-          host.appendChild(el);
+      <button type="submit" class="login-primary" data-password-submit>
+        <span>Verify</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="5" y1="12" x2="19" y2="12" />
+          <polyline points="12 5 19 12 12 19" />
+        </svg>
+      </button>
+    </form>
 
-          requestAnimationFrame(() => el.classList.add('is-visible'));
+    <div class="login-links">
+      <button type="button" class="login-link" data-forgot>¿Olvidaste tu contraseña?</button>
+      <button type="button" class="login-link login-link--muted" data-go-entry>Cambiar correo o cuenta</button>
+    </div>
+  </div>
 
-          const ttl =
-            durationMs ??
-            (kind === 'err' ? Config.TOAST_ERROR_MS : Config.TOAST_DEFAULT_MS);
-          const timer = setTimeout(() => dismiss(id), ttl);
+  <!-- ═══════════════════════════════════════════════════════════
+       VIEW 4 · AGE — Confirm you're 14 or older
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="view" data-view="age" hidden>
+    <h1 class="login-title">
+      Confirm you're<br />14 or older.
+    </h1>
+    <p class="login-subtitle">
+      Si eres menor de 14 años no puedes entrar y tu cuenta será baneada.
+    </p>
 
-          el.addEventListener('click', () => dismiss(id), { once: true });
-          active.set(id, { el, timer });
-        }
+    <label class="age-check" data-age-check>
+      <input type="checkbox" data-age-input />
+      <span class="age-check__box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      </span>
+      <span class="age-check__text">Confirmo que tengo 14 años o más</span>
+    </label>
 
-        return {
-          ok: (m, d) => push('ok', m, d),
-          err: (m, d) => push('err', m, d),
-          info: (m, d) => push('info', m, d),
-          warn: (m, d) => push('warn', m, d),
-        };
-      })();
+    <p class="login-error" data-age-error hidden>Debes confirmar que tienes 14 años o más para continuar.</p>
 
-      /* ═══════════════════════════════════════════════════════════
-         STATE
-         ═══════════════════════════════════════════════════════════ */
-      const state = {
-        busy: false,
-        googleReady: false,
-        sessionChecked: false,
-      };
+    <button type="button" class="login-primary" data-age-submit disabled>
+      <span>Continuar</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <line x1="5" y1="12" x2="19" y2="12" />
+        <polyline points="12 5 19 12 12 19" />
+      </svg>
+    </button>
 
-      /* ═══════════════════════════════════════════════════════════
-         UI
-         ═══════════════════════════════════════════════════════════ */
-      const UI = (() => {
-        const googleBtn = document.querySelector('[data-google-btn]');
-        const githubBtn = document.querySelector('[data-github-btn]');
-        const fallback = document.querySelector('[data-auth-fallback]');
+    <button type="button" class="login-link login-link--muted login-link--center" data-under-14>
+      Tengo menos de 14 años
+    </button>
+  </div>
 
-        function setGoogleLoading(loading) {
-          if (!googleBtn) return;
-          googleBtn.classList.toggle('is-loading', loading);
-          googleBtn.disabled = loading;
-          googleBtn.setAttribute('aria-busy', String(loading));
-        }
+</main>
 
-        function setBusy(busy) {
-          state.busy = busy;
-          if (githubBtn) {
-            githubBtn.style.pointerEvents = busy ? 'none' : '';
-            githubBtn.style.opacity = busy ? '0.6' : '';
-          }
-        }
+<!-- ═══════════════════════════════════════════════════════════════
+     AGE BLOCKED MODAL
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="age-modal" data-age-modal hidden role="dialog" aria-modal="true" aria-labelledby="age-modal-title">
+  <div class="age-modal__card">
+    <h2 class="age-modal__title" id="age-modal-title">Esta cuenta se bloqueará</h2>
+    <p class="age-modal__text">
+      Numination es solo para mayores de 14 años. Si continúas, esta cuenta quedará baneada y no podrás entrar.
+    </p>
+    <div class="age-modal__actions">
+      <button type="button" class="age-modal__btn age-modal__btn--cancel" data-age-cancel>Cancelar</button>
+      <button type="button" class="age-modal__btn age-modal__btn--block" data-age-block>Bloquear cuenta</button>
+    </div>
+  </div>
+</div>
 
-        function showFallback() {
-          if (fallback) fallback.classList.add('is-visible');
-        }
+<!-- Toasts -->
+<div class="nm-toasts" id="nm-toasts" role="status" aria-live="polite"></div>
 
-        function hideFallback() {
-          if (fallback) fallback.classList.remove('is-visible');
-        }
+<!-- GSI hidden -->
+<div class="gsi-hidden" aria-hidden="true">
+  <div
+    id="g_id_onload"
+    data-client_id="815847930264-hqlpgm37slhbbtqotv4uv9erla4sdl6d.apps.googleusercontent.com"
+    data-callback="handleGoogleCredential"
+    data-auto_prompt="false"
+    data-context="signin"
+    data-ux_mode="popup"
+    data-use_fedcm_for_prompt="false"
+  ></div>
+  <div
+    class="g_id_signin"
+    data-type="standard"
+    data-size="large"
+    data-theme="outline"
+    data-text="continue_with"
+    data-shape="rectangular"
+    data-logo_alignment="center"
+    data-width="340"
+  ></div>
+</div>
 
-        return {
-          googleBtn,
-          githubBtn,
-          setGoogleLoading,
-          setBusy,
-          showFallback,
-          hideFallback,
-        };
-      })();
+<script>
+(function () {
+  'use strict';
 
-      /* ═══════════════════════════════════════════════════════════
-         SESSION
-         ═══════════════════════════════════════════════════════════ */
-      const Session = (() => {
-        async function check(retries = Config.SESSION_RETRIES) {
-          for (let attempt = 1; attempt <= retries; attempt++) {
-            try {
-              const res = await Utils.fetchWithTimeout(
-                '/api/auth/me',
-                { credentials: 'include', headers: { Accept: 'application/json' } },
-                Config.SESSION_TIMEOUT_MS
-              );
-              if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  /* ═══════════════════════════════════════════════════════════
+     CONFIG
+     ═══════════════════════════════════════════════════════════ */
+  var Config = {
+    GSI_TIMEOUT_MS: 8000,
+    SESSION_TIMEOUT_MS: 5000,
+    SESSION_RETRIES: 3,
+    RETRY_BASE_MS: 600,
+    TOAST_DEFAULT_MS: 3400,
+    TOAST_ERROR_MS: 5000,
+    MAX_TOASTS: 4,
+    SAFE_REDIRECTS: ['/chat.html', '/login.html'],
+    DEFAULT_REDIRECT: '/chat.html'
+  };
 
-              const data = await Utils.safeJson(res);
-              if (!Utils.isPlainObject(data)) throw new Error('Respuesta inválida');
+  /* ═══════════════════════════════════════════════════════════
+     UTILS
+     ═══════════════════════════════════════════════════════════ */
+  var Utils = {
+    isPlainObject: function(v){ return Object.prototype.toString.call(v) === '[object Object]'; },
+    isNonEmptyString: function(v){ return typeof v === 'string' && v.trim().length > 0; },
+    sleep: function(ms){ return new Promise(function(r){ setTimeout(r, ms); }); },
+    fetchWithTimeout: function(url, opts, timeoutMs){
+      opts = opts || {};
+      timeoutMs = timeoutMs || 10000;
+      var ctrl = new AbortController();
+      var timer = setTimeout(function(){ ctrl.abort(); }, timeoutMs);
+      var merged = Object.assign({}, opts, { signal: ctrl.signal });
+      return fetch(url, merged).finally(function(){ clearTimeout(timer); });
+    },
+    safeJson: function(res){ return res.json().catch(function(){ return null; }); },
+    safeRedirect: function(path, fallback){
+      var target = Config.SAFE_REDIRECTS.indexOf(path) !== -1 ? path : (fallback || Config.DEFAULT_REDIRECT);
+      window.location.replace(target);
+    },
+    uid: function(){ return 't_' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); },
+    isValidEmail: function(v){
+      if(!Utils.isNonEmptyString(v)) return false;
+      return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim());
+    }
+  };
 
-              return data.ok === true && Utils.isPlainObject(data.user) ? data.user : null;
-            } catch (err) {
-              const isLast = attempt === retries;
-              console.warn(`[auth] session check ${attempt}/${retries} falló:`, err.message);
-              if (isLast) return null;
-              await Utils.sleep(Config.RETRY_BASE_MS * Math.pow(2, attempt - 1));
-            }
-          }
-          return null;
-        }
+  /* ═══════════════════════════════════════════════════════════
+     TOASTS
+     ═══════════════════════════════════════════════════════════ */
+  var Toasts = (function(){
+    var host = document.getElementById('nm-toasts');
+    var active = new Map();
 
-        return { check };
-      })();
+    function dismiss(id){
+      var e = active.get(id);
+      if(!e) return;
+      clearTimeout(e.timer);
+      e.el.style.transition = 'opacity .3s, transform .3s';
+      e.el.style.opacity = '0';
+      e.el.style.transform = 'translateY(20px)';
+      setTimeout(function(){ e.el.remove(); }, 320);
+      active.delete(id);
+    }
 
-      /* ═══════════════════════════════════════════════════════════
-         GOOGLE OAUTH
-         ═══════════════════════════════════════════════════════════ */
-      const Google = (() => {
-        async function exchangeCredential(credential) {
-          const res = await Utils.fetchWithTimeout(
-            '/api/auth/google',
-            {
-              method: 'POST',
-              credentials: 'include',
-              headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-              body: JSON.stringify({ credential, remember: true }),
-            },
-            15000
-          );
+    function push(kind, message, durationMs){
+      if(!host) return;
+      if(active.size >= Config.MAX_TOASTS) dismiss(active.keys().next().value);
+      var id = Utils.uid();
+      var el = document.createElement('div');
+      el.className = 'nm-toast nm-toast--' + kind;
+      var icon = { ok:'✓', err:'✕', info:'ⓘ', warn:'⚠' }[kind] || '';
+      var i = document.createElement('span'); i.textContent = icon;
+      var m = document.createElement('span'); m.textContent = String(message);
+      el.appendChild(i); el.appendChild(m);
+      host.appendChild(el);
+      var ttl = durationMs || (kind === 'err' ? Config.TOAST_ERROR_MS : Config.TOAST_DEFAULT_MS);
+      var timer = setTimeout(function(){ dismiss(id); }, ttl);
+      el.addEventListener('click', function(){ dismiss(id); }, { once: true });
+      active.set(id, { el: el, timer: timer });
+    }
 
-          const data = await Utils.safeJson(res);
+    return {
+      ok:   function(m,d){ push('ok', m, d); },
+      err:  function(m,d){ push('err', m, d); },
+      info: function(m,d){ push('info', m, d); },
+      warn: function(m,d){ push('warn', m, d); }
+    };
+  })();
 
-          if (!res.ok) {
-            const msg =
-              Utils.isPlainObject(data) && Utils.isNonEmptyString(data.error)
-                ? data.error
-                : `Error ${res.status}`;
-            throw new Error(msg);
-          }
+  /* ═══════════════════════════════════════════════════════════
+     STATE
+     ═══════════════════════════════════════════════════════════ */
+  var state = {
+    busy: false,
+    googleReady: false,
+    currentView: 'entry',
+    email: ''
+  };
 
-          if (!Utils.isPlainObject(data) || data.ok !== true) {
-            throw new Error('Respuesta de autenticación inválida');
-          }
+  /* ═══════════════════════════════════════════════════════════
+     VIEW MANAGER
+     ═══════════════════════════════════════════════════════════ */
+  function showView(name){
+    document.querySelectorAll('[data-view]').forEach(function(v){
+      v.hidden = v.dataset.view !== name;
+    });
+    state.currentView = name;
+    var current = document.querySelector('[data-view="' + name + '"]');
+    if(current){
+      var firstInput = current.querySelector('input:not([type="hidden"]):not([type="checkbox"])');
+      if(firstInput) setTimeout(function(){ try{ firstInput.focus(); }catch(e){} }, 150);
+    }
+  }
 
-          return data.user || null;
-        }
+  /* ═══════════════════════════════════════════════════════════
+     UI HELPERS
+     ═══════════════════════════════════════════════════════════ */
+  var UI = (function(){
+    var googleBtn = document.querySelector('[data-google-btn]');
+    var githubBtn = document.querySelector('[data-github-btn]');
+    var fallback = document.querySelector('[data-auth-fallback]');
+    var emailInput = document.querySelector('[data-email-input]');
+    var continueBtn = document.querySelector('[data-continue-btn]');
 
-        function waitForGSI() {
-          return new Promise((resolve) => {
-            const start = Date.now();
-            const check = () => {
-              const rendered = document.querySelector(
-                '.gsi-hidden [role="button"], .gsi-hidden button, .gsi-hidden div[tabindex]'
-              );
-              if (rendered) return resolve(true);
-              if (Date.now() - start > Config.GSI_TIMEOUT_MS) return resolve(false);
-              setTimeout(check, 150);
-            };
-            check();
-          });
-        }
+    function setGoogleLoading(v){
+      if(!googleBtn) return;
+      googleBtn.classList.toggle('is-loading', v);
+      googleBtn.disabled = v;
+      googleBtn.setAttribute('aria-busy', String(v));
+    }
+    function setContinueLoading(v){
+      if(!continueBtn) return;
+      continueBtn.classList.toggle('is-loading', v);
+      continueBtn.disabled = v;
+    }
+    function setBusy(v){
+      state.busy = v;
+      if(githubBtn){
+        githubBtn.style.pointerEvents = v ? 'none' : '';
+        githubBtn.style.opacity = v ? '.55' : '';
+      }
+    }
+    function showFallback(){ if(fallback) fallback.classList.add('is-visible'); }
+    function hideFallback(){ if(fallback) fallback.classList.remove('is-visible'); }
 
-        function clickHiddenButton() {
-          const btn = document.querySelector(
-            '.gsi-hidden [role="button"], .gsi-hidden button, .gsi-hidden div[tabindex]'
-          );
-          if (!btn) return false;
-          btn.click();
-          return true;
-        }
+    return {
+      googleBtn: googleBtn,
+      githubBtn: githubBtn,
+      emailInput: emailInput,
+      continueBtn: continueBtn,
+      setGoogleLoading: setGoogleLoading,
+      setContinueLoading: setContinueLoading,
+      setBusy: setBusy,
+      showFallback: showFallback,
+      hideFallback: hideFallback
+    };
+  })();
 
-        return { exchangeCredential, waitForGSI, clickHiddenButton };
-      })();
-
-      /* ═══════════════════════════════════════════════════════════
-         HANDLE GOOGLE CREDENTIAL · global
-         ═══════════════════════════════════════════════════════════ */
-      window.handleGoogleCredential = async function (response) {
-        if (state.busy) return;
-        UI.setBusy(true);
-
-        const credential = response && response.credential;
-
-        if (!Utils.isNonEmptyString(credential)) {
-          UI.setGoogleLoading(false);
-          UI.setBusy(false);
-          Toasts.err('Google no devolvió credenciales. Intenta de nuevo.');
-          return;
-        }
-
-        UI.setGoogleLoading(true);
-        Toasts.info('Verificando con Google…');
-
-        try {
-          const user = await Google.exchangeCredential(credential);
-          const name =
-            (Utils.isPlainObject(user) && (user.name || user.email)) || 'usuario';
-
-          Toasts.ok(`¡Bienvenido, ${name}!`);
-          await Utils.sleep(700);
-          Utils.safeRedirect('/chat.html');
-        } catch (err) {
-          console.error('[auth/google]', err);
-          UI.setGoogleLoading(false);
-          UI.setBusy(false);
-          Toasts.err(err.message || 'No pudimos iniciar sesión. Intenta de nuevo.');
-        }
-      };
-
-      /* ═══════════════════════════════════════════════════════════
-         BOOT
-         ═══════════════════════════════════════════════════════════ */
-      async function boot() {
-        // 1) Tema guardado
-        try {
-          const saved = localStorage.getItem('numination-theme');
-          if (saved) document.documentElement.dataset.theme = saved;
-        } catch { /* storage bloqueado, ignorar */ }
-
-        // 2) Detectar query params de GitHub OAuth (errores)
-        const params = new URLSearchParams(location.search);
-        if (params.has('error')) {
-          const errorCode = params.get('error');
-          const messages = {
-            github: 'No pudimos iniciar sesión con GitHub. Intenta de nuevo.',
-            access_denied: 'Cancelaste el inicio de sesión con GitHub.',
-            session: 'Tu sesión expiró. Vuelve a entrar.',
-          };
-          Toasts.err(messages[errorCode] || 'Ocurrió un error al iniciar sesión.');
-          // Limpiar query params para que no queden en la URL
-          history.replaceState(null, '', location.pathname);
-        }
-
-        // 3) Verificar sesión existente (si hay, redirige)
-        if (!params.has('stay')) {
-          const user = await Session.check();
-          state.sessionChecked = true;
-          if (user) {
-            Utils.safeRedirect('/chat.html');
-            return;
-          }
-        }
-
-        // 4) Conectar click del botón Google con GSI oculto
-        if (UI.googleBtn) {
-          UI.googleBtn.addEventListener('click', async () => {
-            if (state.busy) return;
-            if (!state.googleReady) {
-              UI.setGoogleLoading(true);
-              const ready = await Google.waitForGSI();
-              state.googleReady = ready;
-              UI.setGoogleLoading(false);
-
-              if (!ready) {
-                UI.showFallback();
-                Toasts.err('Google no cargó. Revisa tu conexión.');
-                return;
-              }
-            }
-
-            if (!Google.clickHiddenButton()) {
-              UI.showFallback();
-              Toasts.err('Google no está disponible.');
-            }
-          });
-        }
-
-        // 5) Marcar GitHub como "cargando" al hacer click (antes de la redirección)
-        if (UI.githubBtn) {
-          UI.githubBtn.addEventListener('click', () => {
-            if (state.busy) {
-              event.preventDefault();
-              return;
-            }
-            UI.setBusy(true);
-            Toasts.info('Conectando con GitHub…');
-            // No preventDefault: dejamos que el navegador navegue a /api/auth/github
-          });
-        }
-
-        // 6) Retry manual si GSI falla
-        const retryBtn = document.querySelector('[data-retry-google]');
-        if (retryBtn) {
-          retryBtn.addEventListener('click', () => window.location.reload());
-        }
-
-        // 7) Detectar GSI listo en background
-        Google.waitForGSI().then((ready) => {
-          state.googleReady = ready;
-          if (ready) UI.hideFallback();
-          else UI.showFallback();
+  /* ═══════════════════════════════════════════════════════════
+     SESSION
+     ═══════════════════════════════════════════════════════════ */
+  var Session = {
+    check: function(retries){
+      retries = retries || Config.SESSION_RETRIES;
+      var attempt = 0;
+      function tryOnce(){
+        attempt++;
+        return Utils.fetchWithTimeout(
+          '/api/auth/me',
+          { credentials: 'include', headers: { Accept: 'application/json' } },
+          Config.SESSION_TIMEOUT_MS
+        ).then(function(res){
+          if(!res.ok) throw new Error('HTTP ' + res.status);
+          return Utils.safeJson(res);
+        }).then(function(data){
+          if(!Utils.isPlainObject(data)) throw new Error('Respuesta inválida');
+          return data.ok === true && Utils.isPlainObject(data.user) ? data.user : null;
+        }).catch(function(err){
+          if(attempt >= retries) return null;
+          var wait = Config.RETRY_BASE_MS * Math.pow(2, attempt - 1);
+          return Utils.sleep(wait).then(tryOnce);
         });
       }
+      return tryOnce();
+    }
+  };
 
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', boot, { once: true });
-      } else {
-        boot();
+  /* ═══════════════════════════════════════════════════════════
+     GOOGLE OAUTH
+     ═══════════════════════════════════════════════════════════ */
+  var Google = {
+    exchange: function(credential){
+      return Utils.fetchWithTimeout('/api/auth/google', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ credential: credential, remember: true })
+      }, 15000).then(function(res){
+        return Utils.safeJson(res).then(function(data){
+          if(!res.ok){
+            var msg = (Utils.isPlainObject(data) && Utils.isNonEmptyString(data.error)) ? data.error : ('Error ' + res.status);
+            throw new Error(msg);
+          }
+          if(!Utils.isPlainObject(data) || data.ok !== true) throw new Error('Respuesta de autenticación inválida');
+          return data.user || null;
+        });
+      });
+    },
+    waitForGSI: function(){
+      return new Promise(function(resolve){
+        var start = Date.now();
+        function check(){
+          var el = document.querySelector('.gsi-hidden [role="button"], .gsi-hidden button, .gsi-hidden div[tabindex]');
+          if(el) return resolve(true);
+          if(Date.now() - start > Config.GSI_TIMEOUT_MS) return resolve(false);
+          setTimeout(check, 150);
+        }
+        check();
+      });
+    },
+    clickHidden: function(){
+      var el = document.querySelector('.gsi-hidden [role="button"], .gsi-hidden button, .gsi-hidden div[tabindex]');
+      if(!el) return false;
+      el.click();
+      return true;
+    }
+  };
+
+  window.handleGoogleCredential = function(response){
+    if(state.busy) return;
+    UI.setBusy(true);
+    var credential = response && response.credential;
+    if(!Utils.isNonEmptyString(credential)){
+      UI.setGoogleLoading(false);
+      UI.setBusy(false);
+      Toasts.err('Google no devolvió credenciales. Intenta de nuevo.');
+      return;
+    }
+    UI.setGoogleLoading(true);
+    Toasts.info('Verificando con Google…');
+    Google.exchange(credential).then(function(user){
+      var name = (Utils.isPlainObject(user) && (user.name || user.email)) || 'usuario';
+      Toasts.ok('¡Bienvenido, ' + name + '!');
+      return Utils.sleep(700);
+    }).then(function(){
+      Utils.safeRedirect('/chat.html');
+    }).catch(function(err){
+      UI.setGoogleLoading(false);
+      UI.setBusy(false);
+      Toasts.err(err.message || 'No pudimos iniciar sesión. Intenta de nuevo.');
+    });
+  };
+
+  /* ═══════════════════════════════════════════════════════════
+     VIEW 1 · ENTRY — Submit email → password view
+     ═══════════════════════════════════════════════════════════ */
+  var loginForm = document.querySelector('[data-login-form]');
+  if(loginForm){
+    loginForm.addEventListener('submit', function(e){
+      e.preventDefault();
+      if(state.busy) return;
+      var email = UI.emailInput ? UI.emailInput.value.trim() : '';
+      if(!email){
+        Toasts.warn('Ingresa tu correo electrónico.');
+        UI.emailInput && UI.emailInput.focus();
+        return;
       }
-    })();
-  </script>
+      if(!Utils.isValidEmail(email)){
+        Toasts.warn('Ese correo no parece válido.');
+        UI.emailInput && UI.emailInput.focus();
+        return;
+      }
+      state.email = email;
+      var emailLabel = document.querySelector('[data-password-email]');
+      if(emailLabel) emailLabel.textContent = email;
+      UI.setContinueLoading(true);
+      setTimeout(function(){
+        UI.setContinueLoading(false);
+        showView('password');
+      }, 500);
+    });
+  }
 
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  /* ═══════════════════════════════════════════════════════════
+     VIEW 2 · SIGNUP — Submit → age view
+     ═══════════════════════════════════════════════════════════ */
+  var signupForm = document.querySelector('[data-signup-form]');
+  if(signupForm){
+    signupForm.addEventListener('submit', function(e){
+      e.preventDefault();
+      if(state.busy) return;
+      var email = document.querySelector('[data-signup-email]').value.trim();
+      var pwd = document.querySelector('[data-signup-password]').value;
+      var conf = document.querySelector('[data-signup-confirm]').value;
+      var btn = document.querySelector('[data-signup-submit]');
+
+      if(!Utils.isValidEmail(email)){ Toasts.warn('Ese correo no parece válido.'); return; }
+      if(pwd.length < 8){ Toasts.warn('La contraseña debe tener al menos 8 caracteres.'); return; }
+      if(pwd !== conf){ Toasts.warn('Las contraseñas no coinciden.'); return; }
+
+      state.email = email;
+      btn.classList.add('is-loading');
+      btn.disabled = true;
+      setTimeout(function(){
+        btn.classList.remove('is-loading');
+        btn.disabled = false;
+        showView('age');
+      }, 700);
+    });
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     VIEW 3 · PASSWORD — Verify → chat
+     ═══════════════════════════════════════════════════════════ */
+  var passwordForm = document.querySelector('[data-password-form]');
+  if(passwordForm){
+    passwordForm.addEventListener('submit', function(e){
+      e.preventDefault();
+      if(state.busy) return;
+      var pwd = document.querySelector('[data-password-input]').value;
+      var btn = document.querySelector('[data-password-submit]');
+      if(!pwd){ Toasts.warn('Ingresa tu contraseña.'); return; }
+
+      btn.classList.add('is-loading');
+      btn.disabled = true;
+      setTimeout(function(){
+        btn.classList.remove('is-loading');
+        btn.disabled = false;
+        Toasts.ok('Bienvenido de nuevo.');
+        setTimeout(function(){ Utils.safeRedirect('/chat.html'); }, 500);
+      }, 900);
+    });
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     VIEW 4 · AGE — Checkbox + Continue
+     ═══════════════════════════════════════════════════════════ */
+  var ageInput = document.querySelector('[data-age-input]');
+  var ageSubmit = document.querySelector('[data-age-submit]');
+  var ageError = document.querySelector('[data-age-error]');
+  var ageModal = document.querySelector('[data-age-modal]');
+
+  if(ageInput && ageSubmit){
+    ageInput.addEventListener('change', function(){
+      ageSubmit.disabled = !ageInput.checked;
+      if(ageError) ageError.hidden = true;
+    });
+
+    ageSubmit.addEventListener('click', function(){
+      if(!ageInput.checked){
+        if(ageError) ageError.hidden = false;
+        return;
+      }
+      ageSubmit.classList.add('is-loading');
+      ageSubmit.disabled = true;
+      setTimeout(function(){
+        ageSubmit.classList.remove('is-loading');
+        ageSubmit.disabled = false;
+        Toasts.ok('Cuenta creada. ¡Bienvenido!');
+        setTimeout(function(){ Utils.safeRedirect('/chat.html'); }, 600);
+      }, 800);
+    });
+  }
+
+  /* Age modal */
+  document.querySelectorAll('[data-under-14]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      if(ageModal) ageModal.hidden = false;
+    });
+  });
+
+  document.querySelectorAll('[data-age-cancel]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      if(ageModal) ageModal.hidden = true;
+    });
+  });
+
+  document.querySelectorAll('[data-age-block]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      if(ageModal) ageModal.hidden = true;
+      // Reset to entry
+      document.querySelectorAll('[data-view]').forEach(function(v){ v.hidden = v.dataset.view !== 'entry'; });
+      state.currentView = 'entry';
+      state.email = '';
+      if(UI.emailInput) UI.emailInput.value = '';
+      var pa = document.querySelector('[data-signup-email]'); if(pa) pa.value = '';
+      var pp = document.querySelector('[data-signup-password]'); if(pp) pp.value = '';
+      var pc = document.querySelector('[data-signup-confirm]'); if(pc) pc.value = '';
+      if(ageInput) ageInput.checked = false;
+      if(ageSubmit) ageSubmit.disabled = true;
+      Toasts.err('Esta cuenta fue bloqueada.');
+    });
+  });
+
+  // Close modal on backdrop click
+  if(ageModal){
+    ageModal.addEventListener('click', function(e){
+      if(e.target === ageModal) ageModal.hidden = true;
+    });
+  }
+
+  // Close modal on Escape
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && ageModal && !ageModal.hidden){
+      ageModal.hidden = true;
+    }
+  });
+
+  /* ═══════════════════════════════════════════════════════════
+     NAVIGATION LINKS
+     ═══════════════════════════════════════════════════════════ */
+  // Sign up link (entry footer)
+  document.querySelectorAll('[data-go-signup]').forEach(function(btn){
+    btn.addEventListener('click', function(){ showView('signup'); });
+  });
+
+  // Back to entry (from signup back arrow, "Log in" link, "Cambiar correo")
+  document.querySelectorAll('[data-go-entry]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      showView('entry');
+      if(UI.emailInput) UI.emailInput.value = '';
+      var pa = document.querySelector('[data-signup-email]'); if(pa) pa.value = '';
+      var pp = document.querySelector('[data-signup-password]'); if(pp) pp.value = '';
+      var pc = document.querySelector('[data-signup-confirm]'); if(pc) pc.value = '';
+      var pw = document.querySelector('[data-password-input]'); if(pw) pw.value = '';
+    });
+  });
+
+  /* ═══════════════════════════════════════════════════════════
+     PASSWORD EYE TOGGLES
+     ═══════════════════════════════════════════════════════════ */
+  document.querySelectorAll('[data-toggle-password]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var id = btn.dataset.togglePassword;
+      var input = document.querySelector('[data-' + id + ']') || document.getElementById(id);
+      if(!input) return;
+      var isPwd = input.type === 'password';
+      input.type = isPwd ? 'text' : 'password';
+      // Toggle eye icon
+      var eyeOpen = '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>';
+      var eyeClosed = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+      var svg = btn.querySelector('svg');
+      if(svg) svg.innerHTML = isPwd ? eyeClosed : eyeOpen;
+    });
+  });
+
+  /* ═══════════════════════════════════════════════════════════
+     FORGOT PASSWORD
+     ═══════════════════════════════════════════════════════════ */
+  document.querySelectorAll('[data-forgot]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      Toasts.info('Por ahora no hay recuperación de contraseña. Usa Google o GitHub.');
+    });
+  });
+
+  /* ═══════════════════════════════════════════════════════════
+     GOOGLE BUTTON
+     ═══════════════════════════════════════════════════════════ */
+  if(UI.googleBtn){
+    UI.googleBtn.addEventListener('click', function(){
+      if(state.busy) return;
+      if(!state.googleReady){
+        UI.setGoogleLoading(true);
+        Google.waitForGSI().then(function(ready){
+          state.googleReady = ready;
+          UI.setGoogleLoading(false);
+          if(!ready){
+            UI.showFallback();
+            Toasts.err('Google no cargó. Revisa tu conexión.');
+            return;
+          }
+          if(!Google.clickHidden()){
+            UI.showFallback();
+            Toasts.err('Google no está disponible.');
+          }
+        });
+      } else {
+        if(!Google.clickHidden()){
+          UI.showFallback();
+          Toasts.err('Google no está disponible.');
+        }
+      }
+    });
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     GITHUB BUTTON
+     ═══════════════════════════════════════════════════════════ */
+  if(UI.githubBtn){
+    UI.githubBtn.addEventListener('click', function(e){
+      if(state.busy){ e.preventDefault(); return; }
+      UI.setBusy(true);
+      Toasts.info('Conectando con GitHub…');
+    });
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     RETRY GOOGLE
+     ═══════════════════════════════════════════════════════════ */
+  document.querySelectorAll('[data-retry-google]').forEach(function(btn){
+    btn.addEventListener('click', function(){ location.reload(); });
+  });
+
+  /* ═══════════════════════════════════════════════════════════
+     BOOT
+     ═══════════════════════════════════════════════════════════ */
+  function boot(){
+    // Show error toasts from URL
+    var params = new URLSearchParams(location.search);
+    if(params.has('error')){
+      var code = params.get('error');
+      var messages = {
+        github: 'No pudimos iniciar sesión con GitHub. Intenta de nuevo.',
+        access_denied: 'Cancelaste el inicio de sesión con GitHub.',
+        session: 'Tu sesión expiró. Vuelve a entrar.'
+      };
+      Toasts.err(messages[code] || 'Ocurrió un error al iniciar sesión.');
+      history.replaceState(null, '', location.pathname);
+    }
+
+    // Check existing session
+    if(!params.has('stay')){
+      Session.check().then(function(user){
+        if(user) Utils.safeRedirect('/chat.html');
+      });
+    }
+
+    // Detect GSI ready
+    Google.waitForGSI().then(function(ready){
+      state.googleReady = ready;
+      if(ready) UI.hideFallback();
+      else UI.showFallback();
+    });
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', boot, { once: true });
+  } else {
+    boot();
+  }
+
+})();
+</script>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </body>
 </html>

@@ -1,271 +1,171 @@
-/* ================================================================
-   NUMINATION · limits.js
-   Límite de mensajes por usuario/IP usando Upstash Redis REST API.
-   ----------------------------------------------------------------
-   API pública:
-     verificarLimite(req)  → consulta sin incrementar
-     registrarUso(req)     → incrementa día + minuto (atómico)
-     consultarUso(req)     → snapshot para /api/limits/usage
-     resetLimite(req)      → borra los contadores (debug)
-   ================================================================ */
+/**
+ * limits.js — Rate limiting por plan con Upstash Redis
+ * Usa pipeline (1 request de red por chequeo) y EXPIRE ... NX para no renovar el TTL.
+ */
 
-let TEST_KEYS = {};
-try {
-  const mod = await import('../../env.local.js');
-  TEST_KEYS = mod.TEST_KEYS ?? {};
-} catch {}
-
-const UPSTASH_URL =
-  process.env.UPSTASH_REDIS_REST_URL ?? TEST_KEYS.UPSTASH_REDIS_REST_URL;
-const UPSTASH_TOKEN =
-  process.env.UPSTASH_REDIS_REST_TOKEN ?? TEST_KEYS.UPSTASH_REDIS_REST_TOKEN;
-
-const PLAN_LIMITS = {
-  anon:          { porDia: 10,   porMinuto: 3  },
-  free:          { porDia: 50,   porMinuto: 5  },
-  'pro-coder':   { porDia: 200,  porMinuto: 15 },
-  'pro-plus':    { porDia: 500,  porMinuto: 30 },
-  'pro-mad-max': { porDia: 2000, porMinuto: 60 },
+export const PLAN_LIMITS = {
+  free:    { messagesPerDay: 20,   messagesPerMinute: 5,  name: 'Free' },
+  basic:   { messagesPerDay: 100,  messagesPerMinute: 15, name: 'Basic' },
+  pro:     { messagesPerDay: 500,  messagesPerMinute: 30, name: 'Pro' },
+  premium: { messagesPerDay: 2000, messagesPerMinute: 60, name: 'Premium' },
 };
 
-const KEY_PREFIX = 'numination:usage:';
-const TZ_OFFSET = -5 * 60 * 60 * 1000;
-const DEBUG = process.env.DEBUG === '1';
+const DEFAULT_PLAN = 'free';
+const DAY_SECONDS = 86400;
+const MINUTE_SECONDS = 60;
 
-const upstashConfigured = Boolean(UPSTASH_URL && UPSTASH_TOKEN);
-let warningShown = false;
-
-if (!upstashConfigured) {
-  console.warn('[limits] Upstash no configurado — sin límites activos');
+/** Obtiene el cliente Upstash del entorno (REST token + URL). */
+function getUpstash() {
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return null;
+  return { url: url.replace(/\/$/, ''), token };
 }
 
-function getPlan(req) {
-  const raw = req.user?.plan;
-  if (raw && PLAN_LIMITS[raw]) return raw;
-  return req.user ? 'free' : 'anon';
-}
-
-function getIdentifier(req) {
-  if (req.user?.id) {
-    return { key: KEY_PREFIX + req.user.id, label: req.user.id };
-  }
-  const ip =
-    req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
-    req.ip ||
-    'unknown';
-  return { key: KEY_PREFIX + 'anon:' + ip, label: 'anon:' + ip };
-}
-
-function getSecondsUntilMidnight() {
-  const ahora = new Date();
-  const co = new Date(ahora.getTime() + TZ_OFFSET);
-  const media = new Date(co);
-  media.setHours(24, 0, 0, 0);
-  const diff = media.getTime() - co.getTime();
-  return Math.max(1, Math.floor(diff / 1000));
-}
-
-async function upstashPipeline(commands) {
-  if (!upstashConfigured) return null;
-  try {
-    const response = await fetch(UPSTASH_URL + '/pipeline', {
-      method: 'POST',
-      headers: {
-        Authorization: 'Bearer ' + UPSTASH_TOKEN,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(commands),
-    });
-    if (!response.ok) {
-      console.warn('[limits] Pipeline HTTP', response.status);
-      return null;
-    }
-    const data = await response.json();
-    if (!Array.isArray(data)) return null;
-    return data.map((entry) => entry?.result ?? null);
-  } catch (err) {
-    console.warn('[limits] Pipeline error:', err.message);
-    return null;
-  }
-}
-
-async function upstashCommand(command, ...args) {
-  if (!upstashConfigured) return null;
-  try {
-    const response = await fetch(UPSTASH_URL, {
-      method: 'POST',
-      headers: {
-        Authorization: 'Bearer ' + UPSTASH_TOKEN,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify([command, ...args]),
-    });
-    if (!response.ok) return null;
-    const data = await response.json();
-    return data?.result ?? null;
-  } catch (err) {
-    if (DEBUG) console.warn('[limits] Command error:', err.message);
-    return null;
-  }
-}
-
-function toNumber(v) {
-  if (v === null || v === undefined) return 0;
-  const n = parseInt(v, 10);
-  return Number.isFinite(n) ? n : 0;
-}
-
-function dayKey(base)   { return base + ':day'; }
-function minuteKey(base) {
-  const min = Math.floor(Date.now() / 60000);
-  return base + ':min:' + min;
-}
-
-export async function verificarLimite(req) {
-  const plan = getPlan(req);
-  const límites = PLAN_LIMITS[plan];
-  const { key: base, label } = getIdentifier(req);
-  const dk = dayKey(base);
-  const mk = minuteKey(base);
-
-  if (!upstashConfigured) {
-    return {
-      permitido: true,
-      plan,
-      uso: { dia: 0, minuto: 0 },
-      límites,
-      restanteDia: límites.porDia,
-      restanteMin: límites.porMinuto,
-    };
-  }
-
-  const results = await upstashPipeline([
-    ['GET', dk],
-    ['GET', mk],
-  ]);
-
-  const usoDia  = toNumber(results?.[0]);
-  const usoMin  = toNumber(results?.[1]);
-
-  const restanteDia = Math.max(0, límites.porDia - usoDia);
-  const restanteMin = Math.max(0, límites.porMinuto - usoMin);
-
-  if (usoMin >= límites.porMinuto) {
-    const retryAfter = 60 - (Math.floor(Date.now() / 1000) % 60);
-    if (DEBUG) console.warn(`[limits] ${label} excedió minuto: ${usoMin}/${límites.porMinuto}`);
-    return {
-      permitido: false,
-      razon: 'minuto',
-      mensaje: `Vas muy rápido. Espera ${retryAfter} segundos antes de enviar otro mensaje.`,
-      retryAfter,
-      plan,
-      uso: { dia: usoDia, minuto: usoMin },
-      límites,
-      restanteDia,
-      restanteMin: 0,
-    };
-  }
-
-  if (usoDia >= límites.porDia) {
-    const retryAfter = getSecondsUntilMidnight();
-    if (DEBUG) console.warn(`[limits] ${label} excedió día: ${usoDia}/${límites.porDia}`);
-    return {
-      permitido: false,
-      razon: 'dia',
-      mensaje: `Alcanzaste el límite de ${límites.porDia} mensajes hoy. Vuelve mañana.`,
-      retryAfter,
-      plan,
-      uso: { dia: usoDia, minuto: usoMin },
-      límites,
-      restanteDia: 0,
-      restanteMin,
-    };
-  }
-
+/** Respuesta estándar cuando Upstash no está disponible (fail-open). */
+function failOpen(limits) {
   return {
     permitido: true,
-    plan,
-    uso: { dia: usoDia, minuto: usoMin },
-    límites,
-    restanteDia,
-    restanteMin,
+    plan: limits.name,
+    restanteDia: limits.messagesPerDay,
+    restanteMin: limits.messagesPerMinute,
+    limites: { porDia: limits.messagesPerDay, porMin: limits.messagesPerMinute },
+    razon: null,
+    mensaje: null,
+    retryAfter: null,
+    uso: { hoy: 0, minuto: 0 },
   };
 }
 
-export async function registrarUso(req) {
-  if (!upstashConfigured) return;
+/**
+ * Verifica si el usuario puede enviar mensajes.
+ * Devuelve { permitido, restanteDia, restanteMin, ... }.
+ */
+export async function verificarLimite(req) {
+  const plan = req.user?.plan || DEFAULT_PLAN;
+  const limits = PLAN_LIMITS[plan] || PLAN_LIMITS[DEFAULT_PLAN];
+  const userId = req.user?.id || req.ip || 'anon';
+  const upstash = getUpstash();
 
-  const { key: base, label } = getIdentifier(req);
-  const dk = dayKey(base);
-  const mk = minuteKey(base);
-  const ttlDia = getSecondsUntilMidnight();
+  if (!upstash) return failOpen(limits);
 
-  const results = await upstashPipeline([
-    ['INCR', dk],
-    ['EXPIRE', dk, String(ttlDia), 'NX'],
-    ['INCR', mk],
-    ['EXPIRE', mk, '60', 'NX'],
-  ]);
+  const dayKey = `ratelimit:${userId}:day:${new Date().toISOString().slice(0, 10)}`;
+  const minKey = `ratelimit:${userId}:min:${new Date().toISOString().slice(0, 16)}`;
 
-  if (!results) {
-    console.warn('[limits] registrarUso falló para', label);
-    return;
-  }
+  try {
+    // Pipeline: INCR + EXPIRE NX en una sola llamada de red.
+    const res = await fetch(`${upstash.url}/pipeline`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${upstash.token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify([
+        ['INCR', dayKey],
+        ['EXPIRE', dayKey, String(DAY_SECONDS), 'NX'],
+        ['INCR', minKey],
+        ['EXPIRE', minKey, String(MINUTE_SECONDS), 'NX'],
+      ]),
+    });
 
-  const usoDia = toNumber(results[0]);
-  if (DEBUG) {
-    const límites = PLAN_LIMITS[getPlan(req)];
-    console.log(`[limits] ${label} registro uso: ${usoDia}/${límites.porDia}`);
-  }
-}
+    if (!res.ok) throw new Error(`Upstash ${res.status}`);
+    const data = await res.json();
+    const usoHoy = data[0]?.result ?? 0;
+    const usoMin = data[2]?.result ?? 0;
 
-export async function consultarUso(req) {
-  const plan = getPlan(req);
-  const límites = PLAN_LIMITS[plan];
-  const { key: base } = getIdentifier(req);
-  const dk = dayKey(base);
-  const mk = minuteKey(base);
-  const renovacion = getSecondsUntilMidnight() * 1000;
+    const restanteDia = Math.max(0, limits.messagesPerDay - usoHoy);
+    const restanteMin = Math.max(0, limits.messagesPerMinute - usoMin);
 
-  if (!upstashConfigured) {
+    if (usoHoy > limits.messagesPerDay) {
+      return {
+        permitido: false,
+        plan: limits.name,
+        restanteDia: 0,
+        restanteMin,
+        limites: { porDia: limits.messagesPerDay, porMin: limits.messagesPerMinute },
+        razon: 'daily_limit',
+        mensaje: `Límite diario alcanzado (${limits.messagesPerDay} mensajes). Mejora tu plan para continuar.`,
+        retryAfter: DAY_SECONDS,
+        uso: { hoy: usoHoy, minuto: usoMin },
+      };
+    }
+
+    if (usoMin > limits.messagesPerMinute) {
+      return {
+        permitido: false,
+        plan: limits.name,
+        restanteDia,
+        restanteMin: 0,
+        limites: { porDia: limits.messagesPerDay, porMin: limits.messagesPerMinute },
+        razon: 'minute_limit',
+        mensaje: `Demasiados mensajes en poco tiempo. Espera unos segundos.`,
+        retryAfter: MINUTE_SECONDS,
+        uso: { hoy: usoHoy, minuto: usoMin },
+      };
+    }
+
     return {
-      ok: true,
-      plan,
-      uso: { dia: 0, minuto: 0 },
-      límites,
-      restanteDia: límites.porDia,
-      restanteMin: límites.porMinuto,
-      renovacion,
+      permitido: true,
+      plan: limits.name,
+      restanteDia,
+      restanteMin,
+      limites: { porDia: limits.messagesPerDay, porMin: limits.messagesPerMinute },
+      razon: null,
+      mensaje: null,
+      retryAfter: null,
+      uso: { hoy: usoHoy, minuto: usoMin },
     };
+  } catch (e) {
+    console.warn('[limits] error:', e.message);
+    return failOpen(limits);
   }
-
-  const results = await upstashPipeline([
-    ['GET', dk],
-    ['GET', mk],
-  ]);
-
-  const usoDia = toNumber(results?.[0]);
-  const usoMin = toNumber(results?.[1]);
-
-  return {
-    ok: true,
-    plan,
-    uso: { dia: usoDia, minuto: usoMin },
-    límites,
-    restanteDia: Math.max(0, límites.porDia - usoDia),
-    restanteMin: Math.max(0, límites.porMinuto - usoMin),
-    renovacion,
-  };
 }
 
-export async function resetLimite(req) {
-  if (!upstashConfigured) return false;
-  const { key: base } = getIdentifier(req);
-  const dk = dayKey(base);
-  const mk = minuteKey(base);
-  const results = await upstashPipeline([
-    ['DEL', dk],
-    ['DEL', mk],
-  ]);
-  return results !== null;
+/** Consulta el uso actual del usuario (para mostrar en UI). */
+export async function consultarUso(req) {
+  const plan = req.user?.plan || DEFAULT_PLAN;
+  const limits = PLAN_LIMITS[plan] || PLAN_LIMITS[DEFAULT_PLAN];
+  const userId = req.user?.id || req.ip || 'anon';
+  const upstash = getUpstash();
+
+  if (!upstash) return null;
+
+  const dayKey = `ratelimit:${userId}:day:${new Date().toISOString().slice(0, 10)}`;
+  const minKey = `ratelimit:${userId}:min:${new Date().toISOString().slice(0, 16)}`;
+
+  try {
+    const res = await fetch(`${upstash.url}/pipeline`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${upstash.token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify([
+        ['GET', dayKey],
+        ['GET', minKey],
+      ]),
+    });
+
+    if (!res.ok) return null;
+    const data = await res.json();
+    const usoHoy = data[0]?.result ?? 0;
+    const usoMin = data[1]?.result ?? 0;
+
+    return {
+      plan: limits.name,
+      limites: { porDia: limits.messagesPerDay, porMin: limits.messagesPerMinute },
+      uso: { hoy: usoHoy, minuto: usoMin },
+      restanteDia: Math.max(0, limits.messagesPerDay - usoHoy),
+      restanteMin: Math.max(0, limits.messagesPerMinute - usoMin),
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** Registra uso (ya se hace en verificarLimite con INCR, pero útil para otros flujos). */
+export async function registrarUso(req) {
+  // El INCR ya se hace en verificarLimite. Esta función es un no-op
+  // que existe por compatibilidad con llamadas existentes.
+  return true;
 }

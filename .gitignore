@@ -10,7 +10,6 @@ package-lock.json
 env.local.js
 .env
 .env.*
-!.env.example
 
 # ─── Firebase ───
 serviceAccountKey.json

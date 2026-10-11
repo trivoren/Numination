@@ -1,826 +1,267 @@
-<div align="center">
+# Numination
 
-# 🇨🇴 Numination
+**La IA que habla el idioma de nuestra educación.**
 
-### La IA que habla el idioma de nuestra educación
-
-**La primera inteligencia artificial educativa 100% colombiana.**
-**Creada por [Kraq](https://github.com/kraq).**
-
-[![Estado](https://img.shields.io/badge/estado-activo-success?style=for-the-badge)](#)
-[![Versión](https://img.shields.io/badge/versi%C3%B3n-1.0.0-blue?style=for-the-badge)](#)
-[![Licencia](https://img.shields.io/badge/licencia-MIT-yellow?style=for-the-badge)](#-licencia)
-[![Hecho en](https://img.shields.io/badge/hecho%20en-Colombia-FCD116?style=for-the-badge)](#)
-[![Kraq](https://img.shields.io/badge/by-Kraq-111111?style=for-the-badge)](#-sobre-kraq)
-
-[Descripción](#-sobre-numination) ·
-[Sobre Kraq](#-sobre-kraq) ·
-[Características](#-características) ·
-[Instalación](#-instalación) ·
-[Uso](#-guía-de-uso) ·
-[API](#-referencia-de-la-api) ·
-[Deploy](#-guía-de-deploy) ·
-[FAQ](#-preguntas-frecuentes) ·
-[Documentación](docs/architecture.md)
-
-</div>
+Numination es una plataforma de IA para programadores y estudiantes de código. Escribís código, lo depurás, lo explicás, lo refactorizás. Simple: entrás y chateás.
 
 ---
 
-## 📖 Tabla de contenidos
+## Qué es
 
-- [Sobre Numination](#-sobre-numination)
-- [Sobre Kraq](#-sobre-kraq)
-- [Características](#-características)
-- [Demo en vivo](#-demo-en-vivo)
-- [Capturas de pantalla](#-capturas-de-pantalla)
-- [Stack tecnológico](#-stack-tecnológico)
-- [Arquitectura](#-arquitectura)
-- [Requisitos](#-requisitos)
-- [Instalación](#-instalación)
-- [Configuración](#-configuración)
-- [Guía de uso](#-guía-de-uso)
-- [Referencia de la API](#-referencia-de-la-api)
-- [Guía de deploy](#-guía-de-deploy)
-- [Solución de problemas](#-solución-de-problemas)
-- [Preguntas frecuentes](#-preguntas-frecuentes)
-- [Roadmap](#-roadmap)
-- [Cómo contribuir](#-cómo-contribuir)
-- [Autores](#-autores)
-- [Licencia](#-licencia)
+Numination es un chat con IA enfocado en código. No es una IA genérica. No es un tutor de colegio. Es un asistente que entiende de programación y te ayuda a escribir, depurar, entender y mejorar código.
+
+Modelo: Numi-OT.01
+Fundadores: Álvaro García Gómez & Robinson Rodríguez Gómez
+País: Colombia
 
 ---
 
-## 🇨🇴 Sobre Numination
+## Features
 
-### ¿Qué es?
-
-**Numination** es una inteligencia artificial educativa diseñada específicamente para el contexto colombiano. No es una adaptación de un modelo extranjero: es un asistente pedagógico pensado desde cero para las necesidades reales de **estudiantes** y **profesores** de Colombia.
-
-Funciona con dos motores de IA en paralelo (Google Gemini y Mistral AI) y aplica un **system prompt especializado** que conoce:
-
-- Los **DBA** (Derechos Básicos de Aprendizaje)
-- Los **EBC** (Estándares Básicos de Competencias) del MEN
-- Las **pruebas Saber** (3°, 5°, 9°, 11°) y el formato ICFES
-- El **PTA** (Programa Todos a Aprender)
-- **Escuela Nueva** y aulas multigrado
-- El **PEI** de las instituciones educativas
-
-Y todo contextualizado con ejemplos auténticos: el café del Eje Cafetero, el río Magdalena, la cumbia, el vallenato, García Márquez, la Batalla de Boyacá, Nairo Quintana, y un largo etcétera.
-
-### ¿Por qué existe?
-
-En Colombia, la calidad educativa depende demasiado del **código postal** del estudiante. Un niño en Bogotá puede tener un tutor personal; un niño en Quibdó o en zona rural dispersa, muchas veces no.
-
-Numination busca cerrar esa brecha:
-
-> **Un tutor personal 24/7, gratis, con paciencia infinita, que habla colombiano.**
-
-Y para los profesores:
-
-> **Un asistente que les devuelva el tiempo para lo que realmente importa: acompañar a sus estudiantes.**
-
-### Misión
-
-Democratizar el acceso a una tutoría educativa de calidad en Colombia, eliminando las barreras geográficas, económicas y de horario.
-
-### Visión
-
-Que en 2030, cualquier estudiante colombiano —sin importar dónde viva— tenga acceso a un tutor personalizado con IA que le explique con paciencia, con ejemplos de su región, y en su idioma.
+- Chat con IA: conversación en streaming, token por token
+- 3 modos: Chat general, Coder (código), Razonamiento (paso a paso)
+- Modo incógnito: conversaciones que no se guardan ni aparecen en el historial
+- Memorias: la IA recuerda lo que le contás para ayudarte mejor
+- Multi-motor: Groq → Gemini → Kimi con fallback automático
+- Google + GitHub: login OAuth, sin contraseñas
+- Email + password: alternativa si no querés usar OAuth
+- 13 conectores: Wikipedia, NASA, Open Trivia, Colombia, etc.
+- 150+ skills: habilidades específicas por categoría
 
 ---
 
-## 🏢 Sobre Kraq
+## Stack
 
-**Kraq** es el estudio que crea Numination y otros productos digitales colombianos.
+Backend:
+- Node.js 20+ (ESM)
+- Express
+- Postgres (Supabase)
+- JWT en cookies httpOnly
+- SSE para streaming
 
-> Dos mentes, catorce años, una misma convicción: la tecnología puede cerrar brechas que la geografía no debería imponer.
+IA:
+- Groq (motor principal)
+- Google Gemini (motor secundario, 3 keys rotando)
+- NVIDIA NIM / Kimi K3 (respaldo)
 
-Kraq nace de una idea simple: si la educación de calidad depende de dónde naciste, entonces hay que construir herramientas que no le pregunten a nadie su código postal antes de ayudar. Numination es el primer producto de ese proyecto — pensado, diseñado y programado por su propio equipo fundador.
+Frontend:
+- HTML, CSS, JavaScript vanilla
+- Sin frameworks
+- Sin build step
 
-- 🎯 **Enfoque**: productos de IA e ingeniería de software con impacto social real en Colombia
-- 🌱 **Filosofía**: construir en público, aprender haciendo, priorizar a quien menos oportunidades tiene
-- 🇨🇴 **Origen**: 100% colombiano, de principio a fin
-
----
-
-## ✨ Características
-
-### Para estudiantes
-
-- 🎓 **Tutoría paso a paso**: explica cualquier tema desde cero, con analogías cotidianas.
-- 📚 **Preparación Saber 11**: simulacros con formato ICFES, análisis de errores y plan de estudio.
-- 🧠 **Técnicas de estudio**: Pomodoro, Feynman, repetición espaciada, mapas mentales.
-- 💪 **Apoyo motivacional**: reconoce frustración, celebra logros, fomenta mentalidad de crecimiento.
-- 🌱 **Aprendizaje honesto**: **nunca** hace la tarea por el estudiante. Lo guía para que la haga él.
-- 📱 **Accesible**: funciona desde el celular, sin apps que descargar.
-
-### Para profesores
-
-- 📝 **Planes de clase**: estructurados con inicio, desarrollo, cierre, alineados con DBA.
-- ✅ **Evaluaciones tipo Saber**: preguntas ICFES, rúbricas y análisis por competencia.
-- 🎯 **Adaptaciones DUA**: versiones diferenciadas por ritmo, estilo y necesidad.
-- 📊 **Rúbricas**: criterios claros, niveles Superior / Alto / Básico / Bajo.
-- 💬 **Retroalimentación asistida**: comentarios empáticos y constructivos.
-- 🏫 **Material para Escuela Nueva** y aulas multigrado.
-
-### Características técnicas
-
-- 🤖 **Doble motor IA**: Gemini para razonamiento profundo, Mistral para tareas rápidas.
-- 🔄 **Fallback automático**: si un motor falla, el otro responde sin que el usuario lo note.
-- 🎨 **Interfaz bilingüe visual**: modo claro/oscuro, responsive, mobile-first.
-- 💾 **Historial persistente**: las conversaciones se guardan en `localStorage`.
-- ⌨️ **Atajos de teclado**: `Ctrl + K` nueva conversación, `Ctrl + Shift + L` modo oscuro.
-- 🔒 **API keys protegidas**: nunca se suben al repositorio.
-- 📡 **API REST limpia**: un solo endpoint, fácil de consumir desde cualquier cliente.
-- 🚀 **Deploy en minutos**: compatible con Railway, Render y Fly.io.
+Deploy:
+- Vercel (serverless)
 
 ---
 
-## 🎬 Demo en vivo
+## Instalación
 
-> **URL de producción:** _(pendiente — próximo deploy)_
->
-> **Video demo:** _(pendiente — próximamente en YouTube)_
+Requisitos:
+- Node.js 20 o superior
+- Cuenta de Supabase (gratis)
+- Cuenta de Google Cloud (para OAuth)
+- Cuenta de GitHub (para OAuth)
+- Cuenta de Groq (gratis)
 
-Mientras tanto, puedes correrlo localmente siguiendo la [guía de instalación](#-instalación).
+Pasos:
 
----
+    git clone https://github.com/tu-usuario/numination.git
+    cd numination
+    npm install
+    cp .env.example env.local.js
+    npm run dev
 
-## 📸 Capturas de pantalla
-
-### Landing principal
-
-```
-┌────────────────────────────────────────────────────────────┐
-│  🇨🇴 Numination                        Probar   Comenzar   │
-├────────────────────────────────────────────────────────────┤
-│                                                              │
-│            La IA que habla el idioma de                     │
-│                nuestra educación                             │
-│                                                              │
-│   Numination es la primera inteligencia artificial          │
-│   educativa 100% colombiana. Tutor personal 24/7.           │
-│   Un producto de Kraq.                                      │
-│                                                              │
-│      [ Comenzar gratis → ]   [ Ver características ]        │
-│                                                              │
-│   1100        24         2         100                      │
-│  Municipios  Horas   Motores   % colombiano                 │
-│                                                              │
-└────────────────────────────────────────────────────────────┘
-```
-
-### Chat con estudiante
-
-```
-┌──────────┬───────────────────────────────────────────────────┐
-│ + Nueva  │  🎓 Estudiante   👨‍🏫 Profesor    ✨ Gemini  🌙   │
-├──────────┼───────────────────────────────────────────────────┤
-│ Recientes│                                                   │
-│          │  Yo: Explícame la fotosíntesis con un            │
-│ • Hola   │      ejemplo del café colombiano                 │
-│ • Plan   │                                                   │
-│          │  🇨🇴 Numination · 08:16 a.m. · gemini           │
-│          │  ¡Claro! Piensa en un cafetal del Eje            │
-│          │  Cafetero ☕. Las hojas del cafeto toman          │
-│          │  luz del sol, agua y CO₂ para producir su        │
-│          │  alimento y liberar oxígeno.                      │
-│          │                                                   │
-│ Ajustes  │  [ Escribe tu pregunta... ]                [➤]   │
-└──────────┴───────────────────────────────────────────────────┘
-```
+Abrí http://localhost:8080
 
 ---
 
-## 🛠 Stack tecnológico
+## Estructura
 
-### Backend
-
-| Tecnología | Versión | Uso |
-|---|---|---|
-| **Node.js** | ≥ 20 | Runtime del servidor |
-| **Express** | ^4.21 | Framework HTTP |
-| **@google/genai** | ^0.21 | SDK de Google Gemini |
-| **@mistralai/mistralai** | ^1.3 | SDK de Mistral AI |
-| **dotenv** | ^16.4 | Carga de variables (opcional) |
-
-### Frontend
-
-| Tecnología | Uso |
-|---|---|
-| **HTML5** | Estructura semántica |
-| **CSS3** | Estilos modernos (Grid, Flex, variables CSS) |
-| **JavaScript ES2022** | Lógica del cliente, sin frameworks |
-| **Web Speech API** | TTS + STT nativo del navegador |
-
-### IA
-
-| Proveedor | Modelo | Uso principal |
-|---|---|---|
-| **Google Gemini** | `gemini-3.6-flash` | Razonamiento pedagógico profundo |
-| **Mistral AI** | `mistral-small-latest` | Tareas rápidas, resúmenes, rúbricas |
-
-### Infraestructura
-
-- **Git + GitHub** para control de versiones
-- **Railway / Render / Fly.io** para deploy (pendiente)
-- **Firebase** para autenticación (roadmap)
-
----
-
-## 🏗 Arquitectura
-
-### Diagrama de flujo
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     NAVEGADOR DEL USUARIO                     │
-│                                                                │
-│  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐  │
-│  │   Landing       │  │   Chat UI      │  │  localStorage  │  │
-│  │  (index.html)   │  │   (app.js)     │  │  (historial)   │  │
-│  └────────────────┘  └────────────────┘  └────────────────┘  │
-│           │                  │                                │
-│           └──────────────────┴────────────────────────────────┤
-│                              │                                │
-│                              ▼                                │
-│                     fetch('/api/chat')                        │
-└─────────────────────────────┬───────────────────────────────┘
-                               │
-                               │ HTTP POST (JSON)
-                               ▼
-┌─────────────────────────────────────────────────────────────┐
-│                  SERVIDOR EXPRESS (Node.js)                   │
-│                                                                │
-│  ┌──────────────────────────────────────────────────────────┐│
-│  │              src/index.js                                ││
-│  │                                                          ││
-│  │  1. Recibe { message, provider, role }                   ││
-│  │  2. Construye el system prompt según el rol              ││
-│  │  3. Intenta con el proveedor elegido                     ││
-│  │  4. Si falla, fallback al otro proveedor                 ││
-│  │  5. Devuelve { reply, provider }                         ││
-│  └──────────────────────────────────────────────────────────┘│
-│           │                                    │              │
-│           ▼                                    ▼              │
-│  ┌──────────────────┐                 ┌──────────────────┐   │
-│  │  Google Gemini    │                 │   Mistral AI     │   │
-│  │  (3.6-flash)      │                 │  (small-latest)  │   │
-│  └──────────────────┘                 └──────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Estructura de archivos
-
-```
-numination-ai-web/
-├── public/                     # Frontend estático
-│   ├── index.html              # Estructura de la app
-│   ├── styles.css              # Estilos completos
-│   └── app.js                  # Lógica del cliente
-│
-├── src/                         # Backend
-│   └── index.js                # Servidor Express + IA + prompt
-│
-├── .env.example                 # Ejemplo de variables (plantilla)
-├── .gitignore                   # Archivos que NO se suben
-├── env.local.js                 # 🔴 API keys (NO subir)
-├── package.json                 # Dependencias y scripts
-└── README.md                    # Este archivo
-```
+    numination/
+    ├── src/
+    │   ├── index.js           servidor Express + rutas core
+    │   ├── auth.js            login, signup, JWT, OAuth
+    │   ├── chats.js           CRUD chats + streaming SSE
+    │   ├── memories.js        memorias con tags y búsqueda
+    │   ├── skills.js          endpoint de skills
+    │   ├── connectors.js      13 conectores a APIs externas
+    │   ├── email.js           envío de correos (Brevo)
+    │   └── services/
+    │       ├── supabase.js    cliente de Postgres + helpers
+    │       ├── streaming.js   adaptadores de streaming para cada IA
+    │       └── limits.js      cuotas por plan
+    │
+    ├── public/
+    │   ├── login.html         entrada (Google, GitHub, email)
+    │   ├── chat.html          la app
+    │   ├── verify-email.html  verificación de correo
+    │   ├── reset-password.html recuperar contraseña
+    │   ├── 404.html           página no encontrada
+    │   ├── terminos.html      términos y condiciones
+    │   ├── privacidad.html    política de privacidad
+    │   └── assets/
+    │       └── js/
+    │           └── skills.js  biblioteca de 150+ skills
+    │
+    ├── env.local.js           variables (NO subir a git)
+    ├── .env.example           plantilla de variables
+    ├── package.json
+    └── README.md
 
 ---
 
-## 📋 Requisitos
+## Variables de entorno
 
-Antes de empezar, asegúrate de tener:
+Copiá .env.example a env.local.js y rellená:
 
-- ✅ **Node.js** versión 20 o superior ([descargar](https://nodejs.org))
-- ✅ **npm** (viene incluido con Node.js)
-- ✅ **Git** ([descargar](https://git-scm.com))
-- ✅ Una **cuenta de Google** (para Gemini)
-- ✅ Una **cuenta de Mistral** (para Mistral)
-- ✅ Un **editor de código** (recomendado: [VS Code](https://code.visualstudio.com))
-
-### Verificar versiones
-
-```bash
-node --version    # Debe decir v20.x.x o superior
-npm --version     # Debe decir 10.x.x o superior
-git --version     # Debe decir 2.x.x o superior
-```
-
-Si alguno no funciona, instálalo antes de seguir.
-
----
-
-## 🚀 Instalación
-
-### Paso 1: Clonar el repositorio
-
-```bash
-git clone https://github.com/kraq/Numination.git
-cd Numination
-```
-
-O si ya tienes los archivos localmente:
-
-```bash
-cd "numination ai web"
-```
-
-### Paso 2: Instalar dependencias
-
-```bash
-npm install
-```
-
-Debe instalar ~70 paquetes. Espera a que termine.
-
-### Paso 3: Obtener las API keys
-
-#### 3.1 — Google Gemini
-
-1. Ve a [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
-2. Inicia sesión con tu cuenta de Google
-3. Clic en **Create API key**
-4. Copia la key (empieza con `AIza...`)
-
-#### 3.2 — Mistral AI
-
-1. Ve a [console.mistral.ai](https://console.mistral.ai)
-2. Crea una cuenta gratuita
-3. Ve a **API Keys** → **Create new key**
-4. Copia la key
-
-### Paso 4: Configurar las keys
-
-Crea un archivo llamado `env.local.js` en la raíz del proyecto:
-
-```javascript
-// env.local.js
-// ⚠️ Este archivo NO se sube a Git (está en .gitignore)
-
-export const TEST_KEYS = {
-  GEMINI_API_KEY: 'AIzaSy...tu_key_de_gemini...',
-  MISTRAL_API_KEY: 'tu_key_de_mistral...',
-};
-```
-
-> 🔴 **NUNCA subas este archivo a GitHub.**
-
-### Paso 5: Correr el proyecto
-
-```bash
-npm run dev
-```
-
-Debe mostrar:
-
-```
-🇨🇴 Numination escuchando en http://localhost:8080
-```
-
-Abre tu navegador en:
-
-```
-http://localhost:8080
-```
-
-¡Listo! Numination está corriendo. 🎉
+    export const TEST_KEYS = {
+      DATABASE_URL: 'postgresql://...',
+      JWT_SECRET: 'clave-aleatoria-de-64-caracteres',
+      GOOGLE_CLIENT_ID: '...',
+      GOOGLE_CLIENT_SECRET: '...',
+      GITHUB_CLIENT_ID: '...',
+      GITHUB_CLIENT_SECRET: '...',
+      GROQ_API_KEY: 'gsk_...',
+      GEMINI_API_KEY: 'AIza...',
+      GEMINI_API_KEY_2: 'AIza...',
+      GEMINI_API_KEY_3: 'AIza...',
+      NVIDIA_API_KEY: 'nvapi-...',
+      BREVO_SMTP_USER: 'xsmtpsib-...',
+      BREVO_SMTP_PASSWORD: 'xsmtpsib-...',
+      BREVO_FROM_EMAIL: 'no-reply@numination.app',
+      BREVO_FROM_NAME: 'Numination',
+    };
 
 ---
 
-## ⚙ Configuración
+## Comandos
 
-### Variables de entorno
-
-| Variable | Descripción | Dónde conseguirla |
-|---|---|---|
-| `GEMINI_API_KEY` | API key de Google Gemini | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
-| `MISTRAL_API_KEY` | API key de Mistral AI | [console.mistral.ai](https://console.mistral.ai) |
-| `PORT` | Puerto del servidor (default `8080`) | Opcional |
-
-En **desarrollo** las keys se leen de `env.local.js`.
-
-En **producción** (Railway, Render, etc.) se leen de las variables de entorno del servidor.
-
-### Prompt del sistema
-
-El prompt está en `src/index.js`, en las constantes:
-
-- `NUMINATION_BASE` — Prompt principal (identidad, contexto, reglas)
-- `ROLE_HINT_TEACHER` — Instrucciones extra para modo profesor
-- `ROLE_HINT_STUDENT` — Instrucciones extra para modo estudiante
-
-La función `buildSystemPrompt(role)` combina `NUMINATION_BASE` con el hint correcto según el rol activo.
+    npm run dev      Desarrollo con auto-reload
+    npm start        Producción
+    npm test         Tests (próximamente)
 
 ---
 
-## 📘 Guía de uso
+## API
 
-### Interfaz web
+Todos los endpoints empiezan con /api/
 
-Al abrir `http://localhost:8080` verás:
+Autenticación:
+    POST    /api/auth/signup              Crear cuenta email + password
+    POST    /api/auth/login               Iniciar sesión
+    POST    /api/auth/logout              Cerrar sesión
+    POST    /api/auth/google              Login con Google (GIS)
+    GET     /api/auth/github              Iniciar OAuth GitHub
+    GET     /api/auth/me                  Usuario actual
+    GET     /api/auth/session             Info de la sesión
+    POST    /api/auth/forgot-password     Pedir reset
+    POST    /api/auth/reset-password      Aplicar reset
+    PATCH   /api/auth/profile             Editar perfil
+    DELETE  /api/auth/account             Eliminar cuenta
 
-1. **Landing** con hero, características, roles, impacto y about.
-2. **Botones de acceso**: "Probar", "Comenzar", "Comenzar gratis".
-3. **Chat** con sidebar de historial, tabs de rol y proveedor.
+Chat:
+    GET     /api/chats                    Listar conversaciones
+    POST    /api/chats                    Crear conversación
+    GET     /api/chats/:id                Obtener una con mensajes
+    PATCH   /api/chats/:id                Renombrar
+    DELETE  /api/chats/:id                Eliminar
+    POST    /api/chat/stream              Streaming SSE con IA
+    POST    /api/chat                     Chat sin streaming
 
-### Modo estudiante
+Memorias:
+    GET     /api/memories                 Listar con filtros
+    POST    /api/memories                 Crear
+    PATCH   /api/memories/:id             Editar
+    DELETE  /api/memories/:id             Eliminar
+    GET     /api/memories/stats           Estadísticas
 
-1. Clic en el tab **🎓 Estudiante**
-2. Aparecen sugerencias tipo:
-   - "Explícame la fotosíntesis con un ejemplo del café"
-   - "Ayúdame con el Saber 11 de matemáticas"
-3. Escribe tu pregunta o pulsa una sugerencia
-4. Numination responde con:
-   - Explicación paso a paso
-   - Ejemplos colombianos
-   - Pregunta de verificación al final
-
-### Modo profesor
-
-1. Clic en el tab **👨‍🏫 Profesor**
-2. Prueba con:
-   - "Plan de clase sobre el Río Magdalena para 5°"
-   - "Rúbrica para evaluar una exposición oral"
-3. Numination responde con:
-   - Estructura completa (inicio / desarrollo / cierre)
-   - Alineación con DBA y EBC
-   - Adaptaciones DUA
-
-### Cambiar de motor IA
-
-En la esquina superior derecha del chat:
-
-- **✨ Gemini** → razonamiento profundo, respuestas más largas
-- **🌪️ Mistral** → respuestas rápidas, menor costo
-
-> Si un motor falla, el sistema usa automáticamente el otro.
-
-### Atajos de teclado
-
-| Atajo | Acción |
-|---|---|
-| `Enter` | Enviar mensaje |
-| `Shift + Enter` | Salto de línea sin enviar |
-| `Ctrl + K` | Nueva conversación |
-| `Ctrl + Shift + L` | Alternar modo claro/oscuro |
-| `Esc` | Cerrar modales o sidebar |
+Otros:
+    GET     /api/skills                   Lista de skills
+    GET     /api/connectors               Lista de conectores
+    POST    /api/connectors/:id/query     Ejecutar conector
+    GET     /api/limits/usage             Cuota del plan
+    GET     /api/health                   Estado del server
 
 ---
 
-## 🔌 Referencia de la API
+## Modos de la IA
 
-### `GET /api/health`
+Chat (role: 'student')
+Conversación general. Explica conceptos, resuelve dudas, sugiere caminos.
 
-Verifica que el servidor esté activo.
+Coder (role: 'teacher')
+Especializado en programación. Escribe, depura, explica y refactoriza código. Sabe JavaScript, TypeScript, Python, React, Node, SQL y más.
 
-**Respuesta:**
-```json
-{
-  "ok": true,
-  "service": "numination"
-}
-```
-
-### `POST /api/chat`
-
-Envía un mensaje y recibe una respuesta.
-
-**Body:**
-```json
-{
-  "message": "Explícame la fotosíntesis",
-  "provider": "gemini",
-  "role": "student"
-}
-```
-
-**Parámetros:**
-
-| Campo | Tipo | Requerido | Valores válidos |
-|---|---|---|---|
-| `message` | string | ✅ | 1-4000 caracteres |
-| `provider` | string | ❌ | `"gemini"` (default) o `"mistral"` |
-| `role` | string | ❌ | `"student"` (default) o `"teacher"` |
-
-**Respuesta exitosa (200):**
-```json
-{
-  "reply": "¡Claro! Piensa en un cafetal del Eje Cafetero...",
-  "provider": "gemini"
-}
-```
-
-**Respuesta de error (4xx/5xx):**
-```json
-{
-  "error": "Descripción del error"
-}
-```
-
-**Ejemplo con cURL:**
-```bash
-curl -X POST http://localhost:8080/api/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message":"Hola","provider":"gemini","role":"student"}'
-```
-
-**Ejemplo con PowerShell:**
-```powershell
-$body = @{
-  message = "Hola"
-  provider = "gemini"
-  role = "student"
-} | ConvertTo-Json
-
-Invoke-RestMethod -Uri "http://localhost:8080/api/chat" `
-  -Method Post -Body $body -ContentType "application/json"
-```
+Razonamiento (role: 'reasoning')
+Piensa paso a paso antes de responder. El proceso interno va dentro de etiquetas thinking y después viene la respuesta final limpia.
 
 ---
 
-## 🚢 Guía de deploy
+## Motores de IA
 
-### Railway (recomendado)
+Numination usa 3 motores con fallback automático:
 
-1. Crea cuenta en [railway.app](https://railway.app) con GitHub
-2. **New Project** → **Deploy from GitHub repo**
-3. Selecciona `kraq/Numination`
-4. Railway detecta Node.js automáticamente
-5. Ve a **Variables** y agrega:
-   - `GEMINI_API_KEY` = tu key
-   - `MISTRAL_API_KEY` = tu key
-6. **Deploy** → espera 2 minutos
-7. Obtienes una URL tipo `numination-production.up.railway.app`
+    Texto     → Groq → Gemini → Kimi
+    Archivos  → Gemini → Kimi → Groq
 
-### Render
+Si uno falla, pasa al siguiente. El usuario nunca ve el drama. Si los tres fallan, se devuelve un error legible.
 
-1. Crea cuenta en [render.com](https://render.com)
-2. **New Web Service** → conecta tu repo
-3. Configura:
-   - **Build Command:** `npm install`
-   - **Start Command:** `node src/index.js`
-4. Agrega las variables de entorno
-5. Deploy
-
-### Fly.io
-
-```bash
-fly launch
-fly secrets set GEMINI_API_KEY=tu_key
-fly secrets set MISTRAL_API_KEY=tu_key
-fly deploy
-```
+Configuración en src/index.js:
+- Groq: modelo openai/gpt-oss-120b
+- Gemini: gemini-3.6-flash con 3 keys rotando
+- NVIDIA NIM: moonshotai/kimi-k3
 
 ---
 
-## 🔧 Solución de problemas
+## Deploy
 
-### El servidor no arranca
+Vercel:
 
-**Error:** `Error: listen EADDRINUSE :::8080`
+    npm i -g vercel
+    vercel login
+    vercel --prod
 
-**Solución:**
-```powershell
-Get-Process node -ErrorAction SilentlyContinue | Stop-Process -Force
-Start-Sleep -Seconds 2
-npm run dev
-```
-
-### "Failed to fetch" en el chat
-
-**Causa:** el servidor backend no está corriendo.
-
-**Solución:** verifica que la terminal con `npm run dev` siga abierta y muestre `🇨🇴 Numination escuchando en...`.
-
-### Error 503 de Gemini
-
-**Causa:** Google está saturado.
-
-**Solución:** el sistema cambia automáticamente a Mistral. Si ambos fallan, espera 30 segundos e intenta de nuevo.
-
-### Error 429 de Mistral
-
-**Causa:** superaste el límite gratuito (1 petición/segundo).
-
-**Solución:** espera unos segundos entre mensajes.
-
-### `Cannot find module '@google/genai'`
-
-**Solución:**
-```bash
-npm install
-```
-
-### Pantalla en blanco
-
-**Solución:**
-1. Abre DevTools (`F12`) → Console
-2. Recarga con `Ctrl + Shift + R`
-3. Busca errores rojos
-4. Verifica que `public/styles.css` y `public/app.js` no estén vacíos
-
-### Los estilos no cargan
-
-**Causa:** caché del navegador.
-
-**Solución:** `Ctrl + Shift + R` (recarga forzada).
+Variables de entorno en Vercel: Settings → Environment Variables. Copiá todas las de env.local.js
 
 ---
 
-## ❓ Preguntas frecuentes
+## Seguridad
 
-### ¿Numination es gratis?
+- Contraseñas con scrypt (64-byte key, 16-byte salt)
+- Cookies httpOnly + SameSite=Lax + Secure en producción
+- JWT firmados con expiración de 30 días
+- Rate limiting por IP y por email
+- Bloqueo de cuenta tras 5 intentos fallidos
+- Verificación de email
+- Prompt injection guard
+- CORS restringido a dominios propios
 
-Sí, es gratis para estudiantes. El proyecto usa las cuotas gratuitas de Gemini y Mistral.
-
-### ¿Reemplaza a los profesores?
-
-**No.** Numination es una herramienta de apoyo. Los profesores son irremplazables.
-
-### ¿Hace las tareas por los estudiantes?
-
-**No.** Por diseño, Numination **guía** al estudiante para que llegue a la respuesta por sí mismo.
-
-### ¿Qué pasa con mis datos?
-
-Las conversaciones se guardan **en tu navegador** (`localStorage`). No hay cuentas, no hay tracking, no hay publicidad.
-
-### ¿Puedo usarlo sin internet?
-
-No. Necesita conectarse a las APIs de IA que requieren internet.
-
-### ¿Funciona en celular?
-
-Sí. La interfaz es responsive.
-
-### ¿Quién está detrás de Numination?
-
-**Kraq**, el estudio fundado por Álvaro García Gómez y Robinson Rodríguez Gómez.
-
-### ¿Cómo reporto un bug?
-
-Abre un issue en [github.com/kraq/Numination/issues](https://github.com/kraq/Numination/issues).
-
-### ¿Puedo contribuir?
-
-¡Claro! Lee la sección de [contribución](#-cómo-contribuir).
-
-### ¿Cómo consigo una API key de Gemini?
-
-Ve a [aistudio.google.com/apikey](https://aistudio.google.com/apikey).
-
-### ¿Cómo consigo una API key de Mistral?
-
-Ve a [console.mistral.ai](https://console.mistral.ai).
-
-### ¿Las conversaciones se pierden al cerrar el navegador?
-
-No. Se guardan en `localStorage`.
-
-### ¿Puedo cambiar el prompt?
-
-Sí. Está en `src/index.js`, en `NUMINATION_BASE`.
+Si encontrás una vulnerabilidad, escribí a seguridad@numination.app (no abras un issue público).
 
 ---
 
-## 🗺 Roadmap
+## Licencia
 
-### v1.0 — Actual ✅
+Todos los derechos reservados. Numination es propiedad de sus fundadores.
 
-- [x] Backend Express
-- [x] Frontend con landing + chat
-- [x] Integración Gemini
-- [x] Integración Mistral
-- [x] Fallback automático
-- [x] Prompt colombiano contextualizado
-- [x] Modo estudiante / profesor
-- [x] Historial en localStorage
-- [x] Modo oscuro
-
-### v1.1 — Próximo
-
-- [ ] Deploy a Railway con URL pública
-- [ ] README completo
-- [ ] Logo y favicon
-
-### v1.2 — Audio
-
-- [ ] Text-to-Speech (Web Speech API)
-- [ ] Speech-to-Text (dictado por voz)
-- [ ] Botón 🔊 en cada respuesta
-
-### v1.3 — Cuentas y persistencia
-
-- [ ] Login con Firebase Auth
-- [ ] Historial en Firestore
-- [ ] Sincronización entre dispositivos
-
-### v1.4 — Streaming
-
-- [ ] Respuestas palabra por palabra (SSE)
-- [ ] Cancelar respuesta en curso
-
-### v1.5 — Features educativas
-
-- [ ] Generador de simulacros Saber 11
-- [ ] Plantillas de plan de clase
-- [ ] Rúbricas exportables a PDF
-
-### v2.0 — Comunidad
-
-- [ ] Panel para profesores con estadísticas
-- [ ] Biblioteca de materiales compartidos
-- [ ] App móvil nativa
+El código fuente no es de código abierto. Si querés colaborar, escribinos.
 
 ---
 
-## 🤝 Cómo contribuir
+## Contacto
 
-1. **Fork** el repositorio
-2. **Clone** tu fork: `git clone https://github.com/tu-usuario/Numination.git`
-3. **Crea una rama**: `git checkout -b feature/nueva-funcionalidad`
-4. **Haz tus cambios**
-5. **Commit**: `git commit -m "feat: agrega nueva funcionalidad"`
-6. **Push**: `git push origin feature/nueva-funcionalidad`
-7. **Abre un Pull Request**
-
-### Estilo de commits
-
-- `feat:` nueva funcionalidad
-- `fix:` corrección de bug
-- `docs:` cambios en documentación
-- `style:` cambios de formato
-- `refactor:` reorganización de código
-- `test:` tests
-- `chore:` tareas de mantenimiento
-
-### Áreas donde necesitamos ayuda
-
-- 🎨 **Diseño gráfico**: logo, ilustraciones
-- 📝 **Contenido pedagógico**: revisar prompt, DBA
-- 🌐 **Traducción**: inglés, portugués
-- 🧪 **Testing**: navegadores y dispositivos
-- 📱 **Frontend**: UX, accesibilidad
+Soporte: soporte@numination.app
+Privacidad: privacidad@numination.app
+Seguridad: seguridad@numination.app
 
 ---
 
-## 👥 Autores
+## Estado del proyecto
 
-**Álvaro García Gómez**
-- Cofundador de Kraq · 14 años
-- 📧 kraqsupport@gmail.com
-- 🐙 [@kraq](https://github.com/kraq)
+    Backend completo         7 módulos, 73+ endpoints
+    Frontend de auth         login, verify, reset
+    Frontend de chat         chat.html con streaming
+    Frontend legal           404, términos, privacidad
+    Deploy                   configurado en Vercel
 
-**Robinson Rodríguez Gómez**
-- Cofundador de Kraq · 14 años
-
----
-
-## 📜 Licencia
-
-Este proyecto está bajo la licencia **MIT**.
-
-```
-MIT License
-
-Copyright (c) 2026 Kraq — Álvaro García Gómez & Robinson Rodríguez Gómez
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
-
----
-
-<div align="center">
-
-### 🇨🇴 Hecho con 💛💙❤️ en Colombia, por Kraq
-
-**Numination — La IA que habla el idioma de nuestra educación**
-
-*"Queremos que ningún estudiante colombiano se quede sin un tutor que le explique con paciencia, sin importar dónde viva."*
-
-**— Álvaro & Robinson, fundadores de Kraq, 14 años**
-
-⭐ Si te gusta el proyecto, dale una estrella en GitHub ⭐
-
-</div>
+Hecho con amor en Colombia|Barranquilla · 2026

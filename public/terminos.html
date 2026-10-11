@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="es-CO" data-theme="claro">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#f0f0f2" />
+<meta name="color-scheme" content="light" />
+<meta name="robots" content="index, follow" />
+<meta name="referrer" content="strict-origin-when-cross-origin" />
+
+<title>Términos y condiciones · Numination</title>
+<meta name="description" content="Términos y condiciones de uso de Numination, la IA educativa colombiana." />
+
+<link rel="icon" href="/favicon.ico" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
+
+<style>
+/* ═══════════════════════════════════════════════════════════════════════
+   TOKENS
+   ═══════════════════════════════════════════════════════════════════════ */
+:root {
+  --c-bg:          #f0f0f2;
+  --c-bg-card:     #ffffff;
+  --c-bg-soft:     #f5f5f7;
+  --c-bg-hover:    #f7f7f8;
+  --c-border:      #e4e4e7;
+  --c-border-soft: #ececef;
+  --c-text:        #0a0a0a;
+  --c-text-2:      #3a3a40;
+  --c-text-muted:  #6b6b6b;
+  --c-text-subtle: #a0a0a3;
+
+  --c-primary:       #1e3a5f;
+  --c-primary-hover: #162d4a;
+  --c-accent:        #7c5eff;
+  --c-accent-soft:   #f2ecff;
+
+  --c-success:      #16a34a;
+  --c-success-soft: #f0fdf4;
+  --c-warn:         #d97706;
+  --c-warn-soft:    #fffbeb;
+
+  --radius-pill: 999px;
+  --radius-card: 24px;
+  --radius-md:   12px;
+
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  --shadow-card: 0 1px 2px rgba(0,0,0,.04), 0 1px 3px rgba(0,0,0,.03);
+  --shadow-btn:  0 4px 14px rgba(30,58,95,.18);
+
+  --transition: 180ms cubic-bezier(.4,0,.2,1);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   RESET
+   ═══════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+html, body { min-height: 100%; }
+
+body {
+  font-family: var(--font-sans);
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-size: 15px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; -webkit-tap-highlight-color: transparent; }
+a { color: var(--c-accent); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; transition: opacity var(--transition); }
+a:hover { opacity: .75; }
+svg { display: block; max-width: 100%; }
+
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-thumb { background: var(--c-border); border-radius: 4px; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   LAYOUT
+   ═══════════════════════════════════════════════════════════════════════ */
+.page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 40px 24px 80px;
+  display: flex;
+  justify-content: center;
+}
+
+.wrap {
+  width: 100%;
+  max-width: 900px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 40px;
+  animation: fadeInUp .5s cubic-bezier(.16,1,.3,1);
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (min-width: 1024px) {
+  .page { padding: 60px 40px 100px; }
+  .wrap { grid-template-columns: 220px 1fr; gap: 56px; max-width: 1100px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SIDEBAR · índice sticky (solo desktop)
+   ═══════════════════════════════════════════════════════════════════════ */
+.toc { display: none; }
+
+@media (min-width: 1024px) {
+  .toc {
+    display: block;
+    position: sticky;
+    top: 40px;
+    align-self: start;
+    max-height: calc(100vh - 80px);
+    overflow-y: auto;
+    padding-right: 8px;
+  }
+}
+
+.toc__label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--c-text-subtle);
+  margin-bottom: 14px;
+  padding-left: 12px;
+}
+
+.toc__list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 0;
+}
+
+.toc__link {
+  display: block;
+  padding: 7px 12px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--c-text-muted);
+  text-decoration: none;
+  border-radius: 8px;
+  border-left: 2px solid transparent;
+  transition: all var(--transition);
+  letter-spacing: -0.005em;
+  line-height: 1.4;
+}
+
+.toc__link:hover {
+  background: var(--c-bg-hover);
+  color: var(--c-text);
+  opacity: 1;
+}
+
+.toc__link.is-active {
+  color: var(--c-accent);
+  border-left-color: var(--c-accent);
+  background: var(--c-accent-soft);
+  font-weight: 600;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   CONTENIDO
+   ═══════════════════════════════════════════════════════════════════════ */
+.doc {
+  background: var(--c-bg-card);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-card);
+  padding: 48px 40px;
+  box-shadow: var(--shadow-card);
+}
+
+@media (max-width: 640px) {
+  .doc { padding: 32px 22px; border-radius: 20px; }
+}
+
+.doc__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px 6px 8px;
+  margin-left: -8px;
+  margin-bottom: 24px;
+  border-radius: var(--radius-pill);
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--c-text-muted);
+  text-decoration: none;
+  transition: all var(--transition);
+}
+
+.doc__back:hover {
+  background: var(--c-bg-hover);
+  color: var(--c-text);
+  opacity: 1;
+}
+
+.doc__back svg { width: 16px; height: 16px; stroke-width: 2; }
+
+.doc__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  margin-bottom: 16px;
+  background: var(--c-bg-soft);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-pill);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--c-text-muted);
+}
+
+.doc__label-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--c-accent);
+}
+
+.doc__title {
+  font-size: clamp(28px, 6vw, 40px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: var(--c-text);
+  margin-bottom: 10px;
+}
+
+.doc__meta {
+  font-size: 14px;
+  color: var(--c-text-subtle);
+  margin-bottom: 24px;
+  letter-spacing: -0.005em;
+}
+
+.doc__meta strong { color: var(--c-text-muted); font-weight: 500; }
+
+.doc__intro {
+  font-size: 15.5px;
+  color: var(--c-text-2);
+  line-height: 1.65;
+  letter-spacing: -0.005em;
+  margin-bottom: 8px;
+}
+
+/* ─── Callout ─── */
+.callout {
+  display: flex;
+  gap: 14px;
+  padding: 18px 20px;
+  margin: 32px 0;
+  border-radius: var(--radius-md);
+  font-size: 14.5px;
+  line-height: 1.6;
+  letter-spacing: -0.005em;
+}
+
+.callout svg {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  stroke-width: 1.9;
+}
+
+.callout--info {
+  background: var(--c-accent-soft);
+  border-left: 3px solid var(--c-accent);
+  color: var(--c-text-2);
+}
+
+.callout--info svg { color: var(--c-accent); }
+
+.callout--success {
+  background: var(--c-success-soft);
+  border-left: 3px solid var(--c-success);
+  color: #14532d;
+}
+
+.callout--success svg { color: var(--c-success); }
+
+.callout strong { font-weight: 700; }
+
+/* ─── Secciones ─── */
+.section {
+  padding-top: 36px;
+  margin-top: 36px;
+  border-top: 1px solid var(--c-border-soft);
+  scroll-margin-top: 24px;
+}
+
+.section:first-of-type {
+  padding-top: 0;
+  margin-top: 0;
+  border-top: none;
+}
+
+.section__num {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  color: var(--c-accent);
+  margin-bottom: 6px;
+}
+
+.section__title {
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.022em;
+  line-height: 1.25;
+  color: var(--c-text);
+  margin-bottom: 16px;
+}
+
+.section p {
+  font-size: 15.5px;
+  color: var(--c-text-2);
+  margin-bottom: 14px;
+  letter-spacing: -0.005em;
+  line-height: 1.7;
+}
+
+.section p:last-child { margin-bottom: 0; }
+
+.section strong { color: var(--c-text); font-weight: 600; }
+
+.section ul, .section ol {
+  padding-left: 22px;
+  margin: 0 0 16px;
+}
+
+.section li {
+  font-size: 15.5px;
+  color: var(--c-text-2);
+  margin-bottom: 8px;
+  letter-spacing: -0.005em;
+  line-height: 1.7;
+}
+
+.section li:last-child { margin-bottom: 0; }
+
+.section code {
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  background: var(--c-bg-soft);
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-size: 13.5px;
+  color: var(--c-accent);
+  border: 1px solid var(--c-border);
+}
+
+/* ─── Footer del doc ─── */
+.doc__footer {
+  padding-top: 40px;
+  margin-top: 40px;
+  border-top: 1px solid var(--c-border-soft);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.doc__footer-text {
+  font-size: 13.5px;
+  color: var(--c-text-muted);
+  letter-spacing: -0.005em;
+}
+
+.doc__footer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  border-radius: var(--radius-pill);
+  text-decoration: none;
+  transition: all var(--transition);
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.btn svg { width: 16px; height: 16px; stroke-width: 2; }
+
+.btn--primary {
+  background: var(--c-primary);
+  color: #fff;
+  box-shadow: var(--shadow-btn);
+}
+
+.btn--primary:hover {
+  background: var(--c-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(30,58,95,.24);
+  opacity: 1;
+}
+
+.btn--outline {
+  background: var(--c-bg-card);
+  color: var(--c-text);
+  border: 1.5px solid var(--c-border);
+}
+
+.btn--outline:hover {
+  background: var(--c-bg-hover);
+  border-color: #d4d4d8;
+  opacity: 1;
+}
+
+/* ─── Progress bar top ─── */
+.progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  background: var(--c-accent);
+  width: 0;
+  z-index: 9999;
+  transition: width 100ms ease-out;
+}
+
+/* ─── Print ─── */
+@media print {
+  body { background: #fff; }
+  .page { padding: 0; }
+  .wrap { grid-template-columns: 1fr; gap: 0; max-width: 100%; }
+  .toc, .progress, .doc__back, .doc__footer-actions { display: none !important; }
+  .doc { border: none; box-shadow: none; padding: 0; border-radius: 0; }
+  a { color: var(--c-text); text-decoration: none; }
+  .section { page-break-inside: avoid; }
+}
+</style>
+</head>
+
+<body>
+
+<div class="progress" data-progress></div>
+
+<main class="page">
+  <div class="wrap">
+
+    <!-- ═══════════════════════════════════════════════════════════
+         ÍNDICE STICKY
+         ═══════════════════════════════════════════════════════════ -->
+    <aside class="toc" aria-label="Índice">
+      <div class="toc__label">En esta página</div>
+      <nav>
+        <ul class="toc__list">
+          <li><a href="#s1" class="toc__link" data-toc>1 · Uso del servicio</a></li>
+          <li><a href="#s2" class="toc__link" data-toc>2 · Cuenta</a></li>
+          <li><a href="#s3" class="toc__link" data-toc>3 · Contenido</a></li>
+          <li><a href="#s4" class="toc__link" data-toc>4 · Limitaciones</a></li>
+          <li><a href="#s5" class="toc__link" data-toc>5 · Créditos y pagos</a></li>
+          <li><a href="#s6" class="toc__link" data-toc>6 · Cambios</a></li>
+          <li><a href="#s7" class="toc__link" data-toc>7 · Contacto</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         DOCUMENTO
+         ═══════════════════════════════════════════════════════════ -->
+    <article class="doc">
+
+      <a href="/chat.html" class="doc__back">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"/>
+          <polyline points="12 19 5 12 12 5"/>
+        </svg>
+        Volver
+      </a>
+
+      <div class="doc__label">
+        <span class="doc__label-dot"></span>
+        Documento legal
+      </div>
+
+      <h1 class="doc__title">Términos y Condiciones</h1>
+      <p class="doc__meta">
+        Última actualización: <strong data-fecha>—</strong>
+      </p>
+
+      <p class="doc__intro">
+        Al usar Numination aceptas los siguientes términos. Si no estás de acuerdo, te pedimos no utilizar el servicio.
+      </p>
+
+      <!-- ─── 1 ─── -->
+      <section class="section" id="s1">
+        <div class="section__num">01</div>
+        <h2 class="section__title">Uso del servicio</h2>
+        <p>
+          Numination es una plataforma de IA y workspace para resolver problemas, desarrollar ideas y organizar trabajo. Te comprometes a usarla de forma <strong>lícita y respetuosa</strong>.
+        </p>
+      </section>
+
+      <!-- ─── 2 ─── -->
+      <section class="section" id="s2">
+        <div class="section__num">02</div>
+        <h2 class="section__title">Cuenta</h2>
+        <p>
+          Eres responsable de mantener la <strong>seguridad de tu cuenta</strong> y de toda actividad realizada desde ella.
+        </p>
+      </section>
+
+      <!-- ─── 3 ─── -->
+      <section class="section" id="s3">
+        <div class="section__num">03</div>
+        <h2 class="section__title">Contenido</h2>
+        <p>
+          <strong>Conservas la propiedad del contenido que creas.</strong> Nos otorgas el permiso mínimo necesario para operar el servicio (procesar, almacenar y mostrar tu contenido dentro de Numination).
+        </p>
+        <div class="callout callout--success">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>
+            <path d="m9 12 2 2 4-4"/>
+          </svg>
+          <div>
+            Tu contenido es <strong>tuyo</strong>. Solo lo usamos para que el servicio funcione, nunca para otros fines.
+          </div>
+        </div>
+      </section>
+
+      <!-- ─── 4 ─── -->
+      <section class="section" id="s4">
+        <div class="section__num">04</div>
+        <h2 class="section__title">Limitaciones</h2>
+        <p>
+          Numination se ofrece <strong>"tal cual"</strong>. Estamos construyendo activamente el producto y algunas funciones pueden cambiar o estar en desarrollo.
+        </p>
+        <div class="callout callout--info">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="16" x2="12" y2="12"/>
+            <line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+          <div>
+            Numination está en desarrollo activo. Las funciones pueden evolucionar, cambiar o mejorar con el tiempo.
+          </div>
+        </div>
+      </section>
+
+      <!-- ─── 5 ─── -->
+      <section class="section" id="s5">
+        <div class="section__num">05</div>
+        <h2 class="section__title">Créditos y pagos</h2>
+        <p>
+          Los sistemas de créditos y recargas que se incorporen estarán sujetos a <strong>términos adicionales</strong> que se comunicarán en el momento.
+        </p>
+      </section>
+
+      <!-- ─── 6 ─── -->
+      <section class="section" id="s6">
+        <div class="section__num">06</div>
+        <h2 class="section__title">Cambios</h2>
+        <p>
+          Estos términos pueden actualizarse. Los cambios importantes se comunicarán <strong>dentro del servicio</strong>.
+        </p>
+      </section>
+
+      <!-- ─── 7 ─── -->
+      <section class="section" id="s7">
+        <div class="section__num">07</div>
+        <h2 class="section__title">Contacto</h2>
+        <p>
+          Cualquier duda sobre estos términos:
+        </p>
+        <ul>
+          <li><strong>Correo general:</strong> <a href="mailto:soporte@numination.app">soporte@numination.app</a></li>
+          <li><strong>Privacidad:</strong> <a href="mailto:privacidad@numination.app">privacidad@numination.app</a></li>
+        </ul>
+      </section>
+
+      <!-- ─── Footer ─── -->
+      <div class="doc__footer">
+        <div class="doc__footer-text">
+          Última revisión: <span data-fecha>—</span>
+        </div>
+        <div class="doc__footer-actions">
+          <a href="/privacidad.html" class="btn btn--outline">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            Política de privacidad
+          </a>
+          <a href="/chat.html" class="btn btn--primary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"/>
+              <polyline points="12 5 19 12 12 19"/>
+            </svg>
+            Ir a Numination
+          </a>
+        </div>
+      </div>
+
+    </article>
+  </div>
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ─── Fecha de hoy ─── */
+  const fecha = new Date().toLocaleDateString('es-CO', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+  document.querySelectorAll('[data-fecha]').forEach(el => {
+    el.textContent = fecha;
+  });
+
+  /* ─── Barra de progreso de lectura ─── */
+  const progress = document.querySelector('[data-progress]');
+  if (progress) {
+    const updateProgress = () => {
+      const h = document.documentElement;
+      const scrolled = h.scrollTop;
+      const total = h.scrollHeight - h.clientHeight;
+      const pct = total > 0 ? (scrolled / total) * 100 : 0;
+      progress.style.width = pct + '%';
+    };
+    document.addEventListener('scroll', updateProgress, { passive: true });
+    updateProgress();
+  }
+
+  /* ─── Índice activo según scroll ─── */
+  const tocLinks = Array.from(document.querySelectorAll('[data-toc]'));
+  const sections = tocLinks
+    .map(link => {
+      const id = link.getAttribute('href').slice(1);
+      return { link, section: document.getElementById(id) };
+    })
+    .filter(x => x.section);
+
+  if (sections.length > 0 && 'IntersectionObserver' in window) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const id = entry.target.id;
+          tocLinks.forEach(l => l.classList.toggle('is-active', l.getAttribute('href') === '#' + id));
+        }
+      });
+    }, {
+      rootMargin: '-20% 0px -70% 0px',
+      threshold: 0
+    });
+
+    sections.forEach(({ section }) => observer.observe(section));
+  }
+
+  /* ─── Smooth scroll con offset ─── */
+  tocLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+      const id = link.getAttribute('href');
+      const target = document.querySelector(id);
+      if (!target) return;
+      e.preventDefault();
+      const top = target.getBoundingClientRect().top + window.pageYOffset - 32;
+      window.scrollTo({ top, behavior: 'smooth' });
+      history.replaceState(null, '', id);
+    });
+  });
+
+  /* ─── Log ─── */
+  console.log(
+    '%cNumination · Términos v1.0%c  ' + fecha,
+    'background:#7c5eff;color:#fff;padding:3px 8px;border-radius:4px;font-weight:700',
+    'color:#6b6b70;font-weight:500'
+  );
+})();
+</script>
+
+</body>
+</html>

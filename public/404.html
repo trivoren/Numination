@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="es-CO" data-theme="claro">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#f0f0f2" />
+<meta name="color-scheme" content="light" />
+<meta name="robots" content="noindex" />
+<meta name="referrer" content="strict-origin-when-cross-origin" />
+
+<title>404 · Página no encontrada · Numination</title>
+<meta name="description" content="La página que buscás no existe." />
+
+<link rel="icon" href="/favicon.ico" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
+
+<style>
+/* ═══════════════════════════════════════════════════════════════════════
+   TOKENS
+   ═══════════════════════════════════════════════════════════════════════ */
+:root {
+  --c-bg:          #f0f0f2;
+  --c-bg-card:     #ffffff;
+  --c-bg-soft:     #f5f5f7;
+  --c-bg-hover:    #f7f7f8;
+  --c-border:      #e4e4e7;
+  --c-text:        #0a0a0a;
+  --c-text-muted:  #6b6b6b;
+  --c-text-subtle: #a0a0a3;
+
+  --c-primary:       #1e3a5f;
+  --c-primary-hover: #162d4a;
+  --c-primary-active:#0f2138;
+  --c-accent:        #7c5eff;
+  --c-accent-soft:   #f2ecff;
+
+  --radius-pill:  999px;
+  --radius-card:  24px;
+
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  --shadow-card: 0 1px 2px rgba(0,0,0,.04), 0 1px 3px rgba(0,0,0,.03);
+  --shadow-btn:  0 4px 14px rgba(30,58,95,.18);
+
+  --transition: 180ms cubic-bezier(.4,0,.2,1);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   RESET
+   ═══════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; width: 100%; }
+
+body {
+  font-family: var(--font-sans);
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; -webkit-tap-highlight-color: transparent; }
+a { color: inherit; text-decoration: none; }
+svg { display: block; max-width: 100%; }
+
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-thumb { background: var(--c-border); border-radius: 4px; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   LAYOUT
+   ═══════════════════════════════════════════════════════════════════════ */
+.page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Decoración de fondo */
+.page::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(10,10,12,.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(10,10,12,.025) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse at 50% 50%, #000 20%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse at 50% 50%, #000 20%, transparent 70%);
+  pointer-events: none;
+}
+
+.page::after {
+  content: '';
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 700px;
+  height: 700px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(124,94,255,.08) 0%, transparent 65%);
+  filter: blur(40px);
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   CARD
+   ═══════════════════════════════════════════════════════════════════════ */
+.card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 480px;
+  background: var(--c-bg-card);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-card);
+  padding: 56px 40px;
+  text-align: center;
+  box-shadow: var(--shadow-card);
+  animation: fadeInUp .6s cubic-bezier(.16,1,.3,1);
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   ICON
+   ═══════════════════════════════════════════════════════════════════════ */
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  height: 96px;
+  margin: 0 auto 32px;
+  background: var(--c-accent-soft);
+  border-radius: 28px;
+  color: var(--c-accent);
+  position: relative;
+  animation: iconFloat 4s ease-in-out infinite;
+}
+
+@keyframes iconFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+
+.icon svg {
+  width: 44px;
+  height: 44px;
+  stroke-width: 1.8;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   TYPOGRAPHY
+   ═══════════════════════════════════════════════════════════════════════ */
+.code {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  margin-bottom: 18px;
+  background: var(--c-bg-soft);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--c-text-muted);
+}
+
+.code__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--c-accent);
+  animation: pulseDot 2s ease-in-out infinite;
+}
+
+@keyframes pulseDot {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(124,94,255,.15); }
+  50%      { box-shadow: 0 0 0 6px rgba(124,94,255,.06); }
+}
+
+.title {
+  font-size: clamp(28px, 7vw, 36px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.12;
+  color: var(--c-text);
+  margin-bottom: 14px;
+}
+
+.subtitle {
+  font-size: 15.5px;
+  color: var(--c-text-muted);
+  line-height: 1.6;
+  letter-spacing: -0.005em;
+  margin-bottom: 36px;
+  padding: 0 4px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   ACCIONES
+   ═══════════════════════════════════════════════════════════════════════ */
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 56px;
+  padding: 0 24px;
+  font-size: 15.5px;
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  border-radius: var(--radius-pill);
+  transition: all var(--transition);
+  width: 100%;
+  text-align: center;
+  text-decoration: none;
+}
+
+.btn svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  stroke-width: 2;
+}
+
+.btn--primary {
+  background: var(--c-primary);
+  color: #fff;
+  box-shadow: var(--shadow-btn);
+}
+
+.btn--primary:hover {
+  background: var(--c-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(30,58,95,.24);
+}
+
+.btn--primary:active {
+  background: var(--c-primary-active);
+  transform: translateY(0) scale(.985);
+}
+
+.btn--outline {
+  background: var(--c-bg-card);
+  color: var(--c-text);
+  border: 1.5px solid var(--c-border);
+}
+
+.btn--outline:hover {
+  background: var(--c-bg-hover);
+  border-color: #d4d4d8;
+  transform: translateY(-1px);
+}
+
+.btn--outline:active {
+  transform: translateY(0) scale(.985);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   FOOTER
+   ═══════════════════════════════════════════════════════════════════════ */
+.footer {
+  padding-top: 24px;
+  border-top: 1px solid var(--c-border);
+  font-size: 13px;
+  color: var(--c-text-subtle);
+  letter-spacing: -0.005em;
+  line-height: 1.55;
+}
+
+.footer a {
+  color: var(--c-text-muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--c-border);
+  transition: color var(--transition);
+}
+
+.footer a:hover {
+  color: var(--c-text);
+  text-decoration-color: var(--c-text);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SUGERENCIAS
+   ═══════════════════════════════════════════════════════════════════════ */
+.suggestions {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--c-border);
+  text-align: left;
+}
+
+.suggestions__title {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--c-text-subtle);
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.suggestions__list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  list-style: none;
+}
+
+.suggestions__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--c-bg-soft);
+  border: 1px solid transparent;
+  border-radius: 12px;
+  font-size: 14px;
+  color: var(--c-text-muted);
+  transition: all var(--transition);
+  text-decoration: none;
+}
+
+.suggestions__item:hover {
+  background: var(--c-bg-hover);
+  border-color: var(--c-border);
+  color: var(--c-text);
+  transform: translateX(3px);
+}
+
+.suggestions__item svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  stroke-width: 2;
+  color: var(--c-text-subtle);
+}
+
+.suggestions__item:hover svg {
+  color: var(--c-accent);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════════════════════════ */
+@media (max-width: 480px) {
+  .page { padding: 24px 16px; }
+  .card { padding: 40px 24px; border-radius: 20px; }
+  .icon { width: 80px; height: 80px; border-radius: 24px; margin-bottom: 24px; }
+  .icon svg { width: 38px; height: 38px; }
+  .title { font-size: 26px; }
+  .subtitle { font-size: 14.5px; margin-bottom: 28px; }
+  .btn { height: 52px; font-size: 15px; }
+  .actions { margin-bottom: 20px; }
+  .suggestions { margin-top: 24px; padding-top: 20px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+</style>
+</head>
+
+<body>
+<main class="page">
+  <div class="card">
+
+    <!-- Icono -->
+    <div class="icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        <line x1="11" y1="8" x2="11" y2="12"/>
+        <line x1="11" y1="16" x2="11.01" y2="16"/>
+      </svg>
+    </div>
+
+    <!-- Código de error -->
+    <div class="code">
+      <span class="code__dot"></span>
+      Error 404
+    </div>
+
+    <!-- Título -->
+    <h1 class="title">Esta página no existe.</h1>
+
+    <!-- Descripción -->
+    <p class="subtitle">
+      Puede que hayas escrito mal la dirección, que la página ya no esté disponible, o que nunca haya existido.
+    </p>
+
+    <!-- Acciones -->
+    <div class="actions">
+      <a href="/chat.html" class="btn btn--primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"/>
+          <polyline points="12 5 19 12 12 19"/>
+        </svg>
+        <span>Ir a Numination</span>
+      </a>
+      <button type="button" class="btn btn--outline" onclick="history.back()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"/>
+          <polyline points="12 19 5 12 12 5"/>
+        </svg>
+        <span>Volver atrás</span>
+      </button>
+    </div>
+
+    <!-- Footer -->
+    <p class="footer">
+      ¿Crees que es un error? Escribinos a
+      <a href="mailto:soporte@numination.app">soporte@numination.app</a>
+    </p>
+
+    <!-- Sugerencias -->
+    <div class="suggestions">
+      <div class="suggestions__title">Quizás buscabas</div>
+      <ul class="suggestions__list">
+        <li>
+          <a href="/chat.html" class="suggestions__item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            <span>Empezar un chat nuevo</span>
+          </a>
+        </li>
+        <li>
+          <a href="/login.html" class="suggestions__item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+              <polyline points="10 17 15 12 10 7"/>
+              <line x1="15" y1="12" x2="3" y2="12"/>
+            </svg>
+            <span>Iniciar sesión</span>
+          </a>
+        </li>
+        <li>
+          <a href="/terminos.html" class="suggestions__item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+            <span>Términos y condiciones</span>
+          </a>
+        </li>
+        <li>
+          <a href="/privacidad.html" class="suggestions__item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            <span>Política de privacidad</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</main>
+
+<script>
+/* ─── Detectar si la URL tiene un path que podría tener una sugerencia ─── */
+(function () {
+  'use strict';
+
+  // Si el path contiene alguna palabra clave conocida, cambiamos el título
+  const path = window.location.pathname.toLowerCase();
+  const titleEl = document.querySelector('.title');
+  const subtitleEl = document.querySelector('.subtitle');
+
+  const hints = {
+    chat: { title: 'El chat no está disponible.', sub: 'Puede que hayas cerrado la sesión o que el servidor esté en mantenimiento.' },
+    login: { title: 'No pudimos encontrar el login.', sub: 'Prueba volviendo a la página principal y empezando desde ahí.' },
+    admin: { title: 'Esta sección es privada.', sub: 'No tenés permisos para ver esta página.' },
+    api: { title: 'Endpoint no encontrado.', sub: 'Ese endpoint de la API no existe o cambió de nombre.' },
+  };
+
+  for (const [key, val] of Object.entries(hints)) {
+    if (path.includes(key) && titleEl && subtitleEl) {
+      titleEl.textContent = val.title;
+      subtitleEl.textContent = val.sub;
+      break;
+    }
+  }
+
+  // Log del error para debug
+  console.warn('[404]', {
+    path: window.location.pathname,
+    search: window.location.search,
+    referrer: document.referrer || 'directo',
+    ts: new Date().toISOString(),
+  });
+})();
+</script>
+
+</body>
+</html>

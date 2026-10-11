@@ -1,42 +1,79 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   NUMINATION — Backend v6.0
-   ───────────────────────────────────────────────────────────────────────────
-   La IA que habla el idioma de nuestra educación.
-
-   Prioridad de motores:
-     Texto:     Groq → Gemini → Kimi
-     Archivos:  Gemini → Kimi → Groq
-   ═══════════════════════════════════════════════════════════════════════════ */
+   
+                            ███╗   ██╗██╗   ██╗███╗   ███╗██╗
+                            ████╗  ██║██║   ██║████╗ ████║██║
+                            ██╔██╗ ██║██║   ██║██╔████╔██║██║
+                            ██║╚██╗██║██║   ██║██║╚██╔╝██║██║
+                            ██║ ╚████║╚██████╔╝██║ ╚═╝ ██║███████╗
+                            ╚═╝  ╚═══╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝
+   
+                              I N D E X   ·   v 6 . 3
+   
+   ─────────────────────────────────────────────────────────────────────────
+   Punto de entrada del servidor. Monta TODOS los módulos en el orden correcto.
+   
+   MÓDULOS:
+     auth.js         · 15 endpoints de autenticación
+     chats.js        · 8 endpoints de chats + streaming SSE
+     memories.js     · 14 endpoints de memorias
+     skills.js       · 3+ endpoints de skills
+     connectors.js   · 15 endpoints de 13 APIs externas
+     email.js        · 8 endpoints de email transaccional
+   
+   ORDEN CRÍTICO:
+     1. Middlewares base       → requestId, security, CORS, rate limit, JSON, cookies
+     2. Auth                   → attachUser + rutas /api/auth/*
+     3. Routers                → chats, memories, skills, connectors, email
+     4. Chat streaming         → /api/chat/stream + /api/chat (SSE)
+     5. Límites y health       → /api/limits/usage, /api/health, /api/version, /api/ping
+     6. Estáticos              → /public
+     7. Raíz                   → redirige a /login.html
+     8. Catch-all              → 404 JSON para /api/*, HTML para el resto
+     9. Error handler          → 500 con requestId
+    10. Listen                 → puerto 8080 (excepto en Vercel)
+   
+   MOTORES DE IA:
+     Texto     → Groq → Gemini → Kimi
+     Archivos  → Gemini → Kimi → Groq
+   ───────────────────────────────────────────────────────────────────────── */
 
 import express from 'express';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import cookieParser from 'cookie-parser';
 import { GoogleGenAI } from '@google/genai';
 import Groq from 'groq-sdk';
 import OpenAI from 'openai';
 
+/* ─── Servicios internos ─── */
 import { streamGroq, streamGemini } from './services/streaming.js';
+import { verificarLimite, consultarUso, registrarUso } from './services/limits.js';
+import { supabaseDisponible, listarMemories, pingDatabase } from './services/supabase.js';
+
+/* ─── Routers ─── */
 import { mountAuthRoutes, attachUser, requireAuth } from './auth.js';
 import { mountChatRoutes } from './chats.js';
 import { mountMemoryRoutes } from './memories.js';
-import { verificarLimite, consultarUso, registrarUso } from './services/limits.js';
-import { supabaseDisponible, listarMemories } from './services/supabase.js';
+import { mountSkillsRoutes } from './skills.js';
+import { mountConnectorRoutes } from './connectors.js';
+import { mountEmailRoutes } from './email.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, '..', 'public');
-const VERSION = '6.0.0';
+
+const VERSION = '6.3.0';
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   CONFIG
+   CONFIGURACIÓN
    ═══════════════════════════════════════════════════════════════════════════ */
 
 const IS_PROD = process.env.NODE_ENV === 'production';
 const IS_VERCEL = process.env.VERCEL === '1';
 const PORT = parseInt(process.env.PORT || '8080', 10);
 
-const CFG = {
+const CFG = Object.freeze({
   maxMsgLen: 8000,
   jsonLimit: '15mb',
   geminiCooldownMs: 60_000,
@@ -45,10 +82,17 @@ const CFG = {
   rateLimitIPMax: 240,
   retryAttempts: 6,
   retryBaseDelayMs: 900,
-};
+  sseHeartbeatMs: 15_000,
+  sseMaxDurationMs: 120_000,
+  memCacheTtlMs: 30_000,
+  memCacheMax: 200,
+  keepAliveTimeout: 65_000,
+  headersTimeout: 66_000,
+  shutdownTimeout: 10_000,
+});
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   LOGGER SIMPLE
+   LOGGER
    ═══════════════════════════════════════════════════════════════════════════ */
 
 const LVL = { debug: 10, info: 20, warn: 30, error: 40 };
@@ -79,16 +123,16 @@ try {
   TEST_KEYS = mod.TEST_KEYS ?? {};
 } catch {}
 
-const KEYS = {
-  GROQ:   process.env.GROQ_API_KEY   ?? TEST_KEYS.GROQ_API_KEY,
-  NV:     process.env.NVIDIA_API_KEY ?? TEST_KEYS.NVIDIA_API_KEY,
-  GM1:    process.env.GEMINI_API_KEY   ?? TEST_KEYS.GEMINI_API_KEY,
-  GM2:    process.env.GEMINI_API_KEY_2 ?? TEST_KEYS.GEMINI_API_KEY_2,
-  GM3:    process.env.GEMINI_API_KEY_3 ?? TEST_KEYS.GEMINI_API_KEY_3,
-};
+const KEYS = Object.freeze({
+  GROQ: process.env.GROQ_API_KEY     ?? TEST_KEYS.GROQ_API_KEY,
+  NV:   process.env.NVIDIA_API_KEY   ?? TEST_KEYS.NVIDIA_API_KEY,
+  GM1:  process.env.GEMINI_API_KEY   ?? TEST_KEYS.GEMINI_API_KEY,
+  GM2:  process.env.GEMINI_API_KEY_2 ?? TEST_KEYS.GEMINI_API_KEY_2,
+  GM3:  process.env.GEMINI_API_KEY_3 ?? TEST_KEYS.GEMINI_API_KEY_3,
+});
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   GEMINI POOL
+   GEMINI POOL · 3 keys con cooldown independiente
    ═══════════════════════════════════════════════════════════════════════════ */
 
 const geminiPool = [KEYS.GM1, KEYS.GM2, KEYS.GM3]
@@ -97,22 +141,30 @@ const geminiPool = [KEYS.GM1, KEYS.GM2, KEYS.GM3]
     id: i + 1,
     client: new GoogleGenAI({ apiKey }),
     cooldownUntil: 0,
+    requests: 0,
+    errors: 0,
   }));
 
 const geminiAvailable = () => geminiPool.filter((e) => e.cooldownUntil <= Date.now());
 
 function geminiCooldown(entry, ms = CFG.geminiCooldownMs) {
   entry.cooldownUntil = Date.now() + ms;
+  entry.errors++;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    CLIENTES IA
    ═══════════════════════════════════════════════════════════════════════════ */
 
-const groq = KEYS.GROQ ? new Groq({ apiKey: KEYS.GROQ }) : null;
+const groq = KEYS.GROQ
+  ? new Groq({ apiKey: KEYS.GROQ })
+  : null;
 
 const nvidia = KEYS.NV
-  ? new OpenAI({ apiKey: KEYS.NV, baseURL: 'https://integrate.api.nvidia.com/v1' })
+  ? new OpenAI({
+      apiKey: KEYS.NV,
+      baseURL: 'https://integrate.api.nvidia.com/v1',
+    })
   : null;
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -130,12 +182,13 @@ function short(t, n = 120) {
 function isRateLimit(err) {
   const msg = String(err?.message || '').toLowerCase();
   const st = err?.status ?? err?.code ?? 0;
-  return st === 429 || st === 503 || msg.includes('429') || msg.includes('503') ||
+  return st === 429 || st === 503 ||
+    msg.includes('429') || msg.includes('503') ||
     msg.includes('quota') || msg.includes('rate limit') || msg.includes('overloaded');
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   SEGURIDAD (mínimo indispensable)
+   SEGURIDAD · prompt injection guard
    ═══════════════════════════════════════════════════════════════════════════ */
 
 const INJECTION_PATTERNS = [
@@ -143,6 +196,9 @@ const INJECTION_PATTERNS = [
   /disregard\s+(all\s+)?(previous|prior)\s+rules?/i,
   /you\s+are\s+now\s+(a|an)\s+/i,
   /<\|im_start\|>/i,
+  /<\|im_end\|>/i,
+  /\[system\]/i,
+  /\[INST\]/i,
 ];
 
 function isInjection(message) {
@@ -152,7 +208,7 @@ function isInjection(message) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   RATE LIMITER IP (en memoria)
+   RATE LIMITER IP
    ═══════════════════════════════════════════════════════════════════════════ */
 
 const ipBuckets = new Map();
@@ -168,10 +224,11 @@ function checkIP(ip) {
   return { allowed: b.count <= CFG.rateLimitIPMax, reset: b.reset };
 }
 
-setInterval(() => {
+const _ipCleanup = setInterval(() => {
   const now = Date.now();
   for (const [ip, b] of ipBuckets) if (b.reset < now) ipBuckets.delete(ip);
-}, 5 * 60_000).unref?.();
+}, 5 * 60_000);
+if (_ipCleanup.unref) _ipCleanup.unref();
 
 /* ═══════════════════════════════════════════════════════════════════════════
    SYSTEM PROMPTS
@@ -226,10 +283,10 @@ Cuando uses ejemplos, apóyate en:
 `.trim();
 
 const ROLE_HINT = {
-  student: 'Eres un tutor amable y claro para estudiantes colombianos. Explica paso a paso, usa ejemplos sencillos y adapta el lenguaje al nivel del estudiante.',
-  teacher: 'Eres un asistente pedagógico para docentes colombianos. Ayuda a diseñar actividades, evaluaciones y explicaciones aplicables al aula.',
+  student:   'Eres un tutor amable y claro para estudiantes colombianos. Explica paso a paso, usa ejemplos sencillos y adapta el lenguaje al nivel del estudiante.',
+  teacher:   'Eres un asistente pedagógico para docentes colombianos. Ayuda a diseñar actividades, evaluaciones y explicaciones aplicables al aula.',
   reasoning: 'Eres Numi-OT.01 en MODO RAZONAMIENTO. Piensas paso a paso, con rigor, antes de responder. Ayudas a razonar, no resuelves.',
-  coder: 'Eres un asistente técnico especializado en programación. Explicas código, corriges bugs, sugieres mejoras.',
+  coder:     'Eres un asistente técnico especializado en programación. Explicas código, corriges bugs, sugieres mejoras.',
 };
 
 const REASONING_PREFIX = `INSTRUCCIÓN — MODO RAZONAMIENTO:
@@ -264,11 +321,16 @@ function buildFinalMessage(message, isReasoning) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   IMÁGENES (Pollinations)
+   IMÁGENES · Pollinations
    ═══════════════════════════════════════════════════════════════════════════ */
 
 function buildImageUrl(prompt, opts = {}) {
-  const { width = 1024, height = 1024, model = 'flux', seed = Math.floor(Math.random() * 1e6) } = opts;
+  const {
+    width = 1024,
+    height = 1024,
+    model = 'flux',
+    seed = Math.floor(Math.random() * 1e6),
+  } = opts;
   const enc = encodeURIComponent(prompt.trim().slice(0, 500));
   return `https://image.pollinations.ai/prompt/${enc}?width=${width}&height=${height}&model=${model}&seed=${seed}&nologo=true&enhance=true`;
 }
@@ -324,12 +386,18 @@ async function callGemini(systemPrompt, message, file) {
   if (!first) throw new Error('Gemini no configurado');
 
   const parts = [{ text: message || '(analiza el archivo adjunto)' }];
-  if (file?.data) parts.push({ inlineData: { mimeType: file.mimeType, data: file.data } });
+  if (file?.data) {
+    parts.push({ inlineData: { mimeType: file.mimeType, data: file.data } });
+  }
 
+  first.requests++;
   const r = await first.client.models.generateContent({
     model: 'gemini-3.6-flash',
     contents: [{ role: 'user', parts }],
-    config: { systemInstruction: systemPrompt, thinkingConfig: { thinkingBudget: 0 } },
+    config: {
+      systemInstruction: systemPrompt,
+      thinkingConfig: { thinkingBudget: 0 },
+    },
   });
   return r.text ?? '';
 }
@@ -368,20 +436,27 @@ const orderMotors = (file) => file?.data
   : ['groq', 'gemini', 'nvidia'];
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   MEMORIAS (con caché mínimo)
+   MEMORIAS · caché con TTL
    ═══════════════════════════════════════════════════════════════════════════ */
 
 const memCache = new Map();
-const MEM_TTL = 30_000;
 
 async function loadMemories(req) {
   if (!req.user?.id) return [];
   const key = req.user.id;
   const cached = memCache.get(key);
-  if (cached && Date.now() - cached.t < MEM_TTL) return cached.v;
+
+  if (cached && Date.now() - cached.t < CFG.memCacheTtlMs) {
+    return cached.v;
+  }
 
   try {
     const list = await listarMemories(req.user.id);
+
+    if (memCache.size >= CFG.memCacheMax) {
+      const oldestKey = memCache.keys().next().value;
+      memCache.delete(oldestKey);
+    }
     memCache.set(key, { v: list, t: Date.now() });
     return list;
   } catch (e) {
@@ -391,7 +466,7 @@ async function loadMemories(req) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   SSE HELPERS (FIX: sin id:, res.on close, cierre garantizado)
+   SSE HELPERS
    ═══════════════════════════════════════════════════════════════════════════ */
 
 function setupSSE(req, res) {
@@ -406,16 +481,14 @@ function setupSSE(req, res) {
   }
 
   let closed = false;
+  const startedAt = Date.now();
 
-  /* res.on('close') refleja desconexión real del cliente.
-     req.on('close') disparaba al terminar de leer el body (ms). */
   res.on('close', () => { closed = true; });
   res.on('error', () => { closed = true; });
 
   const send = (data) => {
     if (closed) return false;
     try {
-      /* ⚠️ Sin `id:` — el cliente solo parsea líneas que empiezan con `data: ` */
       res.write(`data: ${JSON.stringify(data)}\n\n`);
       return true;
     } catch {
@@ -425,9 +498,17 @@ function setupSSE(req, res) {
   };
 
   const heartbeat = setInterval(() => {
-    if (!closed) { try { res.write(': ping\n\n'); } catch { closed = true; } }
-  }, 15_000);
-  heartbeat.unref?.();
+    if (closed) return;
+    if (Date.now() - startedAt > CFG.sseMaxDurationMs) {
+      send({ error: 'Timeout', done: true });
+      clearInterval(heartbeat);
+      try { res.end(); } catch {}
+      closed = true;
+      return;
+    }
+    try { res.write(': ping\n\n'); } catch { closed = true; }
+  }, CFG.sseHeartbeatMs);
+  if (heartbeat.unref) heartbeat.unref();
 
   const close = () => {
     clearInterval(heartbeat);
@@ -437,7 +518,7 @@ function setupSSE(req, res) {
     }
   };
 
-  return { send, close, isClosed: () => closed };
+  return { send, close, isClosed: () => closed, elapsed: () => Date.now() - startedAt };
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -461,7 +542,31 @@ app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  if (IS_PROD) res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  if (IS_PROD) {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+  next();
+});
+
+/* ─── CORS ─── */
+app.use((req, res, next) => {
+  const origin = req.get('origin');
+  const allowed = [
+    'http://localhost:8080',
+    'http://127.0.0.1:8080',
+    'https://numination.app',
+    'https://www.numination.app',
+    'https://numinationchat.vercel.app',
+  ];
+  if (origin && allowed.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Request-Id');
+    res.setHeader('Access-Control-Max-Age', '86400');
+  }
+  if (req.method === 'OPTIONS') return res.status(204).end();
   next();
 });
 
@@ -472,9 +577,11 @@ app.use((req, res, next) => {
   }
   const { allowed, reset } = checkIP(req.ip);
   if (!allowed) {
+    res.setHeader('Retry-After', String(Math.ceil((reset - Date.now()) / 1000)));
     return res.status(429).json({
+      ok: false,
       error: 'Demasiadas peticiones. Espera un minuto.',
-      retryAfter: Math.ceil((reset - Date.now()) / 1000),
+      code: 'ip_rate_limit',
     });
   }
   next();
@@ -485,30 +592,41 @@ app.use(express.json({ limit: CFG.jsonLimit }));
 app.use(express.urlencoded({ extended: false, limit: '1mb' }));
 app.use(cookieParser());
 
-/* ─── Auth ─── */
+/* ─── Auth attachUser ─── */
 app.use(attachUser);
 
-/* ─── Rutas privadas ─── */
+/* ─── Proteger /chat.html ─── */
 app.use((req, res, next) => {
   if (req.path === '/chat.html' && !req.user) return res.redirect('/login.html');
   next();
 });
 
-/* ─── Static ─── */
+/* ─── Static files ─── */
 app.use(express.static(publicDir, {
   index: false,
   maxAge: IS_PROD ? '1h' : 0,
   etag: true,
   lastModified: true,
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    }
+  },
 }));
 
 /* ─── Raíz → login ─── */
 app.get('/', (req, res) => res.redirect('/login.html'));
 
-/* ─── Rutas montadas ─── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   ROUTERS (TODOS antes del catch-all)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 mountAuthRoutes(app);
 mountChatRoutes(app, requireAuth);
 mountMemoryRoutes(app, requireAuth);
+mountSkillsRoutes(app, requireAuth);
+mountConnectorRoutes(app, requireAuth);
+mountEmailRoutes(app, requireAuth);
 
 /* ═══════════════════════════════════════════════════════════════════════════
    LÍMITES
@@ -518,20 +636,22 @@ app.get('/api/limits/usage', async (req, res) => {
   try {
     const uso = await consultarUso(req);
     if (!uso) return res.json({ ok: false, error: 'Límites no configurados' });
-    res.json({ ok: true, ...uso });
+    return res.json({ ok: true, ...uso });
   } catch (e) {
     LOG.error('limits/usage:', e.message);
-    res.status(500).json({ ok: false, error: 'Error consultando uso' });
+    return res.status(500).json({ ok: false, error: 'Error consultando uso' });
   }
 });
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   HEALTH
+   HEALTH · VERSION · PING
    ═══════════════════════════════════════════════════════════════════════════ */
 
-app.get('/api/health', (req, res) => {
+app.get('/api/health', async (req, res) => {
   const mem = process.memoryUsage();
-  res.json({
+  const dbPing = await pingDatabase().catch(() => ({ ok: false }));
+
+  return res.json({
     ok: true,
     service: 'numination',
     version: VERSION,
@@ -543,17 +663,19 @@ app.get('/api/health', (req, res) => {
       files: ['gemini', 'nvidia', 'groq'],
     },
     keys: {
-      groq: !!KEYS.GROQ,
-      gemini_1: !!KEYS.GM1,
-      gemini_2: !!KEYS.GM2,
-      gemini_3: !!KEYS.GM3,
-      nvidia: !!KEYS.NV,
+      groq: Boolean(KEYS.GROQ),
+      gemini_1: Boolean(KEYS.GM1),
+      gemini_2: Boolean(KEYS.GM2),
+      gemini_3: Boolean(KEYS.GM3),
+      nvidia: Boolean(KEYS.NV),
     },
     geminiPool: geminiPool.map((e) => ({
       id: e.id,
       cooldown: e.cooldownUntil > Date.now(),
+      requests: e.requests,
+      errors: e.errors,
     })),
-    database: { connected: supabaseDisponible() },
+    database: { connected: supabaseDisponible(), ping: dbPing },
     auth: {
       session: Boolean(req.user),
       email: req.user?.email || null,
@@ -565,11 +687,26 @@ app.get('/api/health', (req, res) => {
         heap: Math.round(mem.heapUsed / 1024 / 1024) + ' MB',
       },
     },
+    ts: new Date().toISOString(),
   });
 });
 
+app.get('/api/version', (_req, res) => {
+  res.json({
+    ok: true,
+    version: VERSION,
+    name: 'Numination',
+    codename: 'Numi-OT.01',
+    env: process.env.NODE_ENV || 'development',
+  });
+});
+
+app.get('/api/ping', (_req, res) => {
+  res.json({ ok: true, pong: Date.now() });
+});
+
 /* ═══════════════════════════════════════════════════════════════════════════
-   CHAT STREAMING
+   CHAT STREAMING · SSE
    ═══════════════════════════════════════════════════════════════════════════ */
 
 app.post('/api/chat/stream', async (req, res) => {
@@ -581,6 +718,7 @@ app.post('/api/chat/stream', async (req, res) => {
     if (!lim.permitido) {
       if (lim.retryAfter) res.setHeader('Retry-After', String(lim.retryAfter));
       return res.status(429).json({
+        ok: false,
         error: lim.mensaje,
         razon: lim.razon,
         retryAfter: lim.retryAfter,
@@ -596,17 +734,21 @@ app.post('/api/chat/stream', async (req, res) => {
     const hasFile = file?.data;
 
     if (!hasText && !hasFile) {
-      return res.status(400).json({ error: 'Falta el mensaje o archivo' });
+      return res.status(400).json({ ok: false, error: 'Falta el mensaje o archivo' });
     }
 
     if (hasText && String(message).length > CFG.maxMsgLen) {
-      return res.status(400).json({ error: `Mensaje muy largo (máx ${CFG.maxMsgLen} caracteres)` });
+      return res.status(400).json({
+        ok: false,
+        error: `Mensaje muy largo (máx ${CFG.maxMsgLen} caracteres)`,
+      });
     }
 
     /* ─── Injection guard ─── */
     if (hasText && isInjection(message)) {
       LOG.warn(`[${req.id}] Injection bloqueado`);
       return res.status(403).json({
+        ok: false,
         error: 'No puedo procesar esa instrucción. Reformúlala como una pregunta educativa.',
         code: 'PROMPT_INJECTION_BLOCKED',
       });
@@ -620,7 +762,9 @@ app.post('/api/chat/stream', async (req, res) => {
     const memories = incognito ? [] : await loadMemories(req);
     const systemPrompt = buildSystemPrompt(effectiveRole, memories);
 
-    LOG.debug(`[${req.id}] stream · ${effectiveRole}${incognito ? ' · incognito' : ''} · mem=${memories.length} · file=${hasFile ? 'sí' : 'no'}`);
+    LOG.debug(
+      `[${req.id}] stream · ${effectiveRole}${incognito ? ' · incognito' : ''} · mem=${memories.length} · file=${hasFile ? 'sí' : 'no'}`
+    );
 
     /* ─── SSE ─── */
     const sse = setupSSE(req, res);
@@ -641,7 +785,7 @@ app.post('/api/chat/stream', async (req, res) => {
     let responded = false;
     let tokens = 0;
 
-    /* ═══ Orden de motores ═══ */
+    /* ═══ Iteración por motores ═══ */
     for (const prov of orderMotors(file)) {
       if (sse.isClosed()) break;
 
@@ -659,8 +803,15 @@ app.post('/api/chat/stream', async (req, res) => {
           try {
             LOG.debug(`[${req.id}] Gemini #${entry.id} streaming...`);
             let local = 0;
+            entry.requests++;
 
-            for await (const token of streamGemini(entry.client, systemPrompt, finalMessage, file, { reasoning: isReasoning })) {
+            for await (const token of streamGemini(
+              entry.client,
+              systemPrompt,
+              finalMessage,
+              file,
+              { reasoning: isReasoning }
+            )) {
               if (sse.isClosed()) break;
               sse.send({ token, done: false });
               responded = true;
@@ -701,7 +852,13 @@ app.post('/api/chat/stream', async (req, res) => {
           LOG.debug(`[${req.id}] Groq streaming...`);
           let local = 0;
 
-          for await (const token of streamGroq(groq, systemPrompt, finalMessage, file, { reasoning: isReasoning })) {
+          for await (const token of streamGroq(
+            groq,
+            systemPrompt,
+            finalMessage,
+            file,
+            { reasoning: isReasoning }
+          )) {
             if (sse.isClosed()) break;
             sse.send({ token, done: false });
             responded = true;
@@ -755,7 +912,9 @@ app.post('/api/chat/stream', async (req, res) => {
     }
   } catch (err) {
     LOG.error(`[${req.id}] Error en stream: ${err.message}`);
-    if (!res.headersSent) res.status(500).json({ error: 'Error interno del servidor' });
+    if (!res.headersSent) {
+      res.status(500).json({ ok: false, error: 'Error interno del servidor' });
+    }
   }
 });
 
@@ -769,7 +928,7 @@ function finishSSE(sse, req, incognito, t0, tokens, provider) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   CHAT NORMAL (no streaming)
+   CHAT NORMAL · sin streaming
    ═══════════════════════════════════════════════════════════════════════════ */
 
 app.post('/api/chat', async (req, res) => {
@@ -780,6 +939,7 @@ app.post('/api/chat', async (req, res) => {
     if (!lim.permitido) {
       if (lim.retryAfter) res.setHeader('Retry-After', String(lim.retryAfter));
       return res.status(429).json({
+        ok: false,
         error: lim.mensaje,
         razon: lim.razon,
         retryAfter: lim.retryAfter,
@@ -793,13 +953,15 @@ app.post('/api/chat', async (req, res) => {
     const hasText = message && String(message).trim();
     const hasFile = file?.data;
 
-    if (!hasText && !hasFile) return res.status(400).json({ error: 'Falta el mensaje o archivo' });
-    if (hasText && String(message).length > CFG.maxMsgLen) {
-      return res.status(400).json({ error: 'Mensaje muy largo' });
+    if (!hasText && !hasFile) {
+      return res.status(400).json({ ok: false, error: 'Falta el mensaje o archivo' });
     }
-
+    if (hasText && String(message).length > CFG.maxMsgLen) {
+      return res.status(400).json({ ok: false, error: 'Mensaje muy largo' });
+    }
     if (hasText && isInjection(message)) {
       return res.status(403).json({
+        ok: false,
         error: 'No puedo procesar esa instrucción.',
         code: 'PROMPT_INJECTION_BLOCKED',
       });
@@ -815,8 +977,9 @@ app.post('/api/chat', async (req, res) => {
       if (imgPrompt.length > 3) {
         LOG.info(`[${req.id}] Imagen: "${short(imgPrompt, 60)}"`);
         const imageUrl = buildImageUrl(enrichColombia(imgPrompt));
-        registrarUso(req).catch(() => {});
+        if (!incognito) registrarUso(req).catch(() => {});
         return res.json({
+          ok: true,
           reply: `Listo, aquí está tu imagen de: **${imgPrompt}**\n\nSi quieres otra versión, pídeme "otra imagen de..." y crearé una variación.`,
           imageUrl,
           imagePrompt: imgPrompt,
@@ -831,9 +994,7 @@ app.post('/api/chat', async (req, res) => {
     const order = orderMotors(file);
 
     /* ─── Intentos ─── */
-    const attempts = [
-      order[0], order[0], order[1], order[2], order[1], order[2],
-    ];
+    const attempts = [order[0], order[0], order[1], order[2], order[1], order[2]];
 
     for (let i = 0; i < attempts.length; i++) {
       const prov = attempts[i];
@@ -848,6 +1009,7 @@ app.post('/api/chat', async (req, res) => {
           LOG.ok(`[${req.id}] ${NAMES[prov]} respondió en ${dur}ms`);
           if (!incognito) registrarUso(req).catch(() => {});
           return res.json({
+            ok: true,
             reply,
             provider: prov,
             mode: effectiveRole,
@@ -863,11 +1025,12 @@ app.post('/api/chat', async (req, res) => {
 
     LOG.error(`[${req.id}] Todos los intentos fallaron`);
     return res.status(503).json({
+      ok: false,
       error: 'Los motores de IA están saturados. Espera unos segundos e intenta de nuevo.',
     });
   } catch (err) {
     LOG.error(`[${req.id}] Error: ${err.message}`);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ ok: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -877,10 +1040,22 @@ app.post('/api/chat', async (req, res) => {
 
 app.use((req, res) => {
   if (req.path.startsWith('/api/')) {
-    return res.status(404).json({ error: 'Endpoint no encontrado: ' + req.path });
+    return res.status(404).json({
+      ok: false,
+      error: 'Endpoint no encontrado: ' + req.path,
+      code: 'endpoint_not_found',
+    });
   }
   if (path.extname(req.path)) {
-    return res.status(404).json({ error: 'Archivo no encontrado: ' + req.path });
+    return res.status(404).json({
+      ok: false,
+      error: 'Archivo no encontrado: ' + req.path,
+      code: 'file_not_found',
+    });
+  }
+  const page404 = path.join(publicDir, '404.html');
+  if (fs.existsSync(page404)) {
+    return res.status(404).sendFile(page404);
   }
   res.redirect('/login.html');
 });
@@ -892,15 +1067,28 @@ app.use((req, res) => {
 app.use((err, req, res, _next) => {
   if (err?.type === 'entity.parse.failed' || err instanceof SyntaxError) {
     LOG.warn(`[${req.id}] JSON inválido: ${err.message}`);
-    if (!res.headersSent) return res.status(400).json({ error: 'JSON inválido' });
+    if (!res.headersSent) {
+      return res.status(400).json({ ok: false, error: 'JSON inválido', code: 'invalid_json' });
+    }
+    return;
+  }
+
+  if (err?.type === 'entity.too.large') {
+    if (!res.headersSent) {
+      return res.status(413).json({ ok: false, error: 'Payload demasiado grande', code: 'payload_too_large' });
+    }
     return;
   }
 
   LOG.error(`[${req.id}] Error no manejado: ${err.message}`);
-  if (process.env.NODE_ENV !== 'production') LOG.error(err.stack);
+  if (!IS_PROD) LOG.error(err.stack);
 
   if (!res.headersSent) {
-    res.status(500).json({ error: 'Error interno del servidor', requestId: req.id });
+    res.status(500).json({
+      ok: false,
+      error: 'Error interno del servidor',
+      requestId: req.id,
+    });
   }
 });
 
@@ -933,7 +1121,19 @@ function banner() {
   console.log(`  🎨  Imágenes:     Pollinations`);
   console.log(`  🧠  Modos:        chat · coder · reasoning`);
   console.log(`  💾  Memorias:     ${dbOn ? 'activas' : 'sin DB'}`);
+  console.log(`  🔌  Conectores:   13 APIs`);
+  console.log(`  📧  Email:        configurable`);
   console.log(`  🔐  Auth:         Google + GitHub`);
+  console.log('');
+  console.log('  📡  MÓDULOS');
+  console.log('      /api/auth/*         · 15 endpoints');
+  console.log('      /api/chats          · conversaciones');
+  console.log('      /api/chat/stream    · streaming SSE');
+  console.log('      /api/memories/*     · 14 endpoints');
+  console.log('      /api/skills         · habilidades');
+  console.log('      /api/connectors/*   · 15 endpoints');
+  console.log('      /api/email/*        · 8 endpoints');
+  console.log('      /api/health         · estado del server');
   console.log('');
   console.log('  💡 Ctrl+C para detener');
   console.log('');
@@ -941,8 +1141,8 @@ function banner() {
 
 if (!IS_VERCEL) {
   server = app.listen(PORT, () => banner());
-  server.keepAliveTimeout = 65_000;
-  server.headersTimeout = 66_000;
+  server.keepAliveTimeout = CFG.keepAliveTimeout;
+  server.headersTimeout = CFG.headersTimeout;
 }
 
 function shutdown(signal) {
@@ -955,23 +1155,29 @@ function shutdown(signal) {
   });
 
   setTimeout(() => {
-    LOG.error('Forzando salida');
+    LOG.error('Forzando salida por timeout');
     process.exit(1);
-  }, 10_000).unref?.();
+  }, CFG.shutdownTimeout).unref?.();
 }
 
 process.on('SIGINT', () => shutdown('SIGINT'));
 process.on('SIGTERM', () => shutdown('SIGTERM'));
+
 process.on('uncaughtException', (err) => {
   LOG.error('Uncaught:', err.message);
   if (!IS_PROD) {
     LOG.error(err.stack);
-    return; /* en dev no matamos el server */
+    return;
   }
   shutdown('uncaughtException');
 });
+
 process.on('unhandledRejection', (reason) => {
   LOG.error('Unhandled rejection:', String(reason));
 });
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EXPORT (para Vercel)
+   ═══════════════════════════════════════════════════════════════════════════ */
 
 export default app;

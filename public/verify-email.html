@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="es-CO" data-theme="claro">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#f0f0f2" />
+<meta name="color-scheme" content="light" />
+<meta name="robots" content="noindex, nofollow" />
+<meta name="referrer" content="strict-origin-when-cross-origin" />
+
+<title>Confirma tu correo · Numination</title>
+<meta name="description" content="Verifica tu correo para continuar en Numination." />
+
+<link rel="icon" href="/favicon.ico" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
+
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   TOKENS
+   ═══════════════════════════════════════════════════════════════ */
+:root {
+  --c-bg:          #f0f0f2;
+  --c-bg-card:     #ffffff;
+  --c-bg-soft:     #f5f5f7;
+  --c-bg-hover:    #f7f7f8;
+  --c-border:      #e4e4e7;
+  --c-border-soft: #ececef;
+  --c-text:        #0a0a0a;
+  --c-text-muted:  #6b6b6b;
+  --c-text-subtle: #a0a0a3;
+
+  --c-primary:       #1e3a5f;
+  --c-primary-hover: #162d4a;
+  --c-primary-active:#0f2138;
+  --c-accent:        #2b7fff;
+  --c-accent-soft:   #e8f1ff;
+  --c-accent-glow:   rgba(43,127,255,.14);
+
+  --c-success:       #16a34a;
+  --c-success-soft:  #dcfce7;
+  --c-danger:        #dc2626;
+  --c-danger-soft:   #fef2f2;
+
+  --radius-pill:  999px;
+  --radius-card:  20px;
+
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  --shadow-card: 0 1px 2px rgba(0,0,0,.04), 0 1px 3px rgba(0,0,0,.03);
+  --shadow-btn:  0 4px 14px rgba(30,58,95,.18);
+
+  --transition: 180ms cubic-bezier(.4,0,.2,1);
+  --z-toast: 9999;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESET
+   ═══════════════════════════════════════════════════════════════ */
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; width: 100%; }
+
+body {
+  font-family: var(--font-sans);
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; -webkit-tap-highlight-color: transparent; }
+button:disabled { cursor: not-allowed; opacity: .55; }
+input { font-family: inherit; color: inherit; background: none; border: none; outline: none; }
+a { color: inherit; text-decoration: none; }
+
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-thumb { background: var(--c-border); border-radius: 4px; }
+
+/* ═══════════════════════════════════════════════════════════════
+   LAYOUT
+   ═══════════════════════════════════════════════════════════════ */
+.page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+}
+
+.page__inner {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  animation: fadeIn .5s cubic-bezier(.4,0,.2,1);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   VISTAS
+   ═══════════════════════════════════════════════════════════════ */
+.view { display: none; }
+.view.is-active { display: flex; flex-direction: column; }
+
+/* ═══════════════════════════════════════════════════════════════
+   TÍTULOS
+   ═══════════════════════════════════════════════════════════════ */
+.title {
+  font-size: clamp(30px, 7vw, 36px);
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: -0.028em;
+  text-align: center;
+  color: var(--c-text);
+  margin-bottom: 12px;
+}
+
+.subtitle {
+  font-size: 15.5px;
+  color: var(--c-text-muted);
+  text-align: center;
+  line-height: 1.5;
+  letter-spacing: -0.005em;
+  margin-bottom: 32px;
+  padding: 0 6px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CARD DE EMAIL
+   ═══════════════════════════════════════════════════════════════ */
+.email-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+  background: var(--c-bg-card);
+  border: 1.5px solid var(--c-border);
+  border-radius: var(--radius-card);
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-card);
+}
+
+.email-card__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: var(--c-bg-soft);
+  border-radius: 14px;
+  flex-shrink: 0;
+  color: var(--c-primary);
+}
+.email-card__icon svg { width: 22px; height: 22px; stroke-width: 1.9; }
+
+.email-card__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.email-card__label {
+  font-size: 13px;
+  color: var(--c-text-muted);
+  font-weight: 400;
+  letter-spacing: -0.005em;
+}
+
+.email-card__value {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--c-text);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   HINT
+   ═══════════════════════════════════════════════════════════════ */
+.hint {
+  font-size: 14.5px;
+  color: var(--c-text-muted);
+  text-align: center;
+  line-height: 1.55;
+  letter-spacing: -0.005em;
+  margin-bottom: 28px;
+  padding: 0 8px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BOTONES
+   ═══════════════════════════════════════════════════════════════ */
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 56px;
+  padding: 0 24px;
+  font-size: 15.5px;
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  border-radius: var(--radius-pill);
+  transition: all var(--transition);
+  width: 100%;
+  text-align: center;
+  text-decoration: none;
+}
+
+.btn svg { width: 20px; height: 20px; flex-shrink: 0; stroke-width: 1.9; }
+
+.btn--primary {
+  background: var(--c-primary);
+  color: #fff;
+  box-shadow: var(--shadow-btn);
+}
+.btn--primary:hover:not(:disabled) {
+  background: var(--c-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(30,58,95,.24);
+}
+.btn--primary:active:not(:disabled) {
+  background: var(--c-primary-active);
+  transform: translateY(0) scale(.985);
+}
+
+.btn--outline {
+  background: var(--c-bg-card);
+  color: var(--c-text);
+  border: 1.5px solid var(--c-border);
+}
+.btn--outline:hover:not(:disabled) {
+  border-color: var(--c-border-soft);
+  background: var(--c-bg-hover);
+  transform: translateY(-1px);
+}
+.btn--outline:active:not(:disabled) {
+  transform: translateY(0) scale(.985);
+}
+
+.btn.is-loading { position: relative; color: transparent; }
+.btn.is-loading svg,
+.btn.is-loading span { opacity: 0; }
+.btn.is-loading::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 20px; height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 2.5px solid rgba(255,255,255,.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+.btn--outline.is-loading::after {
+  border-color: rgba(10,10,10,.15);
+  border-top-color: var(--c-primary);
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.btn + .btn { margin-top: 12px; }
+
+/* ═══════════════════════════════════════════════════════════════
+   LINKS SUAVES
+   ═══════════════════════════════════════════════════════════════ */
+.link-soft {
+  display: block;
+  text-align: center;
+  font-size: 14.5px;
+  color: var(--c-text-muted);
+  margin-top: 18px;
+  padding: 8px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--c-text-subtle);
+  transition: color var(--transition);
+  cursor: pointer;
+  background: none;
+  border: none;
+  width: 100%;
+  font-family: inherit;
+}
+.link-soft:hover:not(:disabled) {
+  color: var(--c-text);
+  text-decoration-color: var(--c-text);
+}
+.link-soft:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ESTADO DE ÉXITO / ERROR
+   ═══════════════════════════════════════════════════════════════ */
+.state-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 88px;
+  height: 88px;
+  margin: 0 auto 28px;
+  border-radius: 50%;
+  animation: popIn 400ms cubic-bezier(.16,1,.3,1);
+}
+.state-icon svg { width: 44px; height: 44px; stroke-width: 2.5; }
+@keyframes popIn {
+  from { transform: scale(0.5); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+.state-icon--success {
+  background: var(--c-success-soft);
+  color: var(--c-success);
+}
+
+.state-icon--error {
+  background: var(--c-danger-soft);
+  color: var(--c-danger);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BARRA DE PROGRESO SUTIL (polling indicator)
+   ═══════════════════════════════════════════════════════════════ */
+.checking {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--c-text-subtle);
+  margin-top: 20px;
+  letter-spacing: -0.005em;
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+.checking.is-visible { opacity: 1; }
+
+.checking__dots {
+  display: inline-flex;
+  gap: 4px;
+}
+.checking__dots span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--c-text-subtle);
+  animation: dotPulse 1.4s infinite;
+}
+.checking__dots span:nth-child(2) { animation-delay: .18s; }
+.checking__dots span:nth-child(3) { animation-delay: .36s; }
+
+@keyframes dotPulse {
+  0%, 60%, 100% { opacity: .3; transform: translateY(0); }
+  30%           { opacity: 1;  transform: translateY(-3px); }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TOASTS
+   ═══════════════════════════════════════════════════════════════ */
+.nm-toasts {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: var(--z-toast);
+  pointer-events: none;
+  width: calc(100% - 32px);
+  max-width: 400px;
+}
+.nm-toast {
+  padding: 13px 18px;
+  background: #1a1a1a;
+  color: #fff;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.20);
+  pointer-events: auto;
+  line-height: 1.4;
+  word-break: break-word;
+  animation: toastIn .3s cubic-bezier(.4,0,.2,1);
+  letter-spacing: -0.005em;
+  cursor: pointer;
+}
+.nm-toast--ok   { background: #0f5132; }
+.nm-toast--err  { background: #842029; }
+.nm-toast--warn { background: #664d03; }
+.nm-toast--info { background: #1a1a1a; }
+.nm-toast__icon { flex-shrink: 0; opacity: .9; }
+@keyframes toastIn {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════════════════ */
+@media (max-width: 380px) {
+  .page { padding: 32px 20px; }
+  .title { font-size: 28px; }
+  .email-card { padding: 16px; }
+  .email-card__icon { width: 44px; height: 44px; }
+  .email-card__value { font-size: 15px; }
+  .btn { height: 54px; font-size: 15px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
+}
+</style>
+</head>
+
+<body>
+<main class="page">
+  <div class="page__inner">
+
+    <!-- ═══════════════════════════════════════════════════════════
+         VISTA 1 · CHECK YOUR EMAIL (la pantalla principal)
+         ═══════════════════════════════════════════════════════════ -->
+    <section class="view is-active" data-view="check">
+      <h1 class="title">Check your email.</h1>
+      <p class="subtitle" data-check-subtitle>Confirma tu email para continuar.</p>
+
+      <div class="email-card">
+        <span class="email-card__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="5" width="18" height="14" rx="2"/>
+            <path d="m3 7 9 6 9-6"/>
+          </svg>
+        </span>
+        <div class="email-card__body">
+          <span class="email-card__label">Correo enviado a</span>
+          <span class="email-card__value" data-email-display>—</span>
+        </div>
+      </div>
+
+      <p class="hint" data-check-hint>
+        Busca el mensaje de confirmación de Numination y pulsa el enlace que aparece dentro.
+      </p>
+
+      <a href="https://mail.google.com" target="_blank" rel="noopener noreferrer"
+         class="btn btn--primary" data-open-mail>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="5" width="18" height="14" rx="2"/>
+          <path d="m3 7 9 6 9-6"/>
+        </svg>
+        <span>Abrir aplicación Gmail</span>
+      </a>
+
+      <button type="button" class="btn btn--outline" data-check-confirmed>
+        <span>Ya confirmé mi correo</span>
+      </button>
+
+      <div class="checking" data-checking>
+        <span>Revisando automáticamente</span>
+        <span class="checking__dots">
+          <span></span><span></span><span></span>
+        </span>
+      </div>
+
+      <button type="button" class="link-soft" data-resend>
+        No recibí el correo · Reenviar
+      </button>
+
+      <button type="button" class="link-soft" data-change-account>
+        Usar otra cuenta
+      </button>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         VISTA 2 · ÉXITO (ya verificado)
+         ═══════════════════════════════════════════════════════════ -->
+    <section class="view" data-view="success">
+      <div class="state-icon state-icon--success" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      </div>
+      <h1 class="title">¡Correo confirmado!</h1>
+      <p class="subtitle">Tu cuenta ya está lista. Te llevamos a Numination en un segundo…</p>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         VISTA 3 · ERROR
+         ═══════════════════════════════════════════════════════════ -->
+    <section class="view" data-view="error">
+      <div class="state-icon state-icon--error" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+      </div>
+      <h1 class="title">Algo falló</h1>
+      <p class="subtitle" data-error-message>No pudimos verificar tu correo.</p>
+
+      <button type="button" class="btn btn--primary" data-retry>
+        <span>Intentar de nuevo</span>
+      </button>
+
+      <a href="/login.html" class="link-soft">Volver al login</a>
+    </section>
+
+  </div>
+</main>
+
+<div class="nm-toasts" id="nm-toasts" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ═════════════════════════════════════════════════════════════
+     CONFIG
+     ═════════════════════════════════════════════════════════════ */
+  const CFG = Object.freeze({
+    API_BASE: '',
+    POLL_INTERVAL_MS: 4_000,
+    POLL_TIMEOUT_MS: 5 * 60 * 1000,
+    RESEND_COOLDOWN_MS: 45_000,
+    REDIRECT_AFTER_MS: 1_500,
+  });
+
+  /* ═════════════════════════════════════════════════════════════
+     UTILS
+     ═════════════════════════════════════════════════════════════ */
+  const $ = (s, c) => (c || document).querySelector(s);
+  const $$ = (s, c) => Array.from((c || document).querySelectorAll(s));
+
+  const Utils = {
+    qs(name) { return new URLSearchParams(location.search).get(name); },
+    sleep(ms) { return new Promise(r => setTimeout(r, ms)); },
+    async fetchJSON(url, opts = {}, timeoutMs = 12000) {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+      try {
+        const res = await fetch(url, { credentials: 'include', ...opts, signal: ctrl.signal });
+        let data = null;
+        try { data = await res.json(); } catch {}
+        return { ok: res.ok, status: res.status, data };
+      } catch (err) {
+        return { ok: false, status: 0, error: err.message, data: null };
+      } finally {
+        clearTimeout(timer);
+      }
+    },
+  };
+
+  /* ═════════════════════════════════════════════════════════════
+     TOASTS
+     ═════════════════════════════════════════════════════════════ */
+  const Toast = (() => {
+    const host = document.getElementById('nm-toasts');
+    const active = new Map();
+
+    function dismiss(id) {
+      const e = active.get(id);
+      if (!e) return;
+      clearTimeout(e.timer);
+      e.el.style.transition = 'opacity .28s, transform .28s';
+      e.el.style.opacity = '0';
+      e.el.style.transform = 'translateY(16px)';
+      setTimeout(() => e.el.remove(), 300);
+      active.delete(id);
+    }
+
+    function push(kind, msg, ttl) {
+      if (!host) return;
+      if (active.size >= 4) dismiss(active.keys().next().value);
+      const id = 't_' + Date.now() + Math.random().toString(36).slice(2, 6);
+      const el = document.createElement('div');
+      el.className = `nm-toast nm-toast--${kind}`;
+      const ico = document.createElement('span');
+      ico.className = 'nm-toast__icon';
+      ico.textContent = ({ ok:'✓', err:'✕', info:'ⓘ', warn:'⚠' })[kind] || '';
+      const txt = document.createElement('span');
+      txt.textContent = String(msg);
+      el.appendChild(ico);
+      el.appendChild(txt);
+      host.appendChild(el);
+      const timeout = ttl ?? (kind === 'err' ? 5000 : 3400);
+      const timer = setTimeout(() => dismiss(id), timeout);
+      el.addEventListener('click', () => dismiss(id), { once: true });
+      active.set(id, { el, timer });
+    }
+
+    return {
+      ok:   (m, d) => push('ok', m, d),
+      err:  (m, d) => push('err', m, d),
+      info: (m, d) => push('info', m, d),
+      warn: (m, d) => push('warn', m, d),
+    };
+  })();
+
+  /* ═════════════════════════════════════════════════════════════
+     UI
+     ═════════════════════════════════════════════════════════════ */
+  const UI = {
+    show(view) {
+      $$('[data-view]').forEach(v => v.classList.toggle('is-active', v.dataset.view === view));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+    setEmail(email) {
+      const el = $('[data-email-display]');
+      if (el) el.textContent = email || '—';
+    },
+    setLoading(btn, on) {
+      if (!btn) return;
+      btn.classList.toggle('is-loading', on);
+      btn.disabled = on;
+    },
+    setChecking(on) {
+      const el = $('[data-checking]');
+      if (el) el.classList.toggle('is-visible', on);
+    },
+    showError(message) {
+      const el = $('[data-error-message]');
+      if (el && message) el.textContent = message;
+      UI.show('error');
+    },
+  };
+
+  /* ═════════════════════════════════════════════════════════════
+     API
+     ═════════════════════════════════════════════════════════════ */
+  const API = {
+    async getSession() {
+      return Utils.fetchJSON(`${CFG.API_BASE}/api/auth/session`);
+    },
+    async getMe() {
+      return Utils.fetchJSON(`${CFG.API_BASE}/api/auth/me`);
+    },
+    async logout() {
+      return Utils.fetchJSON(`${CFG.API_BASE}/api/auth/logout`, { method: 'POST' });
+    },
+    async resendVerification() {
+      return Utils.fetchJSON(`${CFG.API_BASE}/api/auth/verify-email/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+    },
+  };
+
+  /* ═════════════════════════════════════════════════════════════
+     POLLING · detecta cuando el usuario ya confirmó
+     ═════════════════════════════════════════════════════════════ */
+  const Polling = {
+    timerId: null,
+    stopped: false,
+
+    start() {
+      this.stopped = false;
+      const startedAt = Date.now();
+
+      const tick = async () => {
+        if (this.stopped) return;
+        if (Date.now() - startedAt > CFG.POLL_TIMEOUT_MS) {
+          UI.setChecking(false);
+          this.stop();
+          return;
+        }
+
+        try {
+          const { ok, data } = await API.getSession();
+          if (ok && data?.authenticated && data?.user?.emailVerified) {
+            this.stop();
+            await onVerified();
+            return;
+          }
+        } catch {}
+
+        this.timerId = setTimeout(tick, CFG.POLL_INTERVAL_MS);
+      };
+
+      this.timerId = setTimeout(tick, CFG.POLL_INTERVAL_MS);
+    },
+
+    stop() {
+      this.stopped = true;
+      if (this.timerId) {
+        clearTimeout(this.timerId);
+        this.timerId = null;
+      }
+    },
+  };
+
+  /* ═════════════════════════════════════════════════════════════
+     CALLBACKS
+     ═════════════════════════════════════════════════════════════ */
+  async function onVerified() {
+    UI.setChecking(false);
+    UI.show('success');
+    Toast.ok('¡Correo confirmado!');
+    await Utils.sleep(CFG.REDIRECT_AFTER_MS);
+    window.location.href = '/chat.html';
+  }
+
+  /* ═════════════════════════════════════════════════════════════
+     RESEND · con cooldown
+     ═════════════════════════════════════════════════════════════ */
+  const Resend = (() => {
+    let nextAllowedAt = 0;
+
+    function updateButtonState() {
+      const btn = $('[data-resend]');
+      if (!btn) return;
+      const remaining = Math.ceil((nextAllowedAt - Date.now()) / 1000);
+      if (remaining > 0) {
+        btn.disabled = true;
+        btn.textContent = `Espera ${remaining}s para reenviar`;
+      } else {
+        btn.disabled = false;
+        btn.textContent = 'No recibí el correo · Reenviar';
+      }
+    }
+
+    function startCooldown() {
+      nextAllowedAt = Date.now() + CFG.RESEND_COOLDOWN_MS;
+      updateButtonState();
+      const int = setInterval(() => {
+        if (Date.now() >= nextAllowedAt) {
+          clearInterval(int);
+          updateButtonState();
+        } else {
+          updateButtonState();
+        }
+      }, 1000);
+    }
+
+    return { startCooldown, updateButtonState };
+  })();
+
+  /* ═════════════════════════════════════════════════════════════
+     BOOT
+     ═════════════════════════════════════════════════════════════ */
+  async function boot() {
+
+    /* ─── 1 · ¿Ya hay sesión? ─── */
+    let session = null;
+    try {
+      const { ok, data } = await API.getSession();
+      if (ok && data?.authenticated) session = data;
+    } catch {}
+
+    /* ─── 2 · Si ya está verificado → redirigir ─── */
+    if (session?.user?.emailVerified) {
+      await onVerified();
+      return;
+    }
+
+    /* ─── 3 · Si hay token en la URL → verificar directamente ───
+       (el correo trae /verify-email.html?token=xxx)
+       En el backend, /api/auth/verify-email/confirm está stubbeado
+       pero acepta cualquier token y responde ok:true. Se puede
+       mejorar cuando se persista el token en la DB. */
+    const token = Utils.qs('token');
+    if (token) {
+      try {
+        const { ok } = await Utils.fetchJSON(`${CFG.API_BASE}/api/auth/verify-email/confirm`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token }),
+        });
+        if (ok) {
+          await onVerified();
+          return;
+        }
+      } catch {}
+    }
+
+    /* ─── 4 · Si NO hay sesión → al login ─── */
+    if (!session?.authenticated) {
+      Toast.warn('Inicia sesión para continuar.');
+      await Utils.sleep(900);
+      window.location.href = '/login.html';
+      return;
+    }
+
+    /* ─── 5 · Hay sesión pero no está verificado ─── */
+    /* Mostrar email del usuario */
+    let email = session.user?.email;
+    if (!email) {
+      try {
+        const { ok, data } = await API.getMe();
+        if (ok && data?.user?.email) email = data.user.email;
+      } catch {}
+    }
+    UI.setEmail(email || '—');
+
+    /* Mostrar vista de check + activar polling */
+    UI.show('check');
+    UI.setChecking(true);
+    Polling.start();
+
+    /* ─── 6 · Bind botones ─── */
+
+    // "Ya confirmé mi correo" → fuerza un check ahora
+    const btnConfirmed = $('[data-check-confirmed]');
+    if (btnConfirmed) {
+      btnConfirmed.addEventListener('click', async () => {
+        UI.setLoading(btnConfirmed, true);
+        try {
+          const { ok, data } = await API.getSession();
+          if (ok && data?.authenticated && data?.user?.emailVerified) {
+            await onVerified();
+            return;
+          }
+          Toast.info('Todavía no vemos la confirmación. Revisa tu correo.');
+        } catch {
+          Toast.err('No pudimos revisar ahora. Intenta de nuevo.');
+        } finally {
+          UI.setLoading(btnConfirmed, false);
+        }
+      });
+    }
+
+    // "Reenviar" → POST /api/auth/verify-email/send con cooldown
+    const btnResend = $('[data-resend]');
+    if (btnResend) {
+      Resend.updateButtonState();
+      btnResend.addEventListener('click', async () => {
+        if (btnResend.disabled) return;
+        UI.setLoading(btnResend, true);
+        try {
+          const { ok, data } = await API.resendVerification();
+          if (ok) {
+            Toast.ok('Correo reenviado. Revisa tu bandeja.');
+            Resend.startCooldown();
+          } else {
+            Toast.err(data?.error || 'No pudimos reenviar el correo.');
+          }
+        } catch {
+          Toast.err('Error al reenviar. Intenta de nuevo.');
+        } finally {
+          UI.setLoading(btnResend, false);
+        }
+      });
+    }
+
+    // "Usar otra cuenta" → logout + ir a login
+    const btnChange = $('[data-change-account]');
+    if (btnChange) {
+      btnChange.addEventListener('click', async () => {
+        Polling.stop();
+        try { await API.logout(); } catch {}
+        window.location.href = '/login.html';
+      });
+    }
+
+    // "Intentar de nuevo" (vista error)
+    const btnRetry = $('[data-retry]');
+    if (btnRetry) {
+      btnRetry.addEventListener('click', () => location.reload());
+    }
+  }
+
+  /* ═════════════════════════════════════════════════════════════
+     START
+     ═════════════════════════════════════════════════════════════ */
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot, { once: true });
+  } else {
+    boot();
+  }
+
+})();
+</script>
+</body>
+</html>

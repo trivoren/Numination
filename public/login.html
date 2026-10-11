@@ -273,7 +273,7 @@ a { color: inherit; text-decoration: none; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ═══════════════════════════════════════════════════════════════
-   SOCIALS (entry view)
+   SOCIALS
    ═══════════════════════════════════════════════════════════════ */
 .login-socials {
   display: flex;
@@ -349,9 +349,6 @@ a { color: inherit; text-decoration: none; }
 .login-footer a:hover,
 .login-footer button:hover { opacity: .7; }
 
-/* ═══════════════════════════════════════════════════════════════
-   LINKS (password view)
-   ═══════════════════════════════════════════════════════════════ */
 .login-links {
   display: flex;
   flex-direction: column;
@@ -456,6 +453,9 @@ a { color: inherit; text-decoration: none; }
   flex: 1;
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   INLINE ERROR
+   ═══════════════════════════════════════════════════════════════ */
 .login-error {
   font-size: 13.5px;
   color: var(--c-danger);
@@ -654,7 +654,7 @@ a { color: inherit; text-decoration: none; }
 <main class="auth-app">
 
   <!-- ═══════════════════════════════════════════════════════════
-       VIEW 1 · ENTRY — Welcome to Numination.
+       VIEW 1 · ENTRY
        ═══════════════════════════════════════════════════════════ -->
   <div class="view" data-view="entry">
     <h1 class="login-title">
@@ -707,7 +707,7 @@ a { color: inherit; text-decoration: none; }
   </div>
 
   <!-- ═══════════════════════════════════════════════════════════
-       VIEW 2 · SIGNUP — Create your account
+       VIEW 2 · SIGNUP
        ═══════════════════════════════════════════════════════════ -->
   <div class="view" data-view="signup" hidden>
     <button type="button" class="view__back" data-go-entry aria-label="Volver">
@@ -761,6 +761,8 @@ a { color: inherit; text-decoration: none; }
         </button>
       </label>
 
+      <p class="login-error" data-signup-error hidden></p>
+
       <button type="submit" class="login-primary" data-signup-submit>
         <span>Create account</span>
       </button>
@@ -772,13 +774,13 @@ a { color: inherit; text-decoration: none; }
   </div>
 
   <!-- ═══════════════════════════════════════════════════════════
-       VIEW 3 · PASSWORD — Enter your password to continue
+       VIEW 3 · PASSWORD
        ═══════════════════════════════════════════════════════════ -->
   <div class="view" data-view="password" hidden>
     <h1 class="login-title">
       Enter your password<br />to continue
     </h1>
-    <p class="login-subtitle login-subtitle--tight" data-password-email>q@gmail.com</p>
+    <p class="login-subtitle login-subtitle--tight" data-password-email>—</p>
 
     <form class="login-form" data-password-form autocomplete="on" novalidate>
       <label class="login-field">
@@ -794,6 +796,8 @@ a { color: inherit; text-decoration: none; }
           </svg>
         </button>
       </label>
+
+      <p class="login-error" data-password-error hidden></p>
 
       <button type="submit" class="login-primary" data-password-submit>
         <span>Verify</span>
@@ -811,7 +815,7 @@ a { color: inherit; text-decoration: none; }
   </div>
 
   <!-- ═══════════════════════════════════════════════════════════
-       VIEW 4 · AGE — Confirm you're 14 or older
+       VIEW 4 · AGE
        ═══════════════════════════════════════════════════════════ -->
   <div class="view" data-view="age" hidden>
     <h1 class="login-title">
@@ -848,9 +852,7 @@ a { color: inherit; text-decoration: none; }
 
 </main>
 
-<!-- ═══════════════════════════════════════════════════════════════
-     AGE BLOCKED MODAL
-     ═══════════════════════════════════════════════════════════════ -->
+<!-- AGE BLOCKED MODAL -->
 <div class="age-modal" data-age-modal hidden role="dialog" aria-modal="true" aria-labelledby="age-modal-title">
   <div class="age-modal__card">
     <h2 class="age-modal__title" id="age-modal-title">Esta cuenta se bloqueará</h2>
@@ -903,9 +905,10 @@ a { color: inherit; text-decoration: none; }
     SESSION_RETRIES: 3,
     RETRY_BASE_MS: 600,
     TOAST_DEFAULT_MS: 3400,
-    TOAST_ERROR_MS: 5000,
+    TOAST_ERROR_MS: 5200,
     MAX_TOASTS: 4,
-    SAFE_REDIRECTS: ['/chat.html', '/login.html'],
+    API_TIMEOUT_MS: 15000,
+    SAFE_REDIRECTS: ['/chat.html', '/verify-email.html', '/reset-password.html', '/login.html'],
     DEFAULT_REDIRECT: '/chat.html'
   };
 
@@ -918,10 +921,10 @@ a { color: inherit; text-decoration: none; }
     sleep: function(ms){ return new Promise(function(r){ setTimeout(r, ms); }); },
     fetchWithTimeout: function(url, opts, timeoutMs){
       opts = opts || {};
-      timeoutMs = timeoutMs || 10000;
+      timeoutMs = timeoutMs || Config.API_TIMEOUT_MS;
       var ctrl = new AbortController();
       var timer = setTimeout(function(){ ctrl.abort(); }, timeoutMs);
-      var merged = Object.assign({}, opts, { signal: ctrl.signal });
+      var merged = Object.assign({ credentials: 'include' }, opts, { signal: ctrl.signal });
       return fetch(url, merged).finally(function(){ clearTimeout(timer); });
     },
     safeJson: function(res){ return res.json().catch(function(){ return null; }); },
@@ -986,7 +989,9 @@ a { color: inherit; text-decoration: none; }
     busy: false,
     googleReady: false,
     currentView: 'entry',
-    email: ''
+    email: '',
+    signupEmail: '',
+    signupPassword: ''
   };
 
   /* ═══════════════════════════════════════════════════════════
@@ -1002,6 +1007,107 @@ a { color: inherit; text-decoration: none; }
       var firstInput = current.querySelector('input:not([type="hidden"]):not([type="checkbox"])');
       if(firstInput) setTimeout(function(){ try{ firstInput.focus(); }catch(e){} }, 150);
     }
+  }
+
+  function showInlineError(el, msg){
+    if(!el) return;
+    if(msg){ el.textContent = msg; el.hidden = false; }
+    else { el.textContent = ''; el.hidden = true; }
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     API CLIENT
+     ═══════════════════════════════════════════════════════════ */
+  var API = {
+
+    /* POST /api/auth/login */
+    login: function(email, password, remember){
+      return Utils.fetchWithTimeout('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ email: email, password: password, remember: remember !== false })
+      }).then(function(res){
+        return Utils.safeJson(res).then(function(data){
+          return { ok: res.ok, status: res.status, data: data };
+        });
+      });
+    },
+
+    /* POST /api/auth/signup */
+    signup: function(email, password, name){
+      return Utils.fetchWithTimeout('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ email: email, password: password, name: name || undefined })
+      }).then(function(res){
+        return Utils.safeJson(res).then(function(data){
+          return { ok: res.ok, status: res.status, data: data };
+        });
+      });
+    },
+
+    /* POST /api/auth/forgot-password */
+    forgot: function(email){
+      return Utils.fetchWithTimeout('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email })
+      }).then(function(res){
+        return Utils.safeJson(res).then(function(data){
+          return { ok: res.ok, status: res.status, data: data };
+        });
+      });
+    },
+
+    /* GET /api/auth/me */
+    me: function(){
+      return Utils.fetchWithTimeout('/api/auth/me', {
+        headers: { Accept: 'application/json' }
+      }, Config.SESSION_TIMEOUT_MS).then(function(res){
+        if(!res.ok) throw new Error('HTTP ' + res.status);
+        return Utils.safeJson(res);
+      }).then(function(data){
+        if(!Utils.isPlainObject(data)) throw new Error('Respuesta inválida');
+        return data.ok === true && Utils.isPlainObject(data.user) ? data.user : null;
+      });
+    }
+  };
+
+  /* ═══════════════════════════════════════════════════════════
+     SESSION · con reintentos exponenciales
+     ═══════════════════════════════════════════════════════════ */
+  var Session = {
+    check: function(retries){
+      retries = retries || Config.SESSION_RETRIES;
+      var attempt = 0;
+      function tryOnce(){
+        attempt++;
+        return API.me().catch(function(){
+          if(attempt >= retries) return null;
+          var wait = Config.RETRY_BASE_MS * Math.pow(2, attempt - 1);
+          return Utils.sleep(wait).then(tryOnce);
+        });
+      }
+      return tryOnce();
+    }
+  };
+
+  /* ═══════════════════════════════════════════════════════════
+     POST-LOGIN ROUTER
+     ═══════════════════════════════════════════════════════════ */
+  function routeAfterAuth(user){
+    if(!user){ Utils.safeRedirect('/chat.html'); return; }
+
+    /* Si el correo NO está verificado → mandamos a verificar */
+    if(user.emailVerified === false){
+      try{
+        if(user.email) sessionStorage.setItem('nm-pending-email', user.email);
+      }catch(e){}
+      Utils.safeRedirect('/verify-email.html');
+      return;
+    }
+
+    Utils.safeRedirect('/chat.html');
   }
 
   /* ═══════════════════════════════════════════════════════════
@@ -1049,42 +1155,12 @@ a { color: inherit; text-decoration: none; }
   })();
 
   /* ═══════════════════════════════════════════════════════════
-     SESSION
-     ═══════════════════════════════════════════════════════════ */
-  var Session = {
-    check: function(retries){
-      retries = retries || Config.SESSION_RETRIES;
-      var attempt = 0;
-      function tryOnce(){
-        attempt++;
-        return Utils.fetchWithTimeout(
-          '/api/auth/me',
-          { credentials: 'include', headers: { Accept: 'application/json' } },
-          Config.SESSION_TIMEOUT_MS
-        ).then(function(res){
-          if(!res.ok) throw new Error('HTTP ' + res.status);
-          return Utils.safeJson(res);
-        }).then(function(data){
-          if(!Utils.isPlainObject(data)) throw new Error('Respuesta inválida');
-          return data.ok === true && Utils.isPlainObject(data.user) ? data.user : null;
-        }).catch(function(err){
-          if(attempt >= retries) return null;
-          var wait = Config.RETRY_BASE_MS * Math.pow(2, attempt - 1);
-          return Utils.sleep(wait).then(tryOnce);
-        });
-      }
-      return tryOnce();
-    }
-  };
-
-  /* ═══════════════════════════════════════════════════════════
      GOOGLE OAUTH
      ═══════════════════════════════════════════════════════════ */
   var Google = {
     exchange: function(credential){
       return Utils.fetchWithTimeout('/api/auth/google', {
         method: 'POST',
-        credentials: 'include',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({ credential: credential, remember: true })
       }, 15000).then(function(res){
@@ -1133,9 +1209,7 @@ a { color: inherit; text-decoration: none; }
     Google.exchange(credential).then(function(user){
       var name = (Utils.isPlainObject(user) && (user.name || user.email)) || 'usuario';
       Toasts.ok('¡Bienvenido, ' + name + '!');
-      return Utils.sleep(700);
-    }).then(function(){
-      Utils.safeRedirect('/chat.html');
+      return Utils.sleep(600).then(function(){ routeAfterAuth(user); });
     }).catch(function(err){
       UI.setGoogleLoading(false);
       UI.setBusy(false);
@@ -1144,7 +1218,7 @@ a { color: inherit; text-decoration: none; }
   };
 
   /* ═══════════════════════════════════════════════════════════
-     VIEW 1 · ENTRY — Submit email → password view
+     VIEW 1 · ENTRY
      ═══════════════════════════════════════════════════════════ */
   var loginForm = document.querySelector('[data-login-form]');
   if(loginForm){
@@ -1165,16 +1239,19 @@ a { color: inherit; text-decoration: none; }
       state.email = email;
       var emailLabel = document.querySelector('[data-password-email]');
       if(emailLabel) emailLabel.textContent = email;
+      var pwdError = document.querySelector('[data-password-error]');
+      showInlineError(pwdError, null);
       UI.setContinueLoading(true);
       setTimeout(function(){
         UI.setContinueLoading(false);
         showView('password');
-      }, 500);
+      }, 350);
     });
   }
 
   /* ═══════════════════════════════════════════════════════════
-     VIEW 2 · SIGNUP — Submit → age view
+     VIEW 2 · SIGNUP
+     Solo valida y pasa a view 4. El signup real ocurre en view 4.
      ═══════════════════════════════════════════════════════════ */
   var signupForm = document.querySelector('[data-signup-form]');
   if(signupForm){
@@ -1184,48 +1261,134 @@ a { color: inherit; text-decoration: none; }
       var email = document.querySelector('[data-signup-email]').value.trim();
       var pwd = document.querySelector('[data-signup-password]').value;
       var conf = document.querySelector('[data-signup-confirm]').value;
-      var btn = document.querySelector('[data-signup-submit]');
+      var errEl = document.querySelector('[data-signup-error]');
 
-      if(!Utils.isValidEmail(email)){ Toasts.warn('Ese correo no parece válido.'); return; }
-      if(pwd.length < 8){ Toasts.warn('La contraseña debe tener al menos 8 caracteres.'); return; }
-      if(pwd !== conf){ Toasts.warn('Las contraseñas no coinciden.'); return; }
+      showInlineError(errEl, null);
 
+      if(!Utils.isValidEmail(email)){
+        showInlineError(errEl, 'Ese correo no parece válido.');
+        return;
+      }
+      if(pwd.length < 8){
+        showInlineError(errEl, 'La contraseña debe tener al menos 8 caracteres.');
+        return;
+      }
+      if(!/[A-Za-z]/.test(pwd) || !/\d/.test(pwd)){
+        showInlineError(errEl, 'Debe incluir al menos una letra y un número.');
+        return;
+      }
+      if(pwd !== conf){
+        showInlineError(errEl, 'Las contraseñas no coinciden.');
+        return;
+      }
+
+      state.signupEmail = email;
+      state.signupPassword = pwd;
       state.email = email;
+
+      var btn = document.querySelector('[data-signup-submit]');
       btn.classList.add('is-loading');
       btn.disabled = true;
       setTimeout(function(){
         btn.classList.remove('is-loading');
         btn.disabled = false;
         showView('age');
-      }, 700);
+      }, 350);
     });
   }
 
   /* ═══════════════════════════════════════════════════════════
-     VIEW 3 · PASSWORD — Verify → chat
+     VIEW 3 · PASSWORD
      ═══════════════════════════════════════════════════════════ */
   var passwordForm = document.querySelector('[data-password-form]');
   if(passwordForm){
     passwordForm.addEventListener('submit', function(e){
       e.preventDefault();
       if(state.busy) return;
+
       var pwd = document.querySelector('[data-password-input]').value;
       var btn = document.querySelector('[data-password-submit]');
-      if(!pwd){ Toasts.warn('Ingresa tu contraseña.'); return; }
+      var errEl = document.querySelector('[data-password-error]');
+
+      showInlineError(errEl, null);
+
+      if(!pwd){
+        showInlineError(errEl, 'Ingresa tu contraseña.');
+        return;
+      }
+      if(!Utils.isNonEmptyString(state.email)){
+        Toasts.err('Falta el correo. Vuelve a empezar.');
+        showView('entry');
+        return;
+      }
 
       btn.classList.add('is-loading');
       btn.disabled = true;
-      setTimeout(function(){
+      UI.setBusy(true);
+
+      API.login(state.email, pwd, true).then(function(res){
+        var data = res.data || {};
+
+        /* Éxito */
+        if(res.ok && data.ok){
+          Toasts.ok('¡Bienvenido de nuevo!');
+          return Utils.sleep(500).then(function(){
+            routeAfterAuth(data.user);
+          });
+        }
+
+        /* 401 · usa OAuth */
+        if(res.status === 401 && data.code === 'use_oauth'){
+          var prov = data.provider === 'github' ? 'GitHub' : 'Google';
+          showInlineError(errEl, 'Esta cuenta usa ' + prov + '. Entra con el botón de abajo.');
+          Toasts.info('Usa ' + prov + ' para entrar.');
+          return;
+        }
+
+        /* 423 · cuenta bloqueada */
+        if(res.status === 423 && data.code === 'account_locked'){
+          var min = data.retryAfterMinutes || 15;
+          showInlineError(errEl, 'Cuenta bloqueada temporalmente. Intenta en ' + min + ' min.');
+          Toasts.warn('Cuenta bloqueada por intentos fallidos.');
+          return;
+        }
+
+        /* 429 · rate limit */
+        if(res.status === 429){
+          showInlineError(errEl, data.error || 'Demasiados intentos. Espera un momento.');
+          return;
+        }
+
+        /* 401 · credenciales inválidas */
+        if(res.status === 401){
+          showInlineError(
+            errEl,
+            'Correo o contraseña incorrectos. ¿No tienes cuenta? Regístrate abajo.'
+          );
+          return;
+        }
+
+        /* 400 · datos inválidos */
+        if(res.status === 400){
+          showInlineError(errEl, data.error || 'Revisa los datos.');
+          return;
+        }
+
+        /* Otro */
+        showInlineError(errEl, data.error || 'No pudimos iniciar sesión.');
+      }).catch(function(err){
+        showInlineError(errEl, err.message || 'Error de conexión.');
+      }).finally(function(){
         btn.classList.remove('is-loading');
         btn.disabled = false;
-        Toasts.ok('Bienvenido de nuevo.');
-        setTimeout(function(){ Utils.safeRedirect('/chat.html'); }, 500);
-      }, 900);
+        UI.setBusy(false);
+      });
     });
   }
 
   /* ═══════════════════════════════════════════════════════════
-     VIEW 4 · AGE — Checkbox + Continue
+     VIEW 4 · AGE
+     Confirma 14+ → llama POST /api/auth/signup real.
      ═══════════════════════════════════════════════════════════ */
   var ageInput = document.querySelector('[data-age-input]');
   var ageSubmit = document.querySelector('[data-age-submit]');
@@ -1239,18 +1402,78 @@ a { color: inherit; text-decoration: none; }
     });
 
     ageSubmit.addEventListener('click', function(){
+      if(state.busy) return;
+
       if(!ageInput.checked){
         if(ageError) ageError.hidden = false;
         return;
       }
+      if(!state.signupEmail || !state.signupPassword){
+        Toasts.err('Faltan datos. Vuelve a empezar.');
+        showView('entry');
+        return;
+      }
+
       ageSubmit.classList.add('is-loading');
       ageSubmit.disabled = true;
-      setTimeout(function(){
+      UI.setBusy(true);
+
+      API.signup(state.signupEmail, state.signupPassword).then(function(res){
+        var data = res.data || {};
+
+        /* 201 · creado */
+        if(res.status === 201 && data.ok){
+          Toasts.ok('Cuenta creada. ¡Bienvenido!');
+          try{
+            if(data.user && data.user.email){
+              sessionStorage.setItem('nm-pending-email', data.user.email);
+            }
+          }catch(e){}
+
+          return Utils.sleep(600).then(function(){
+            routeAfterAuth(data.user);
+          });
+        }
+
+        /* 409 · email tomado */
+        if(res.status === 409){
+          if(data.code === 'email_taken_oauth'){
+            Toasts.err('Ese correo ya tiene cuenta con Google o GitHub.');
+          } else {
+            Toasts.warn('Ese correo ya está registrado. Inicia sesión.');
+          }
+          /* Volver a view 3 con el email ya puesto */
+          var emailLabel = document.querySelector('[data-password-email]');
+          if(emailLabel) emailLabel.textContent = state.signupEmail;
+          state.email = state.signupEmail;
+          showView('password');
+          return;
+        }
+
+        /* 400 · datos inválidos */
+        if(res.status === 400){
+          Toasts.err(data.error || 'Revisa los datos.');
+          /* Volver a signup para corregir */
+          showView('signup');
+          var errEl = document.querySelector('[data-signup-error]');
+          showInlineError(errEl, data.error || 'Revisa los datos.');
+          return;
+        }
+
+        /* 429 · rate limit */
+        if(res.status === 429){
+          Toasts.warn(data.error || 'Demasiados intentos. Espera un momento.');
+          return;
+        }
+
+        Toasts.err(data.error || 'No pudimos crear la cuenta.');
+      }).catch(function(err){
+        Toasts.err(err.message || 'Error de conexión.');
+      }).finally(function(){
         ageSubmit.classList.remove('is-loading');
-        ageSubmit.disabled = false;
-        Toasts.ok('Cuenta creada. ¡Bienvenido!');
-        setTimeout(function(){ Utils.safeRedirect('/chat.html'); }, 600);
-      }, 800);
+        ageSubmit.disabled = !ageInput.checked;
+        UI.setBusy(false);
+      });
     });
   }
 
@@ -1270,28 +1493,29 @@ a { color: inherit; text-decoration: none; }
   document.querySelectorAll('[data-age-block]').forEach(function(btn){
     btn.addEventListener('click', function(){
       if(ageModal) ageModal.hidden = true;
-      // Reset to entry
+      /* Reset total */
+      state.email = '';
+      state.signupEmail = '';
+      state.signupPassword = '';
       document.querySelectorAll('[data-view]').forEach(function(v){ v.hidden = v.dataset.view !== 'entry'; });
       state.currentView = 'entry';
-      state.email = '';
       if(UI.emailInput) UI.emailInput.value = '';
       var pa = document.querySelector('[data-signup-email]'); if(pa) pa.value = '';
       var pp = document.querySelector('[data-signup-password]'); if(pp) pp.value = '';
       var pc = document.querySelector('[data-signup-confirm]'); if(pc) pc.value = '';
+      var pw = document.querySelector('[data-password-input]'); if(pw) pw.value = '';
       if(ageInput) ageInput.checked = false;
       if(ageSubmit) ageSubmit.disabled = true;
       Toasts.err('Esta cuenta fue bloqueada.');
     });
   });
 
-  // Close modal on backdrop click
   if(ageModal){
     ageModal.addEventListener('click', function(e){
       if(e.target === ageModal) ageModal.hidden = true;
     });
   }
 
-  // Close modal on Escape
   document.addEventListener('keydown', function(e){
     if(e.key === 'Escape' && ageModal && !ageModal.hidden){
       ageModal.hidden = true;
@@ -1299,22 +1523,26 @@ a { color: inherit; text-decoration: none; }
   });
 
   /* ═══════════════════════════════════════════════════════════
-     NAVIGATION LINKS
+     NAVEGACIÓN ENTRE VISTAS
      ═══════════════════════════════════════════════════════════ */
-  // Sign up link (entry footer)
   document.querySelectorAll('[data-go-signup]').forEach(function(btn){
-    btn.addEventListener('click', function(){ showView('signup'); });
+    btn.addEventListener('click', function(){
+      var err = document.querySelector('[data-signup-error]');
+      showInlineError(err, null);
+      showView('signup');
+    });
   });
 
-  // Back to entry (from signup back arrow, "Log in" link, "Cambiar correo")
   document.querySelectorAll('[data-go-entry]').forEach(function(btn){
     btn.addEventListener('click', function(){
       showView('entry');
-      if(UI.emailInput) UI.emailInput.value = '';
+      if(UI.emailInput) UI.emailInput.value = state.email || '';
       var pa = document.querySelector('[data-signup-email]'); if(pa) pa.value = '';
       var pp = document.querySelector('[data-signup-password]'); if(pp) pp.value = '';
       var pc = document.querySelector('[data-signup-confirm]'); if(pc) pc.value = '';
       var pw = document.querySelector('[data-password-input]'); if(pw) pw.value = '';
+      var pe = document.querySelector('[data-password-error]'); showInlineError(pe, null);
+      var se = document.querySelector('[data-signup-error]'); showInlineError(se, null);
     });
   });
 
@@ -1328,7 +1556,6 @@ a { color: inherit; text-decoration: none; }
       if(!input) return;
       var isPwd = input.type === 'password';
       input.type = isPwd ? 'text' : 'password';
-      // Toggle eye icon
       var eyeOpen = '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>';
       var eyeClosed = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
       var svg = btn.querySelector('svg');
@@ -1341,7 +1568,10 @@ a { color: inherit; text-decoration: none; }
      ═══════════════════════════════════════════════════════════ */
   document.querySelectorAll('[data-forgot]').forEach(function(btn){
     btn.addEventListener('click', function(){
-      Toasts.info('Por ahora no hay recuperación de contraseña. Usa Google o GitHub.');
+      var email = state.email || '';
+      var url = '/reset-password.html';
+      if(email) url += '?email=' + encodeURIComponent(email);
+      window.location.href = url;
     });
   });
 
@@ -1397,27 +1627,41 @@ a { color: inherit; text-decoration: none; }
      BOOT
      ═══════════════════════════════════════════════════════════ */
   function boot(){
-    // Show error toasts from URL
     var params = new URLSearchParams(location.search);
+
+    /* Errores de OAuth en URL */
     if(params.has('error')){
       var code = params.get('error');
       var messages = {
         github: 'No pudimos iniciar sesión con GitHub. Intenta de nuevo.',
         access_denied: 'Cancelaste el inicio de sesión con GitHub.',
-        session: 'Tu sesión expiró. Vuelve a entrar.'
+        session: 'Tu sesión expiró. Vuelve a entrar.',
+        oauth_state: 'La sesión de seguridad expiró. Intenta de nuevo.'
       };
       Toasts.err(messages[code] || 'Ocurrió un error al iniciar sesión.');
       history.replaceState(null, '', location.pathname);
     }
 
-    // Check existing session
+    /* Prefill email */
+    var prefill = params.get('email');
+    if(prefill && UI.emailInput){
+      UI.emailInput.value = prefill;
+      state.email = prefill;
+    }
+
+    /* View preferida */
+    if(params.get('view') === 'signup'){
+      showView('signup');
+    }
+
+    /* Auto-redirect si ya hay sesión activa */
     if(!params.has('stay')){
       Session.check().then(function(user){
-        if(user) Utils.safeRedirect('/chat.html');
+        if(user) routeAfterAuth(user);
       });
     }
 
-    // Detect GSI ready
+    /* Detectar GSI ready */
     Google.waitForGSI().then(function(ready){
       state.googleReady = ready;
       if(ready) UI.hideFallback();

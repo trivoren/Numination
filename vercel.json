@@ -1,10 +1,11 @@
 {
   "version": 2,
   "rewrites": [
-    { "source": "/", "destination": "/login.html" }
+    { "source": "/", "destination": "/login.html" },
+    { "source": "/api/:path*", "destination": "/api/index" }
   ],
   "functions": {
-    "api/[...all].js": {
+    "api/index.js": {
       "includeFiles": "src/**"
     }
   }

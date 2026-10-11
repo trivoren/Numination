@@ -1,4 +1,4 @@
-{
+﻿{
   "version": 2,
   "rewrites": [
     { "source": "/", "destination": "/login.html" },
@@ -6,7 +6,7 @@
   ],
   "functions": {
     "api/index.js": {
-      "includeFiles": "src/**"
+      "includeFiles": ["src/**", "public/**"]
     }
   }
 }

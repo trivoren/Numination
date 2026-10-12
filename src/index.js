@@ -96,10 +96,10 @@ import {
 /* ─── Middleware ─── */
 import {
   requestIdMiddleware, notFoundMiddleware, errorMiddleware,
-  installProcessHandlers, getErrorMetrics, getRateLimitMetrics,
+  installProcessHandlers, getErrorMetrics,
 } from './middleware/errors.js';
 
-import { rateLimitUser } from './middleware/rate-limit-per-user.js';
+import { rateLimitUser, getRateLimitMetrics } from './middleware/rate-limit-per-user.js';
 
 /* ─── Routers ─── */
 import { mountAuthRoutes, attachUser, requireAuth } from './auth.js';

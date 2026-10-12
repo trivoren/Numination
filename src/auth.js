@@ -1,5 +1,5 @@
 /* ================================================================
-   NUMINATION · auth.js · v3.1
+   NUMINATION · auth.js · v3.2
    ----------------------------------------------------------------
    Autenticación robusta con:
      · Google Identity Services (popup, GIS)
@@ -7,8 +7,17 @@
      · Email + contraseña (scrypt, sin dependencias nuevas)
    Sesiones JWT en cookies httpOnly. Persistencia en Supabase.
 
-   CAMBIOS v3.1 (respecto a v3.0):
-     · /api/auth/session usa getProfileFull → hasPassword consistente
+   CAMBIOS v3.2 (respecto a v3.1):
+     · FIX: sanitizeEnv() limpia espacios/comillas/saltos en CLIENT_ID.
+       Era la causa del "Wrong recipient, payload audience !=
+       requiredAudience" cuando el valor viene de Vercel con
+       caracteres invisibles.
+     · Diagnóstico: log al arranque muestra longitud y sufijo del
+       CLIENT_ID para comparar contra el frontend.
+     · /api/auth/google devuelve X-Client-Id-Len y X-Client-Id-Suffix
+       en el header 401 (útil para debug desde DevTools).
+     · Google: `verifyIdToken` con try/catch propio que loguea el
+       error real (no solo el genérico).
    ================================================================ */
 
 import { OAuth2Client } from 'google-auth-library';
@@ -42,14 +51,33 @@ try {
   TEST_KEYS = mod.TEST_KEYS ?? {};
 } catch {}
 
-const CLIENT_ID     = process.env.GOOGLE_CLIENT_ID     ?? TEST_KEYS.GOOGLE_CLIENT_ID;
-const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET ?? TEST_KEYS.GOOGLE_CLIENT_SECRET;
-const JWT_SECRET    = process.env.JWT_SECRET           ?? TEST_KEYS.JWT_SECRET;
+/**
+ * Sanitiza una variable de entorno:
+ *  · trim()            → quita espacios/saltos al inicio/fin
+ *  · quita comillas    → "abc" → abc
+ *  · quita \r y \n     → Vercel a veces mete saltos
+ *
+ * Era la causa del bug: Vercel guarda el valor con un \n invisible
+ * al final, y Google rechaza cualquier audience con espacio.
+ */
+function sanitizeEnv(v) {
+  if (typeof v !== 'string') return v;
+  return v.trim().replace(/^["']|["']$/g, '').replace(/[\r\n\t]/g, '');
+}
 
-const GITHUB_CLIENT_ID     = process.env.GITHUB_CLIENT_ID     ?? TEST_KEYS.GITHUB_CLIENT_ID;
-const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET ?? TEST_KEYS.GITHUB_CLIENT_SECRET;
+function pickEnv(envKey, fallback) {
+  const raw = process.env[envKey] ?? fallback;
+  return sanitizeEnv(raw);
+}
 
-const RESEND_API_KEY = process.env.RESEND_API_KEY ?? TEST_KEYS.RESEND_API_KEY ?? null;
+const CLIENT_ID     = pickEnv('GOOGLE_CLIENT_ID',     TEST_KEYS.GOOGLE_CLIENT_ID);
+const CLIENT_SECRET = pickEnv('GOOGLE_CLIENT_SECRET', TEST_KEYS.GOOGLE_CLIENT_SECRET);
+const JWT_SECRET    = pickEnv('JWT_SECRET',           TEST_KEYS.JWT_SECRET);
+
+const GITHUB_CLIENT_ID     = pickEnv('GITHUB_CLIENT_ID',     TEST_KEYS.GITHUB_CLIENT_ID);
+const GITHUB_CLIENT_SECRET = pickEnv('GITHUB_CLIENT_SECRET', TEST_KEYS.GITHUB_CLIENT_SECRET);
+
+const RESEND_API_KEY = pickEnv('RESEND_API_KEY', TEST_KEYS.RESEND_API_KEY) ?? null;
 const FROM_EMAIL     = process.env.NUMINATION_FROM_EMAIL ?? 'Numination <no-reply@numination.app>';
 
 const COOKIE_NAME          = 'numination_session';
@@ -61,7 +89,22 @@ const VERIFY_WINDOW_MIN    = 15;
 const LOCKOUT_ATTEMPTS = 5;
 const LOCKOUT_MINUTES  = 15;
 
-if (!CLIENT_ID)     console.warn('⚠️  GOOGLE_CLIENT_ID no configurado');
+/* ─── Diagnóstico de env vars ─── */
+
+if (!CLIENT_ID) {
+  console.warn('⚠️  GOOGLE_CLIENT_ID no configurado');
+} else {
+  // Se loguea sufijo y longitud (no el valor completo por seguridad)
+  const suffix = CLIENT_ID.slice(-44);
+  const expectedSuffix = 'hqlpgm37slhbbtqotv4uv9erla4sdl6d.apps.googleusercontent.com';
+  const matches = suffix === expectedSuffix;
+  console.log(
+    `[auth] GOOGLE_CLIENT_ID · len=${CLIENT_ID.length} · ` +
+    `suffix=…${CLIENT_ID.slice(-30)} · ` +
+    `${matches ? '✓ coincide con frontend' : '⚠ revisar contra frontend'}`
+  );
+}
+
 if (!CLIENT_SECRET) console.warn('⚠️  GOOGLE_CLIENT_SECRET no configurado');
 if (!JWT_SECRET)    console.warn('⚠️  JWT_SECRET no configurado');
 
@@ -523,14 +566,66 @@ async function findUserFullById(id) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   13 · GOOGLE
+   13 · GOOGLE · v3.2 con verificación robusta y debug
    ══════════════════════════════════════════════════════════════════════════ */
 
 async function handleGoogleLogin(req, res) {
   const { credential, remember = true } = req.body || {};
   if (!credential) return fail(res, 400, 'missing_credential', 'Falta el credential de Google');
 
-  const ticket = await googleClient.verifyIdToken({ idToken: credential, audience: CLIENT_ID });
+  if (!CLIENT_ID) {
+    log('error', 'auth.google.no_client_id', { reason: 'CLIENT_ID vacío' }, req);
+    return fail(res, 500, 'server_misconfigured', 'Google no está configurado en el server.');
+  }
+
+  let ticket;
+  try {
+    ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: CLIENT_ID,
+    });
+  } catch (verifyErr) {
+    // El error real: "Wrong recipient, payload audience != requiredAudience"
+    // o cualquier otro. Lo logueamos con contexto útil.
+    const errMsg = verifyErr?.message || String(verifyErr);
+
+    // Intenta extraer el `aud` del token para compararlo con CLIENT_ID
+    let tokenAud = null;
+    try {
+      const parts = String(credential).split('.');
+      if (parts.length >= 2) {
+        const payload = JSON.parse(
+          Buffer.from(parts[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8')
+        );
+        tokenAud = payload?.aud || null;
+      }
+    } catch {}
+
+    log('error', 'auth.google.verify_failed', {
+      message: errMsg,
+      backendClientIdLen: CLIENT_ID.length,
+      backendClientIdSuffix: CLIENT_ID.slice(-30),
+      tokenAudience: tokenAud,
+      match: tokenAud === CLIENT_ID,
+    }, req);
+
+    // Headers de diagnóstico (visibles en DevTools → Network)
+    res.set('X-Client-Id-Len', String(CLIENT_ID.length));
+    res.set('X-Client-Id-Suffix', CLIENT_ID.slice(-30));
+    if (tokenAud) res.set('X-Token-Aud-Suffix', tokenAud.slice(-30));
+
+    return fail(res, 401, 'google_failed',
+      'Token de Google inválido o audiencia no coincide.',
+      process.env.NODE_ENV !== 'production'
+        ? {
+            debug: {
+              backendClientIdSuffix: CLIENT_ID.slice(-30),
+              tokenAudienceSuffix: tokenAud ? tokenAud.slice(-30) : null,
+            },
+          }
+        : {});
+  }
+
   const payload = ticket.getPayload();
   if (!payload?.email) return fail(res, 400, 'no_email', 'Token de Google sin email');
   if (!payload.email_verified) return fail(res, 400, 'unverified', 'El correo de Google no está verificado');
@@ -544,6 +639,7 @@ async function handleGoogleLogin(req, res) {
   });
 
   log('info', 'auth.login.google.ok', { email: user.email }, req);
+  audit('login.google.ok', { email: user.email });
   return res.json(issueSession(res, user, remember));
 }
 
@@ -626,8 +722,10 @@ export function mountAuthRoutes(app) {
     try {
       await handleGoogleLogin(req, res);
     } catch (err) {
-      log('error', 'auth.google.error', { message: err.message }, req);
-      return fail(res, 401, 'google_failed', 'Token de Google inválido');
+      log('error', 'auth.google.unhandled', { message: err.message }, req);
+      if (!res.headersSent) {
+        return fail(res, 401, 'google_failed', 'Token de Google inválido');
+      }
     }
   });
 
@@ -934,7 +1032,7 @@ export function mountAuthRoutes(app) {
     return res.json({ ok: true, user: publicUser(user) });
   });
 
-  /* SESSION — ✅ arreglado: getProfileFull para hasPassword consistente */
+  /* SESSION */
   app.get('/api/auth/session', async (req, res) => {
     const token = req.cookies?.[COOKIE_NAME];
     if (!token) return res.json({ ok: true, authenticated: false });
@@ -1048,11 +1146,13 @@ export function mountAuthRoutes(app) {
   });
 
   /* BOOT */
+  const cidSuffix = CLIENT_ID ? CLIENT_ID.slice(-30) : '(vacío)';
   console.log(
-    `[auth] rutas montadas (v3.1) · ` +
+    `[auth] rutas montadas (v3.2) · ` +
     `Google: ${CLIENT_ID && CLIENT_SECRET ? '✓' : '✗'} · ` +
     `GitHub: ${GITHUB_ENABLED ? '✓' : '✗'} · ` +
     `Email/Password: ✓ · ` +
     `Email delivery: ${EMAIL_ENABLED ? '✓' : '✗ (dev)'}`
   );
+  console.log(`[auth] CLIENT_ID · len=${CLIENT_ID?.length || 0} · sufijo=…${cidSuffix}`);
 }

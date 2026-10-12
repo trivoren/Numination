@@ -1,35 +1,35 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   NUMINATION · index.js · v7.0
+   NUMINATION · index.js · v8.0
    ─────────────────────────────────────────────────────────────────────────
-   Orquestador del servidor. Monta todos los módulos.
+   Orquestador completo con TODAS las integraciones.
 
-   MÓDULOS:
+   MÓDULOS EXISTENTES:
      auth.js         · 15 endpoints de autenticación
-     chats.js        · 8 endpoints de chats (streaming movido a index.js)
+     chats.js        · 8 endpoints de chats
      memories.js     · 14 endpoints de memorias
      skills.js       · 3+ endpoints de skills
      connectors.js   · 15 endpoints de 13 APIs externas
      email.js        · 8 endpoints de email transaccional
 
+   INFRAESTRUCTURA (v8.0):
+     errors.js               · manejo centralizado + métricas
+     rate-limit-per-user.js  · rate limit por usuario/endpoint/plan
+     prompts.js              · prompts versionados + A/B testing
+     analytics.js            · eventos, DAU/WAU/retention/funnels
+     notifications.js        · notificaciones multicanal
+     webhooks.js             · webhooks outbound firmados
+     search.js               · búsqueda full-text multi-entidad
+     migrations.js           · versionado de schema DB
+     backup.js               · backups y restore
+
    MOTORES DE IA:
      Texto     → Groq → Gemini → Kimi
      Archivos  → Gemini → Kimi → Groq
 
-   v7.0 · ORQUESTADOR CONSOLIDADO
-     · Historial: se extrae del body y se pasa a los 3 motores
-     · Kimi con streaming real (streamKimi de streaming.js v2.0)
-     · AbortController ligado al SSE: si el cliente se desconecta,
-       se aborta el fetch al motor (ahorra cuota y evita tokens
-       fantasma)
-     · X-RateLimit-* headers en cada respuesta (limits.js v2.0)
-     · Refund automático si los 3 motores fallan
-     · Métricas del stream capturadas vía onDone (tokens, TPS)
-     · /api/health incluye ping real a Upstash
-     · /api/limits/usage usa getUsageStats (porcentajes, reset)
-
-   v6.6 · SYSTEM PROMPT Y IDENTIDAD (identidad Numi OT)
-   v6.5 · FIX CRÍTICO DEL SSE (req.on('close') eliminado)
-   v6.4 · Modelos por env + timeouts de primer token
+   PANEL ADMIN:
+     /admin.html             · 10 vistas (dashboard, analytics, users,
+                               webhooks, migrations, limits, notifications,
+                               search, logs, settings)
    ═══════════════════════════════════════════════════════════════════════════ */
 
 import express from 'express';
@@ -42,28 +42,64 @@ import { GoogleGenAI } from '@google/genai';
 import Groq from 'groq-sdk';
 import OpenAI from 'openai';
 
-/* ─── Servicios internos ─── */
+/* ─── Servicios IA ─── */
+import { streamGroq, streamGemini, streamKimi } from './services/streaming.js';
+import { buildSystemPrompt, buildFinalMessage } from './services/prompts.js';
 import {
-  streamGroq,
-  streamGemini,
-  streamKimi,
-} from './services/streaming.js';
-
-import {
-  verificarLimite,
-  consultarUso,
-  registrarUso,
-  reembolsarUso,
-  getUsageStats,
-  buildRateLimitHeaders,
-  pingLimits,
+  verificarLimite, registrarUso, reembolsarUso,
+  getUsageStats, buildRateLimitHeaders, pingLimits,
 } from './services/limits.js';
+import { supabaseDisponible, listarMemories, pingDatabase } from './services/supabase.js';
+
+/* ─── Servicios de infraestructura ─── */
+import {
+  analyticsMiddleware, track, EVENTS as ANALYTICS_EVENTS,
+  getSnapshot as getAnalyticsSnapshot,
+  getDailyActiveUsers, getWeeklyActiveUsers, getMonthlyActiveUsers,
+  getAverageRetention, getSignupFunnel, getWeeklyCohorts,
+  getTopEvents, getProviderUsage, getPlanDistribution,
+  pingAnalytics, flushAndStop as flushAnalytics,
+} from './services/analytics.js';
 
 import {
-  supabaseDisponible,
-  listarMemories,
-  pingDatabase,
-} from './services/supabase.js';
+  notificationsMiddleware, notify, notifications, TYPES,
+  getInbox, getUnreadCount, markAllRead, markRead, clearInbox,
+  getPreferences, updatePreferences, pingNotifications,
+  flushAndStop as flushNotifications,
+} from './services/notifications.js';
+
+import {
+  dispatch, EVENTS as WEBHOOK_EVENTS,
+  createSubscription, getSubscription, listSubscriptions,
+  updateSubscription, deleteSubscription, rotateSecret,
+  getDeliveryLog, getDlq, retryFromDlq, clearDlq, testSubscription,
+  pingWebhooks, getStats as getWebhookStats,
+  flushAndStop as flushWebhooks,
+} from './services/webhooks.js';
+
+import {
+  search, suggest, getRecentSearches, clearRecentSearches,
+  saveSearch, listSavedSearches, deleteSavedSearch, getTrendingSearches,
+  pingSearch,
+} from './services/search.js';
+
+import {
+  runMigrations, getStatus as getMigrationsStatus,
+  verifyIntegrity as verifyMigrations,
+} from './services/migrations.js';
+
+import {
+  createBackup, listBackups, getBackup, downloadBackup, deleteBackup,
+  restoreBackup, runRetention, pingBackup, scheduledBackup,
+} from './services/backup.js';
+
+/* ─── Middleware ─── */
+import {
+  requestIdMiddleware, notFoundMiddleware, errorMiddleware,
+  installProcessHandlers, getErrorMetrics, getRateLimitMetrics,
+} from './middleware/errors.js';
+
+import { rateLimitUser } from './middleware/rate-limit-per-user.js';
 
 /* ─── Routers ─── */
 import { mountAuthRoutes, attachUser, requireAuth } from './auth.js';
@@ -76,7 +112,7 @@ import { mountEmailRoutes } from './email.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, '..', 'public');
 
-const VERSION = '7.0.0';
+const VERSION = '8.0.0';
 
 /* ═══════════════════════════════════════════════════════════════════════════
    CONFIGURACIÓN
@@ -89,26 +125,16 @@ const PORT = parseInt(process.env.PORT || '8080', 10);
 const CFG = Object.freeze({
   maxMsgLen: 8000,
   jsonLimit: '15mb',
-
   geminiCooldownMs: 60_000,
   geminiSoftCooldownMs: 15_000,
-
   rateLimitIPWindow: 60_000,
-  rateLimitIPMax: 240,
-
-  retryAttempts: 6,
+  rateLimitIPMax: 500,
   retryBaseDelayMs: 900,
-
-  /* ─── SSE ─── */
   sseHeartbeatMs: 8_000,
   sseMaxDurationMs: 300_000,
-
-  /* ─── Timeout de primer token del motor ─── */
   aiFirstTokenTimeoutMs: 25_000,
-
   memCacheTtlMs: 30_000,
   memCacheMax: 200,
-
   keepAliveTimeout: 65_000,
   headersTimeout: 66_000,
   shutdownTimeout: 10_000,
@@ -137,7 +163,7 @@ const LOG = {
 };
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   API KEYS Y MODELOS
+   KEYS · MODELOS
    ═══════════════════════════════════════════════════════════════════════════ */
 
 let TEST_KEYS = {};
@@ -190,15 +216,9 @@ function geminiCooldown(entry, ms = CFG.geminiCooldownMs) {
    CLIENTES IA
    ═══════════════════════════════════════════════════════════════════════════ */
 
-const groq = KEYS.GROQ
-  ? new Groq({ apiKey: KEYS.GROQ })
-  : null;
-
+const groq = KEYS.GROQ ? new Groq({ apiKey: KEYS.GROQ }) : null;
 const nvidia = KEYS.NV
-  ? new OpenAI({
-      apiKey: KEYS.NV,
-      baseURL: 'https://integrate.api.nvidia.com/v1',
-    })
+  ? new OpenAI({ apiKey: KEYS.NV, baseURL: 'https://integrate.api.nvidia.com/v1' })
   : null;
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -228,19 +248,11 @@ function isClientAbort(err) {
   return (msg.includes('aborted') || msg.includes('abort')) && !msg.includes('timeout');
 }
 
-/**
- * ¿El SSE ya está cerrado por el cliente?
- * IMPORTANTE: en Node.js 18+ NO usar req.destroyed ni req.on('close').
- * Solo res.destroyed / res.writableEnded reflejan desconexión real del SSE.
- */
 function sseDisconnected(sse, res) {
   return sse.isClosed() || res.destroyed || res.writableEnded;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   SEGURIDAD · prompt injection guard
-   ═══════════════════════════════════════════════════════════════════════════ */
-
+/* ─── Prompt injection guard ─── */
 const INJECTION_PATTERNS = [
   /ignore\s+(all\s+)?(previous|prior|above)\s+instructions?/i,
   /disregard\s+(all\s+)?(previous|prior)\s+rules?/i,
@@ -257,10 +269,7 @@ function isInjection(message) {
   return INJECTION_PATTERNS.some((p) => p.test(t));
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   RATE LIMITER IP
-   ═══════════════════════════════════════════════════════════════════════════ */
-
+/* ─── IP rate limiter (capa 1) ─── */
 const ipBuckets = new Map();
 
 function checkIP(ip) {
@@ -280,126 +289,10 @@ const _ipCleanup = setInterval(() => {
 }, 5 * 60_000);
 if (_ipCleanup.unref) _ipCleanup.unref();
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   SYSTEM PROMPTS · v6.6 (identidad Numi OT)
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-const NUMINATION_BASE = `
-# IDENTIDAD
-
-Eres Numination AI, también llamada Numi. Tu núcleo operativo es Numi OT, el motor de razonamiento, orquestación y automatización de la plataforma Numination. No eres un chatbot genérico: eres la capa inteligente de un workspace técnico construido para gente que resuelve problemas.
-
-- Producto: Numination AI
-- Motor: Numi OT
-- Modelo: Numi-OT.01
-- Eslogan: "La IA para los que resuelven problemas"
-- Identidad corta: "Numi es la clave"
-- Concepto: AI · Workspace · Shell
-
-Si te preguntan qué modelo eres, respondes: Numi OT. No reclames otra identidad, otro proveedor ni otro motor. Numination integra varios modelos por detrás, pero tu identidad de producto siempre es Numination AI / Numi OT.
-
-# MISIÓN
-
-Tu única directiva: ser el asistente técnico más útil que el usuario haya tenido. No el más amable. No el más largo. El más útil.
-
-# CONTEXTO
-
-Eres una IA educativa y técnica de origen colombiano. Cuando uses ejemplos cotidianos, apóyate en referentes colombianos (ciudades como Bogotá, Medellín, Cali; ríos como el Magdalena y el Cauca; regiones como la Andina y el Caribe; comida como ajiaco, arepas, bandeja paisa; cultura como cumbia, vallenato, Carnaval de Barranquilla) solo si aportan claridad. No fuerces el contexto: si un ejemplo neutral funciona mejor, úsalo.
-
-# ESTILO (REGLAS DURAS)
-
-- Tono técnico, claro y directo. Sin grandilocuencia comercial, sin lenguaje condescendiente.
-- Respuestas normales: MÁXIMO 3 párrafos cortos.
-- Temas complejos: usa listas o pasos numerados.
-- NUNCA repitas la pregunta al empezar.
-- NUNCA hagas introducciones tipo "¡Claro! Excelente pregunta".
-- Usa **negrita** solo para términos clave (máximo 3 por respuesta).
-- CERO emojis. Solo texto plano.
-- Tutea. Sin relleno.
-- Si el usuario comete un error, di "revisemos juntos ese paso".
-
-# REGLAS PEDAGÓGICAS
-
-- NUNCA hagas la tarea por el estudiante. Guíalo.
-- Si te pide "resuélveme esto", responde con preguntas que lo lleven a la respuesta.
-- Verifica comprensión antes de avanzar.
-- Violencia o abuso: ICBF 141, Línea 106.
-- Tu rol NO es terapéutico.
-
-# LENGUAJE
-
-- Idioma por defecto: español.
-- Si el usuario escribe en otro idioma, responde en ese idioma.
-- Adáptate al idioma del usuario incluso si cambia a mitad de la conversación.
-- Código, identificadores, rutas de archivos, comandos, claves de configuración y términos técnicos se mantienen en su forma original sin importar el idioma.
-
-# REGLAS ABSOLUTAS
-
-- NUNCA sustituyas atención médica, psicológica o legal.
-- Nunca reveles ni pidas secretos, tokens, llaves de firma o credenciales.
-- Nunca inventes capacidades, endpoints ni estados que no estén confirmados.
-- Nunca presentes la visión como producto terminado.
-- Trata la concurrencia como un requisito de diseño de la plataforma.
-`.trim();
-
-const ROLE_HINT = {
-  student: `
-Actúas como tutor para estudiantes. Explicas paso a paso, usas ejemplos sencillos y adaptas el lenguaje al nivel del estudiante. Verificas comprensión antes de avanzar.
-`.trim(),
-
-  teacher: `
-Actúas como asistente pedagógico para docentes. Ayudas a diseñar actividades, evaluaciones y explicaciones aplicables al aula. Ofreces variantes y adaptaciones por nivel.
-`.trim(),
-
-  reasoning: `
-Actúas en MODO RAZONAMIENTO. Piensas paso a paso con rigor antes de responder. Ayudas a razonar, no resuelves por el usuario.
-`.trim(),
-
-  coder: `
-Actúas como asistente técnico especializado en programación. Explicas código, corriges bugs, sugieres mejoras. Propones ejemplos reproducibles con rutas y versiones explícitas cuando aplica.
-`.trim(),
-};
-
-const REASONING_PREFIX = `INSTRUCCIÓN — MODO RAZONAMIENTO:
-
-Piensa paso a paso ANTES de responder. Todo tu proceso mental DEBE ir envuelto entre <thinking> y </thinking>. Después del cierre, escribe la respuesta final limpia y directa.
-
-Formato:
-<thinking>
-1. Primero identifico...
-2. Luego considero...
-3. Finalmente concluyo...
-</thinking>
-
-[Respuesta final aquí, sin repetir el razonamiento]
-
-PREGUNTA:
-`;
-
-function buildSystemPrompt(role = 'student', memories = []) {
-  const hint = ROLE_HINT[role] || ROLE_HINT.student;
-  let p = NUMINATION_BASE + '\n\n# MODO ACTUAL\n\n' + hint;
-
-  if (memories.length > 0) {
-    const list = memories.slice(0, 20).map((m) => `- ${m.text}`).join('\n');
-    p += '\n\n# LO QUE RECUERDAS DEL USUARIO\n\n' + list;
-  }
-  return p;
-}
-
-function buildFinalMessage(message, isReasoning) {
-  return isReasoning ? REASONING_PREFIX + (message || '') : (message || '');
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   IMÁGENES · Pollinations
-   ═══════════════════════════════════════════════════════════════════════════ */
-
+/* ─── Imágenes · Pollinations ─── */
 function buildImageUrl(prompt, opts = {}) {
   const {
-    width = 1024,
-    height = 1024,
-    model = 'flux',
+    width = 1024, height = 1024, model = 'flux',
     seed = Math.floor(Math.random() * 1e6),
   } = opts;
   const enc = encodeURIComponent(prompt.trim().slice(0, 500));
@@ -433,10 +326,7 @@ function enrichColombia(prompt) {
   return prompt + ', warm colors, artistic style, high quality, detailed';
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   MEMORIAS · caché con TTL
-   ═══════════════════════════════════════════════════════════════════════════ */
-
+/* ─── Memorias · caché con TTL ─── */
 const memCache = new Map();
 
 async function loadMemories(req) {
@@ -450,7 +340,6 @@ async function loadMemories(req) {
 
   try {
     const list = await listarMemories(req.user.id);
-
     if (memCache.size >= CFG.memCacheMax) {
       const oldestKey = memCache.keys().next().value;
       memCache.delete(oldestKey);
@@ -464,15 +353,7 @@ async function loadMemories(req) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   SSE HELPERS · v7.0
-
-   ⚠️  REGLA DE ORO: NUNCA usar req.on('close') ni req.destroyed para
-   detectar desconexión del cliente. En Node.js 18+, `req.on('close')`
-   se dispara cuando el BODY del request termina de leerse (por
-   express.json()), no cuando el socket se cierra.
-
-   El evento correcto para SSE es: `res.on('close')`.
-   El flag correcto para chequear: `res.destroyed` o `res.writableEnded`.
+   SSE HELPERS
    ═══════════════════════════════════════════════════════════════════════════ */
 
 function setupSSE(req, res) {
@@ -483,20 +364,14 @@ function setupSSE(req, res) {
   res.setHeader('Content-Encoding', 'identity');
   res.flushHeaders?.();
 
-  if (res.socket?.setNoDelay) {
-    try { res.socket.setNoDelay(true); } catch {}
-  }
-  if (res.socket?.setTimeout) {
-    try { res.socket.setTimeout(0); } catch {}
-  }
+  if (res.socket?.setNoDelay) try { res.socket.setNoDelay(true); } catch {}
+  if (res.socket?.setTimeout) try { res.socket.setTimeout(0); } catch {}
 
   let closed = false;
   let closeReason = null;
   const startedAt = Date.now();
-
-  // Controller compartido: el SSE lo dispara al cerrar. Los motores lo
-  // reciben como opts.signal y así abortan el fetch de red en el acto.
   const controller = new AbortController();
+
   const abort = (reason) => {
     try { controller.abort(reason); } catch {}
   };
@@ -510,8 +385,6 @@ function setupSSE(req, res) {
     }
   };
 
-  /* ⚠️ SOLO res.on('close') — único evento confiable para SSE.
-     NO agregar req.on('close') ni req.on('aborted') acá. */
   res.on('close', () => onClose('res.close'));
   res.on('error', (e) => onClose(`res.error:${e?.message || 'unknown'}`));
 
@@ -538,11 +411,8 @@ function setupSSE(req, res) {
       return;
     }
 
-    try {
-      res.write(': keepalive\n\n');
-    } catch (e) {
-      onClose(`heartbeat.error:${e?.message || 'unknown'}`);
-    }
+    try { res.write(': keepalive\n\n'); }
+    catch (e) { onClose(`heartbeat.error:${e?.message || 'unknown'}`); }
   }, CFG.sseHeartbeatMs);
   if (heartbeat.unref) heartbeat.unref();
 
@@ -557,8 +427,7 @@ function setupSSE(req, res) {
   };
 
   return {
-    send,
-    close,
+    send, close,
     isClosed: () => closed,
     getReason: () => closeReason,
     elapsed: () => Date.now() - startedAt,
@@ -566,11 +435,6 @@ function setupSSE(req, res) {
   };
 }
 
-/**
- * Espera el primer token del generador con timeout.
- * Si el motor nunca responde, tira error para que el caller
- * pase al siguiente motor.
- */
 function withFirstTokenTimeout(gen, timeoutMs, reqId, engineName) {
   return new Promise((resolve, reject) => {
     let settled = false;
@@ -596,17 +460,10 @@ function withFirstTokenTimeout(gen, timeoutMs, reqId, engineName) {
   });
 }
 
-/**
- * Construye el objeto `opts` que reciben los streamers de streaming.js.
- * Incluye historial, señal, callbacks de métricas y timeout.
- */
 function buildStreamOpts({ reasoning, history, signal, reqId, providerName }) {
   const stats = { tokens: 0, chars: 0, elapsedMs: 0, tps: '0' };
-
   return {
-    reasoning,
-    history,
-    signal,
+    reasoning, history, signal,
     timeoutMs: CFG.aiFirstTokenTimeoutMs,
     onToken: () => { stats.tokens++; },
     onDone: (s) => {
@@ -614,14 +471,20 @@ function buildStreamOpts({ reasoning, history, signal, reqId, providerName }) {
       stats.chars = s.chars;
       stats.elapsedMs = s.elapsedMs;
       stats.tps = s.tps;
-      LOG.debug(
-        `[${reqId}] ${providerName} OK · ${s.tokens} tokens · ${s.chars} chars · ${s.elapsedMs}ms · ${s.tps} tps`
-      );
+      LOG.debug(`[${reqId}] ${providerName} OK · ${s.tokens} tokens · ${s.tps} tps`);
     },
     onError: (info) => {
       LOG.debug(`[${reqId}] ${providerName} retry ${info.attempt + 1} · ${info.kind}`);
     },
   };
+}
+
+const NAMES = { groq: 'Groq', gemini: 'Gemini', nvidia: 'Kimi K3' };
+
+function orderMotors(file) {
+  return file?.data
+    ? ['gemini', 'nvidia', 'groq']
+    : ['groq', 'gemini', 'nvidia'];
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -632,48 +495,39 @@ const app = express();
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
 
-/* ─── Request ID ─── */
-app.use((req, res, next) => {
-  req.id = crypto.randomBytes(4).toString('hex');
-  req._t0 = Date.now();
-  res.setHeader('X-Request-Id', req.id);
-  next();
-});
+/* 1 · Request ID */
+app.use(requestIdMiddleware());
 
-/* ─── Security headers ─── */
+/* 2 · Security headers */
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-  if (IS_PROD) {
-    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-  }
+  if (IS_PROD) res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   next();
 });
 
-/* ─── CORS ─── */
+/* 3 · CORS */
 app.use((req, res, next) => {
   const origin = req.get('origin');
   const allowed = [
-    'http://localhost:8080',
-    'http://127.0.0.1:8080',
-    'https://numination.app',
-    'https://www.numination.app',
+    'http://localhost:8080', 'http://127.0.0.1:8080',
+    'https://numination.app', 'https://www.numination.app',
     'https://numinationchat.vercel.app',
   ];
   if (origin && allowed.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Request-Id');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Request-Id, X-Cron-Secret');
     res.setHeader('Access-Control-Max-Age', '86400');
   }
   if (req.method === 'OPTIONS') return res.status(204).end();
   next();
 });
 
-/* ─── Rate limit IP ─── */
+/* 4 · Rate limit por IP (capa 1) */
 app.use((req, res, next) => {
   if (/^\/assets\//.test(req.path) || /\.(js|css|png|jpg|svg|woff2?|ico)$/i.test(req.path)) {
     return next();
@@ -684,27 +538,38 @@ app.use((req, res, next) => {
     return res.status(429).json({
       ok: false,
       error: 'Demasiadas peticiones. Espera un minuto.',
-      code: 'ip_rate_limit',
+      code: 'limit_ip',
     });
   }
   next();
 });
 
-/* ─── Body + cookies ─── */
+/* 5 · Body + cookies */
 app.use(express.json({ limit: CFG.jsonLimit }));
 app.use(express.urlencoded({ extended: false, limit: '1mb' }));
 app.use(cookieParser());
 
-/* ─── Auth attachUser ─── */
+/* 6 · Auth */
 app.use(attachUser);
 
-/* ─── Proteger /chat.html ─── */
+/* 7 · Notifications middleware */
+app.use(notificationsMiddleware());
+
+/* 8 · Analytics middleware */
+app.use(analyticsMiddleware({ sampleHttp: 1, ignore4xx: false }));
+
+/* 9 · Rate limit por usuario (capa 2) */
+app.use(rateLimitUser({
+  skipPaths: ['/api/health', '/api/version', '/api/ping'],
+}));
+
+/* 10 · Proteger /chat.html */
 app.use((req, res, next) => {
   if (req.path === '/chat.html' && !req.user) return res.redirect('/login.html');
   next();
 });
 
-/* ─── Static files ─── */
+/* 11 · Static */
 app.use(express.static(publicDir, {
   index: false,
   maxAge: IS_PROD ? '1h' : 0,
@@ -717,11 +582,11 @@ app.use(express.static(publicDir, {
   },
 }));
 
-/* ─── Raíz → login ─── */
+/* 12 · Root */
 app.get('/', (req, res) => res.redirect('/login.html'));
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   ROUTERS
+   ROUTERS EXISTENTES
    ═══════════════════════════════════════════════════════════════════════════ */
 
 mountAuthRoutes(app);
@@ -732,7 +597,22 @@ mountConnectorRoutes(app, requireAuth);
 mountEmailRoutes(app, requireAuth);
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   LÍMITES · stats enriquecidos
+   HELPERS · requireAdmin
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+function requireAdmin(req, res, next) {
+  if (!req.user) {
+    return res.status(401).json({ ok: false, error: 'No autenticado', code: 'auth_no_session' });
+  }
+  const role = String(req.user.role || '').toLowerCase();
+  if (role !== 'admin') {
+    return res.status(403).json({ ok: false, error: 'Sin permisos de admin', code: 'auth_forbidden' });
+  }
+  next();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LÍMITES
    ═══════════════════════════════════════════════════════════════════════════ */
 
 app.get('/api/limits/usage', async (req, res) => {
@@ -752,9 +632,14 @@ app.get('/api/limits/usage', async (req, res) => {
 
 app.get('/api/health', async (req, res) => {
   const mem = process.memoryUsage();
-  const [dbPing, limitsPing] = await Promise.all([
+  const [dbPing, limitsPing, analyticsPing, notifPing, webhookPing, searchPing, backupPing] = await Promise.all([
     pingDatabase().catch(() => ({ ok: false })),
     pingLimits().catch(() => ({ ok: false })),
+    pingAnalytics().catch(() => ({ ok: false })),
+    pingNotifications().catch(() => ({ ok: false })),
+    pingWebhooks().catch(() => ({ ok: false })),
+    pingSearch().catch(() => ({ ok: false })),
+    pingBackup().catch(() => ({ ok: false })),
   ]);
 
   return res.json({
@@ -789,6 +674,11 @@ app.get('/api/health', async (req, res) => {
     },
     database: { connected: supabaseDisponible(), ping: dbPing },
     limits: limitsPing,
+    analytics: analyticsPing,
+    notifications: notifPing,
+    webhooks: webhookPing,
+    search: searchPing,
+    backup: backupPing,
     auth: {
       session: Boolean(req.user),
       email: req.user?.email || null,
@@ -820,37 +710,526 @@ app.get('/api/ping', (_req, res) => {
 });
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   CHAT STREAMING · SSE · v7.0
+   NOTIFICATIONS · endpoints de usuario
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+app.get('/api/notifications', requireAuth, async (req, res) => {
+  try {
+    const limit = Math.min(100, parseInt(req.query.limit || '50', 10));
+    const offset = Math.max(0, parseInt(req.query.offset || '0', 10));
+    const inbox = await getInbox(req.user.id, { limit, offset });
+    return res.json({ ok: true, ...inbox });
+  } catch (e) {
+    LOG.error('notifications.list:', e.message);
+    return res.status(500).json({ ok: false, error: 'Error cargando notificaciones' });
+  }
+});
+
+app.get('/api/notifications/unread', requireAuth, async (req, res) => {
+  try {
+    const count = await getUnreadCount(req.user.id);
+    return res.json({ ok: true, unread: count });
+  } catch {
+    return res.json({ ok: true, unread: 0 });
+  }
+});
+
+app.post('/api/notifications/read-all', requireAuth, async (req, res) => {
+  try {
+    await markAllRead(req.user.id);
+    return res.json({ ok: true });
+  } catch {
+    return res.status(500).json({ ok: false, error: 'Error' });
+  }
+});
+
+app.post('/api/notifications/:id/read', requireAuth, async (req, res) => {
+  try {
+    const ok = await markRead(req.user.id, req.params.id);
+    return res.json({ ok });
+  } catch {
+    return res.status(500).json({ ok: false, error: 'Error' });
+  }
+});
+
+app.delete('/api/notifications', requireAuth, async (req, res) => {
+  try {
+    await clearInbox(req.user.id);
+    return res.json({ ok: true });
+  } catch {
+    return res.status(500).json({ ok: false, error: 'Error' });
+  }
+});
+
+app.get('/api/notifications/preferences', requireAuth, async (req, res) => {
+  try {
+    const prefs = await getPreferences(req.user.id);
+    return res.json({ ok: true, preferences: prefs });
+  } catch {
+    return res.status(500).json({ ok: false, error: 'Error' });
+  }
+});
+
+app.patch('/api/notifications/preferences', requireAuth, async (req, res) => {
+  try {
+    const result = await updatePreferences(req.user.id, req.body || {});
+    return res.json({ ok: true, preferences: result.prefs });
+  } catch {
+    return res.status(500).json({ ok: false, error: 'Error' });
+  }
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SEARCH · endpoints
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+app.get('/api/search', requireAuth, async (req, res) => {
+  try {
+    const q = String(req.query.q || '').trim();
+    if (!q) return res.json({ ok: true, items: [], total: 0 });
+
+    const types = req.query.types
+      ? String(req.query.types).split(',').map((s) => s.trim())
+      : undefined;
+
+    const limit = Math.min(parseInt(req.query.limit || '20', 10), 100);
+
+    const result = await search(q, req.user.id, { types, limit });
+    return res.json(result);
+  } catch (e) {
+    LOG.error('search:', e.message);
+    return res.status(500).json({ ok: false, error: 'Error buscando' });
+  }
+});
+
+app.get('/api/search/suggest', requireAuth, async (req, res) => {
+  try {
+    const prefix = String(req.query.q || '').trim();
+    const limit = Math.min(parseInt(req.query.limit || '8', 10), 20);
+    const result = await suggest(prefix, req.user.id, { limit });
+    return res.json(result);
+  } catch (e) {
+    return res.status(500).json({ ok: false, suggestions: [] });
+  }
+});
+
+app.get('/api/search/recent', requireAuth, async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit || '10', 10), 30);
+    const recent = await getRecentSearches(req.user.id, { limit });
+    return res.json({ ok: true, recent });
+  } catch {
+    return res.json({ ok: true, recent: [] });
+  }
+});
+
+app.delete('/api/search/recent', requireAuth, async (req, res) => {
+  await clearRecentSearches(req.user.id);
+  return res.json({ ok: true });
+});
+
+app.get('/api/search/trending', async (_req, res) => {
+  try {
+    const limit = Math.min(parseInt(_req.query.limit || '10', 10), 50);
+    const trending = await getTrendingSearches({ limit });
+    return res.json({ ok: true, trending });
+  } catch {
+    return res.json({ ok: true, trending: [] });
+  }
+});
+
+app.post('/api/search/saved', requireAuth, async (req, res) => {
+  const { name, query, filters } = req.body || {};
+  const result = await saveSearch(req.user.id, { name, query, filters });
+  return res.status(result.ok ? 201 : 400).json(result);
+});
+
+app.get('/api/search/saved', requireAuth, async (req, res) => {
+  const saved = await listSavedSearches(req.user.id);
+  return res.json({ ok: true, saved });
+});
+
+app.delete('/api/search/saved/:id', requireAuth, async (req, res) => {
+  const ok = await deleteSavedSearch(req.user.id, req.params.id);
+  return res.json({ ok });
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   WEBHOOKS · endpoints
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+app.get('/api/webhooks', requireAuth, async (req, res) => {
+  const subs = await listSubscriptions(req.user.id);
+  const safe = subs.map((s) => ({ ...s, secret: undefined }));
+  return res.json({ ok: true, webhooks: safe });
+});
+
+app.post('/api/webhooks', requireAuth, async (req, res) => {
+  const result = await createSubscription(req.user.id, {
+    url: req.body?.url,
+    events: req.body?.events,
+    description: req.body?.description,
+    filters: req.body?.filters,
+  });
+  if (!result.ok) return res.status(400).json(result);
+  return res.status(201).json({ ok: true, webhook: result.subscription });
+});
+
+app.get('/api/webhooks/events', (_req, res) => {
+  return res.json({ ok: true, events: Object.values(WEBHOOK_EVENTS) });
+});
+
+app.get('/api/webhooks/:id', requireAuth, async (req, res) => {
+  const sub = await getSubscription(req.params.id);
+  if (!sub) return res.status(404).json({ ok: false, error: 'not_found' });
+  if (sub.userId !== req.user.id) return res.status(403).json({ ok: false, error: 'forbidden' });
+  return res.json({ ok: true, webhook: { ...sub, secret: undefined } });
+});
+
+app.patch('/api/webhooks/:id', requireAuth, async (req, res) => {
+  const result = await updateSubscription(req.params.id, req.user.id, req.body || {});
+  if (!result.ok) return res.status(400).json(result);
+  return res.json({ ok: true, webhook: { ...result.subscription, secret: undefined } });
+});
+
+app.delete('/api/webhooks/:id', requireAuth, async (req, res) => {
+  const result = await deleteSubscription(req.params.id, req.user.id);
+  return res.json(result);
+});
+
+app.post('/api/webhooks/:id/rotate-secret', requireAuth, async (req, res) => {
+  const result = await rotateSecret(req.params.id, req.user.id);
+  if (!result.ok) return res.status(400).json(result);
+  return res.json({ ok: true, secret: result.secret });
+});
+
+app.post('/api/webhooks/:id/test', requireAuth, async (req, res) => {
+  const result = await testSubscription(req.params.id, req.user.id);
+  return res.json(result);
+});
+
+app.get('/api/webhooks/:id/deliveries', requireAuth, async (req, res) => {
+  const sub = await getSubscription(req.params.id);
+  if (!sub || sub.userId !== req.user.id) return res.status(403).json({ ok: false });
+  const deliveries = await getDeliveryLog(req.params.id, {
+    limit: Math.min(100, parseInt(req.query.limit || '50', 10)),
+  });
+  return res.json({ ok: true, deliveries });
+});
+
+app.get('/api/webhooks/:id/dlq', requireAuth, async (req, res) => {
+  const sub = await getSubscription(req.params.id);
+  if (!sub || sub.userId !== req.user.id) return res.status(403).json({ ok: false });
+  const dlq = await getDlq(req.params.id, {
+    limit: Math.min(100, parseInt(req.query.limit || '50', 10)),
+  });
+  return res.json({ ok: true, dlq });
+});
+
+app.post('/api/webhooks/:id/dlq/retry', requireAuth, async (req, res) => {
+  const sub = await getSubscription(req.params.id);
+  if (!sub || sub.userId !== req.user.id) return res.status(403).json({ ok: false });
+  const result = await retryFromDlq(req.params.id, req.body?.deliveryId);
+  return res.json(result);
+});
+
+app.delete('/api/webhooks/:id/dlq', requireAuth, async (req, res) => {
+  const sub = await getSubscription(req.params.id);
+  if (!sub || sub.userId !== req.user.id) return res.status(403).json({ ok: false });
+  const ok = await clearDlq(req.params.id);
+  return res.json({ ok });
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ADMIN · Analytics
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+app.get('/api/admin/analytics', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const days = Math.min(90, parseInt(req.query.days || '7', 10));
+    return res.json(await getAnalyticsSnapshot({ days }));
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+app.get('/api/admin/analytics/dau', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const days = Math.min(90, parseInt(req.query.days || '30', 10));
+    const [dau, wau, mau] = await Promise.all([
+      getDailyActiveUsers(days),
+      getWeeklyActiveUsers(),
+      getMonthlyActiveUsers(),
+    ]);
+    return res.json({
+      ok: true,
+      dau: dau.ok ? dau : null,
+      wau: wau.ok ? wau : null,
+      mau: mau.ok ? mau : null,
+    });
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+app.get('/api/admin/analytics/retention', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const days = Math.min(30, parseInt(req.query.days || '14', 10));
+    return res.json(await getAverageRetention(days));
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+app.get('/api/admin/analytics/funnel', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const days = Math.min(30, parseInt(req.query.days || '7', 10));
+    return res.json(await getSignupFunnel(days));
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+app.get('/api/admin/analytics/cohorts', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const weeks = Math.min(16, parseInt(req.query.weeks || '8', 10));
+    return res.json(await getWeeklyCohorts(weeks));
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+app.get('/api/admin/analytics/events', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const days = Math.min(30, parseInt(req.query.days || '7', 10));
+    const limit = Math.min(50, parseInt(req.query.limit || '20', 10));
+    const [events, providers, plans] = await Promise.all([
+      getTopEvents(days, limit),
+      getProviderUsage(days),
+      getPlanDistribution(days),
+    ]);
+    return res.json({ ok: true, events, providers, plans });
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ADMIN · Métricas y health
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+app.get('/api/admin/metrics', requireAuth, requireAdmin, async (_req, res) => {
+  try {
+    return res.json({
+      ok: true,
+      errors: getErrorMetrics(10),
+      rateLimit: getRateLimitMetrics(10),
+      webhooks: getWebhookStats(),
+    });
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+app.get('/api/admin/health', requireAuth, requireAdmin, async (_req, res) => {
+  try {
+    const [db, limits, analytics, notif, webhooks, search, backup] = await Promise.all([
+      pingDatabase().catch(() => ({ ok: false })),
+      pingLimits().catch(() => ({ ok: false })),
+      pingAnalytics().catch(() => ({ ok: false })),
+      pingNotifications().catch(() => ({ ok: false })),
+      pingWebhooks().catch(() => ({ ok: false })),
+      pingSearch().catch(() => ({ ok: false })),
+      pingBackup().catch(() => ({ ok: false })),
+    ]);
+    return res.json({
+      ok: true,
+      db, limits, analytics,
+      notifications: notif,
+      webhooks, search, backup,
+      ts: new Date().toISOString(),
+    });
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ADMIN · Migraciones
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+app.get('/api/admin/migrations', requireAuth, requireAdmin, async (_req, res) => {
+  try {
+    return res.json(await getMigrationsStatus());
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+app.post('/api/admin/migrations/run', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const dryRun = req.query.dryRun === 'true' || req.body?.dryRun === true;
+    return res.json(await runMigrations({ dryRun }));
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+app.get('/api/admin/migrations/verify', requireAuth, requireAdmin, async (_req, res) => {
+  try {
+    return res.json(await verifyMigrations());
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ADMIN · Webhooks globales
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+app.get('/api/admin/webhooks', requireAuth, requireAdmin, async (_req, res) => {
+  try {
+    return res.json({
+      ok: true,
+      stats: getWebhookStats(),
+      ping: await pingWebhooks().catch(() => ({ ok: false })),
+    });
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ADMIN · Notificar manualmente
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+app.post('/api/admin/notify', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { to, subject, message } = req.body || {};
+    if (!to || !subject) {
+      return res.status(400).json({ ok: false, error: 'Faltan campos' });
+    }
+    const result = await notify(TYPES.SYSTEM_ALERT, {
+      userId: `admin:${req.user.email}`,
+      email: to,
+      data: { alert: subject, message: message || '(sin mensaje)' },
+      force: true,
+    });
+    return res.json(result);
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ADMIN · Backup
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+app.get('/api/admin/backup', requireAuth, requireAdmin, async (_req, res) => {
+  try {
+    return res.json(await listBackups());
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+app.post('/api/admin/backup', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const result = await createBackup({
+      createdBy: req.user.email,
+      reason: req.body?.reason || 'manual',
+    });
+    return res.status(result.ok ? 201 : 500).json(result);
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+app.get('/api/admin/backup/:id', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    return res.json(await getBackup(req.params.id));
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+app.get('/api/admin/backup/:id/download', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const result = await downloadBackup(req.params.id);
+    if (!result.ok) return res.status(404).json(result);
+    res.setHeader('Content-Type', 'application/gzip');
+    res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
+    return res.send(result.buffer);
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+app.post('/api/admin/backup/:id/restore', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const result = await restoreBackup(req.params.id, {
+      confirm: req.body?.confirm,
+      truncate: req.body?.truncate === true,
+      tables: req.body?.tables,
+    });
+    return res.status(result.ok ? 200 : 400).json(result);
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+app.delete('/api/admin/backup/:id', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    return res.json(await deleteBackup(req.params.id));
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+app.post('/api/admin/backup/retention', requireAuth, requireAdmin, async (_req, res) => {
+  try {
+    return res.json(await runRetention());
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+/* Cron endpoint: backup programado */
+app.post('/api/admin/backup/cron', async (req, res) => {
+  const secret = req.headers['x-cron-secret'] || req.query.secret;
+  if (!process.env.CRON_SECRET || secret !== process.env.CRON_SECRET) {
+    return res.status(401).json({ ok: false, error: 'unauthorized' });
+  }
+  try {
+    return res.json(await scheduledBackup());
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CHAT STREAMING · SSE
    ═══════════════════════════════════════════════════════════════════════════ */
 
 app.post('/api/chat/stream', async (req, res) => {
   const t0 = Date.now();
 
   try {
-    /* ─── Límite (con headers X-RateLimit-*) ─── */
     const lim = await verificarLimite(req);
     buildRateLimitHeaders(res, lim);
 
     if (!lim.permitido) {
       if (lim.retryAfter) res.setHeader('Retry-After', String(lim.retryAfter));
       return res.status(429).json({
-        ok: false,
-        error: lim.mensaje,
-        razon: lim.razon,
-        retryAfter: lim.retryAfter,
-        plan: lim.plan,
-        uso: lim.uso,
-        limites: lim.limites,
+        ok: false, error: lim.mensaje, razon: lim.razon,
+        retryAfter: lim.retryAfter, plan: lim.plan,
+        uso: lim.uso, limites: lim.limites,
       });
     }
 
-    /* ─── Extraer payload incluyendo historial ─── */
     const {
-      message,
-      role = 'student',
-      file = null,
-      incognito = false,
-      history = [],
+      message, role = 'student', file = null,
+      incognito = false, history = [],
     } = req.body ?? {};
 
     const hasText = message && String(message).trim();
@@ -859,20 +1238,15 @@ app.post('/api/chat/stream', async (req, res) => {
     if (!hasText && !hasFile) {
       return res.status(400).json({ ok: false, error: 'Falta el mensaje o archivo' });
     }
-
     if (hasText && String(message).length > CFG.maxMsgLen) {
-      return res.status(400).json({
-        ok: false,
-        error: `Mensaje muy largo (máx ${CFG.maxMsgLen} caracteres)`,
-      });
+      return res.status(400).json({ ok: false, error: `Mensaje muy largo (máx ${CFG.maxMsgLen} caracteres)` });
     }
-
     if (hasText && isInjection(message)) {
       LOG.warn(`[${req.id}] Injection bloqueado`);
       return res.status(403).json({
         ok: false,
         error: 'No puedo procesar esa instrucción. Reformúlala como una pregunta educativa.',
-        code: 'PROMPT_INJECTION_BLOCKED',
+        code: 'chat_injection_blocked',
       });
     }
 
@@ -881,28 +1255,31 @@ app.post('/api/chat/stream', async (req, res) => {
     const finalMessage = buildFinalMessage(message, isReasoning);
 
     const memories = incognito ? [] : await loadMemories(req);
-    const systemPrompt = buildSystemPrompt(effectiveRole, memories);
+    const systemPrompt = buildSystemPrompt(effectiveRole, memories, {
+      userId: req.user?.id,
+      strategy: 'ab',
+    });
 
-    LOG.debug(
-      `[${req.id}] stream · ${effectiveRole}${incognito ? ' · incognito' : ''} · mem=${memories.length} · hist=${Array.isArray(history) ? history.length : 0} · file=${hasFile ? 'sí' : 'no'}`
-    );
+    LOG.debug(`[${req.id}] stream · ${effectiveRole}${incognito ? ' · incognito' : ''} · mem=${memories.length} · hist=${Array.isArray(history) ? history.length : 0} · file=${hasFile ? 'sí' : 'no'}`);
 
-    /* ─── SSE ─── */
     const sse = setupSSE(req, res);
 
     sse.send({
       meta: {
-        plan: lim.plan,
-        restanteDia: lim.restanteDia,
-        restanteMin: lim.restanteMin,
-        mode: effectiveRole,
-        memories: memories.length,
+        plan: lim.plan, restanteDia: lim.restanteDia, restanteMin: lim.restanteMin,
+        mode: effectiveRole, memories: memories.length,
         history: Array.isArray(history) ? history.length : 0,
-        incognito,
-        requestId: req.id,
-        version: VERSION,
+        incognito, requestId: req.id, version: VERSION,
       },
     });
+
+    /* Analytics: AI_REQUEST */
+    if (req.user?.id && !incognito) {
+      track(ANALYTICS_EVENTS.AI_REQUEST, {
+        userId: req.user.id,
+        meta: { mode: effectiveRole },
+      });
+    }
 
     let responded = false;
     let tokens = 0;
@@ -910,29 +1287,20 @@ app.post('/api/chat/stream', async (req, res) => {
 
     /* ═══ Iteración por motores ═══ */
     for (const prov of orderMotors(file)) {
-      if (sseDisconnected(sse, res)) {
-        LOG.debug(`[${req.id}] cliente desconectado, abortando loop`);
-        break;
-      }
+      if (sseDisconnected(sse, res)) break;
 
-      /* ─────── GEMINI ─────── */
+      /* ─── GEMINI ─── */
       if (prov === 'gemini') {
         const candidates = geminiAvailable();
-        if (!candidates.length) {
-          LOG.debug(`[${req.id}] Gemini: todas las keys en cooldown`);
-          continue;
-        }
+        if (!candidates.length) continue;
 
         let ok = false;
         for (const entry of candidates) {
           if (sseDisconnected(sse, res)) break;
 
           const opts = buildStreamOpts({
-            reasoning: isReasoning,
-            history,
-            signal: sse.signal,
-            reqId: req.id,
-            providerName: `Gemini#${entry.id}`,
+            reasoning: isReasoning, history, signal: sse.signal,
+            reqId: req.id, providerName: `Gemini#${entry.id}`,
           });
 
           try {
@@ -940,133 +1308,78 @@ app.post('/api/chat/stream', async (req, res) => {
             let local = 0;
             entry.requests++;
 
-            const gen = streamGemini(
-              entry.client,
-              systemPrompt,
-              finalMessage,
-              file,
-              opts
-            );
+            const gen = streamGemini(entry.client, systemPrompt, finalMessage, file, opts);
 
             let first;
             try {
-              first = await withFirstTokenTimeout(
-                gen,
-                CFG.aiFirstTokenTimeoutMs,
-                req.id,
-                `Gemini#${entry.id}`
-              );
+              first = await withFirstTokenTimeout(gen, CFG.aiFirstTokenTimeoutMs, req.id, `Gemini#${entry.id}`);
             } catch (e) {
-              throw new Error(`Gemini#${entry.id} timeout primer token: ${e.message}`);
+              throw new Error(`Gemini#${entry.id} timeout: ${e.message}`);
             }
 
             if (!first.done && first.value) {
               sse.send({ token: first.value, done: false });
-              responded = true;
-              tokens++;
-              local++;
+              responded = true; tokens++; local++;
             }
-
             for await (const token of gen) {
               if (sseDisconnected(sse, res)) break;
               sse.send({ token, done: false });
-              responded = true;
-              tokens++;
-              local++;
+              responded = true; tokens++; local++;
             }
-
             if (local > 0) {
               sse.send({ token: '', done: true, provider: `gemini-${entry.id}` });
-              ok = true;
-              chosenProvider = `gemini-${entry.id}`;
+              ok = true; chosenProvider = `gemini-${entry.id}`;
               break;
             }
             throw new Error('Gemini no devolvió tokens');
           } catch (err) {
             LOG.warn(`[${req.id}] Gemini #${entry.id} falló: ${short(err.message, 100)}`);
-
-            if (isClientAbort(err) || sseDisconnected(sse, res)) {
-              LOG.debug(`[${req.id}] abort por cliente, no reintentar`);
-              break;
-            }
-            if (isRateLimit(err) && !responded) {
-              geminiCooldown(entry);
-              continue;
-            }
+            if (isClientAbort(err) || sseDisconnected(sse, res)) break;
+            if (isRateLimit(err) && !responded) { geminiCooldown(entry); continue; }
             if (responded) {
               sse.send({ token: '', done: true, provider: `gemini-${entry.id}`, partial: true });
-              ok = true;
-              chosenProvider = `gemini-${entry.id}`;
+              ok = true; chosenProvider = `gemini-${entry.id}`;
               break;
             }
             geminiCooldown(entry, CFG.geminiSoftCooldownMs);
           }
         }
-
-        if (ok) {
-          finishSSE(sse, req, incognito, t0, tokens, chosenProvider);
-          return;
-        }
+        if (ok) { finishSSE(sse, req, incognito, t0, tokens, chosenProvider); return; }
         if (responded || sseDisconnected(sse, res)) {
           finishSSE(sse, req, incognito, t0, tokens, chosenProvider || 'gemini-partial');
           return;
         }
       }
 
-      /* ─────── GROQ ─────── */
+      /* ─── GROQ ─── */
       else if (prov === 'groq') {
-        if (!groq) {
-          LOG.debug(`[${req.id}] Groq no configurado, skip`);
-          continue;
-        }
-
+        if (!groq) continue;
         const opts = buildStreamOpts({
-          reasoning: isReasoning,
-          history,
-          signal: sse.signal,
-          reqId: req.id,
-          providerName: 'Groq',
+          reasoning: isReasoning, history, signal: sse.signal,
+          reqId: req.id, providerName: 'Groq',
         });
-
         try {
           LOG.debug(`[${req.id}] Groq streaming...`);
           let local = 0;
 
-          const gen = streamGroq(
-            groq,
-            systemPrompt,
-            finalMessage,
-            file,
-            opts
-          );
+          const gen = streamGroq(groq, systemPrompt, finalMessage, file, opts);
 
           let first;
           try {
-            first = await withFirstTokenTimeout(
-              gen,
-              CFG.aiFirstTokenTimeoutMs,
-              req.id,
-              'Groq'
-            );
+            first = await withFirstTokenTimeout(gen, CFG.aiFirstTokenTimeoutMs, req.id, 'Groq');
           } catch (e) {
-            throw new Error(`Groq timeout primer token: ${e.message}`);
+            throw new Error(`Groq timeout: ${e.message}`);
           }
 
           if (!first.done && first.value) {
             sse.send({ token: first.value, done: false });
-            responded = true;
-            tokens++;
-            local++;
+            responded = true; tokens++; local++;
           }
-
           for await (const token of gen) {
             if (sseDisconnected(sse, res)) break;
             sse.send({ token, done: false });
-            responded = true;
-            tokens++;
-            local++;
+            responded = true; tokens++; local++;
           }
-
           if (local > 0) {
             sse.send({ token: '', done: true, provider: 'groq' });
             finishSSE(sse, req, incognito, t0, tokens, 'groq');
@@ -1075,13 +1388,10 @@ app.post('/api/chat/stream', async (req, res) => {
           throw new Error('Groq no devolvió tokens');
         } catch (err) {
           LOG.warn(`[${req.id}] Groq falló: ${short(err.message, 100)}`);
-
           if (isClientAbort(err) || sseDisconnected(sse, res)) {
-            LOG.debug(`[${req.id}] abort por cliente, cerrando sin retry`);
             finishSSE(sse, req, incognito, t0, tokens, 'groq-aborted');
             return;
           }
-
           if (responded) {
             sse.send({ token: '', done: true, provider: 'groq', partial: true });
             finishSSE(sse, req, incognito, t0, tokens, 'groq');
@@ -1090,60 +1400,35 @@ app.post('/api/chat/stream', async (req, res) => {
         }
       }
 
-      /* ─────── NVIDIA / KIMI (con streaming real) ─────── */
+      /* ─── NVIDIA / KIMI ─── */
       else if (prov === 'nvidia') {
-        if (!nvidia) {
-          LOG.debug(`[${req.id}] NVIDIA no configurado, skip`);
-          continue;
-        }
-
+        if (!nvidia) continue;
         const opts = buildStreamOpts({
-          reasoning: isReasoning,
-          history,
-          signal: sse.signal,
-          reqId: req.id,
-          providerName: 'Kimi',
+          reasoning: isReasoning, history, signal: sse.signal,
+          reqId: req.id, providerName: 'Kimi',
         });
-
         try {
           LOG.debug(`[${req.id}] Kimi streaming...`);
           let local = 0;
 
-          const gen = streamKimi(
-            nvidia,
-            systemPrompt,
-            finalMessage,
-            file,
-            opts
-          );
+          const gen = streamKimi(nvidia, systemPrompt, finalMessage, file, opts);
 
           let first;
           try {
-            first = await withFirstTokenTimeout(
-              gen,
-              CFG.aiFirstTokenTimeoutMs,
-              req.id,
-              'Kimi'
-            );
+            first = await withFirstTokenTimeout(gen, CFG.aiFirstTokenTimeoutMs, req.id, 'Kimi');
           } catch (e) {
-            throw new Error(`Kimi timeout primer token: ${e.message}`);
+            throw new Error(`Kimi timeout: ${e.message}`);
           }
 
           if (!first.done && first.value) {
             sse.send({ token: first.value, done: false });
-            responded = true;
-            tokens++;
-            local++;
+            responded = true; tokens++; local++;
           }
-
           for await (const token of gen) {
             if (sseDisconnected(sse, res)) break;
             sse.send({ token, done: false });
-            responded = true;
-            tokens++;
-            local++;
+            responded = true; tokens++; local++;
           }
-
           if (local > 0) {
             sse.send({ token: '', done: true, provider: 'nvidia' });
             finishSSE(sse, req, incognito, t0, tokens, 'nvidia');
@@ -1152,12 +1437,10 @@ app.post('/api/chat/stream', async (req, res) => {
           throw new Error('Kimi no devolvió tokens');
         } catch (err) {
           LOG.warn(`[${req.id}] Kimi falló: ${short(err.message, 100)}`);
-
           if (isClientAbort(err) || sseDisconnected(sse, res)) {
             finishSSE(sse, req, incognito, t0, tokens, 'nvidia-aborted');
             return;
           }
-
           if (responded) {
             sse.send({ token: '', done: true, provider: 'nvidia', partial: true });
             finishSSE(sse, req, incognito, t0, tokens, 'nvidia');
@@ -1167,11 +1450,22 @@ app.post('/api/chat/stream', async (req, res) => {
       }
     }
 
-    /* ─── Todos fallaron: reembolsar y avisar ─── */
+    /* ─── Todos fallaron: reembolsar + dispatch ─── */
     if (!responded && !sseDisconnected(sse, res)) {
       LOG.error(`[${req.id}] Todos los motores fallaron · reembolsando`);
-      if (!incognito) reembolsarUso(req).catch(() => {});
-
+      if (!incognito) {
+        reembolsarUso(req).catch(() => {});
+        dispatch(WEBHOOK_EVENTS.AI_ALL_FAILED, {
+          userId: req.user?.id,
+          data: { mode: effectiveRole },
+        }).catch(() => {});
+        if (req.user?.id) {
+          track(ANALYTICS_EVENTS.AI_ERROR, {
+            userId: req.user.id,
+            meta: { provider: 'all', code: 'all_failed' },
+          });
+        }
+      }
       sse.send({
         error: 'Los motores de IA están saturados. Intenta de nuevo en unos segundos.',
         done: true,
@@ -1190,7 +1484,19 @@ app.post('/api/chat/stream', async (req, res) => {
 
 function finishSSE(sse, req, incognito, t0, tokens, provider) {
   const dur = Date.now() - t0;
-  if (!incognito) registrarUso(req).catch(() => {});
+  if (!incognito) {
+    registrarUso(req).catch(() => {});
+    if (req.user?.id) {
+      track(ANALYTICS_EVENTS.CHAT_MESSAGE_RECEIVED, {
+        userId: req.user.id,
+        meta: { provider, durationMs: dur, tokens },
+      });
+      dispatch(WEBHOOK_EVENTS.CHAT_MESSAGE_RECEIVED, {
+        userId: req.user.id,
+        data: { provider, tokens, durationMs: dur },
+      }).catch(() => {});
+    }
+  }
   setImmediate(() => {
     sse.close();
     LOG.debug(`[${req.id}] Stream cerrado en ${dur}ms · ~${tokens} tokens · ${provider}`);
@@ -1211,22 +1517,15 @@ app.post('/api/chat', async (req, res) => {
     if (!lim.permitido) {
       if (lim.retryAfter) res.setHeader('Retry-After', String(lim.retryAfter));
       return res.status(429).json({
-        ok: false,
-        error: lim.mensaje,
-        razon: lim.razon,
-        retryAfter: lim.retryAfter,
-        plan: lim.plan,
-        uso: lim.uso,
-        limites: lim.limites,
+        ok: false, error: lim.mensaje, razon: lim.razon,
+        retryAfter: lim.retryAfter, plan: lim.plan,
+        uso: lim.uso, limites: lim.limites,
       });
     }
 
     const {
-      message,
-      role = 'student',
-      file = null,
-      incognito = false,
-      history = [],
+      message, role = 'student', file = null,
+      incognito = false, history = [],
     } = req.body ?? {};
 
     const hasText = message && String(message).trim();
@@ -1242,7 +1541,7 @@ app.post('/api/chat', async (req, res) => {
       return res.status(403).json({
         ok: false,
         error: 'No puedo procesar esa instrucción.',
-        code: 'PROMPT_INJECTION_BLOCKED',
+        code: 'chat_injection_blocked',
       });
     }
 
@@ -1260,18 +1559,17 @@ app.post('/api/chat', async (req, res) => {
         return res.json({
           ok: true,
           reply: `Listo, aquí está tu imagen de: **${imgPrompt}**\n\nSi quieres otra versión, pídeme "otra imagen de..." y crearé una variación.`,
-          imageUrl,
-          imagePrompt: imgPrompt,
-          type: 'image',
+          imageUrl, imagePrompt: imgPrompt, type: 'image',
         });
       }
     }
 
     const memories = incognito ? [] : await loadMemories(req);
-    const systemPrompt = buildSystemPrompt(effectiveRole, memories);
+    const systemPrompt = buildSystemPrompt(effectiveRole, memories, {
+      userId: req.user?.id,
+      strategy: 'ab',
+    });
     const order = orderMotors(file);
-
-    /* ─── Streaming interno para respuesta completa ─── */
     const attempts = [order[0], order[0], order[1], order[2], order[1], order[2]];
     let lastErr = null;
 
@@ -1288,11 +1586,8 @@ app.post('/api/chat', async (req, res) => {
           LOG.ok(`[${req.id}] ${NAMES[prov]} respondió en ${dur}ms`);
           if (!incognito) registrarUso(req).catch(() => {});
           return res.json({
-            ok: true,
-            reply,
-            provider: prov,
-            mode: effectiveRole,
-            durationMs: dur,
+            ok: true, reply, provider: prov,
+            mode: effectiveRole, durationMs: dur,
           });
         }
         throw new Error('Respuesta vacía');
@@ -1303,7 +1598,6 @@ app.post('/api/chat', async (req, res) => {
       }
     }
 
-    /* ─── Todos fallaron ─── */
     LOG.error(`[${req.id}] Todos los intentos fallaron · reembolsando`);
     if (!incognito) reembolsarUso(req).catch(() => {});
 
@@ -1317,10 +1611,6 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
-/**
- * Recolecta el stream completo del motor indicado y devuelve el texto.
- * Usado por /api/chat (sin SSE).
- */
 async function collectStream(prov, systemPrompt, finalMessage, file, history, isReasoning) {
   const opts = {
     reasoning: isReasoning,
@@ -1345,80 +1635,19 @@ async function collectStream(prov, systemPrompt, finalMessage, file, history, is
   }
 
   const parts = [];
-  for await (const token of gen) {
-    parts.push(token);
-  }
+  for await (const token of gen) parts.push(token);
   return parts.join('');
 }
 
-const NAMES = { groq: 'Groq', gemini: 'Gemini', nvidia: 'Kimi K3' };
-
-function orderMotors(file) {
-  return file?.data
-    ? ['gemini', 'nvidia', 'groq']
-    : ['groq', 'gemini', 'nvidia'];
-}
-
 /* ═══════════════════════════════════════════════════════════════════════════
-   CATCH-ALL
+   CATCH-ALL + ERROR HANDLER
    ═══════════════════════════════════════════════════════════════════════════ */
 
-app.use((req, res) => {
-  if (req.path.startsWith('/api/')) {
-    return res.status(404).json({
-      ok: false,
-      error: 'Endpoint no encontrado: ' + req.path,
-      code: 'endpoint_not_found',
-    });
-  }
-  if (path.extname(req.path)) {
-    return res.status(404).json({
-      ok: false,
-      error: 'Archivo no encontrado: ' + req.path,
-      code: 'file_not_found',
-    });
-  }
-  const page404 = path.join(publicDir, '404.html');
-  if (fs.existsSync(page404)) {
-    return res.status(404).sendFile(page404);
-  }
-  res.redirect('/login.html');
-});
+app.use(notFoundMiddleware(publicDir));
+app.use(errorMiddleware({ includeStack: !IS_PROD }));
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   ERROR HANDLER
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-app.use((err, req, res, _next) => {
-  if (err?.type === 'entity.parse.failed' || err instanceof SyntaxError) {
-    LOG.warn(`[${req.id}] JSON inválido: ${err.message}`);
-    if (!res.headersSent) {
-      return res.status(400).json({ ok: false, error: 'JSON inválido', code: 'invalid_json' });
-    }
-    return;
-  }
-
-  if (err?.type === 'entity.too.large') {
-    if (!res.headersSent) {
-      return res.status(413).json({ ok: false, error: 'Payload demasiado grande', code: 'payload_too_large' });
-    }
-    return;
-  }
-
-  LOG.error(`[${req.id}] Error no manejado: ${err.message}`);
-  if (!IS_PROD) LOG.error(err.stack);
-
-  if (!res.headersSent) {
-    res.status(500).json({
-      ok: false,
-      error: 'Error interno del servidor',
-      requestId: req.id,
-    });
-  }
-});
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   ARRANQUE + SHUTDOWN
+   BOOT + SHUTDOWN
    ═══════════════════════════════════════════════════════════════════════════ */
 
 let server = null;
@@ -1455,12 +1684,19 @@ function banner() {
   console.log(`  📧  Email:        configurable`);
   console.log(`  🔐  Auth:         Google + GitHub`);
   console.log('');
-  console.log('  ⏱️   TIMEOUTS');
-  console.log(`      Keepalive SSE:  ${CFG.sseHeartbeatMs / 1000}s`);
-  console.log(`      Max duración:   ${CFG.sseMaxDurationMs / 1000}s`);
-  console.log(`      Primer token:   ${CFG.aiFirstTokenTimeoutMs / 1000}s`);
+  console.log('  🛠️   INFRAESTRUCTURA');
+  console.log('      · errors        · manejo centralizado');
+  console.log('      · rate-limit    · por usuario/endpoint/plan');
+  console.log('      · prompts       · versionado + A/B');
+  console.log('      · analytics     · DAU/WAU/retention');
+  console.log('      · notifications · multicanal');
+  console.log('      · webhooks      · outbound firmados');
+  console.log('      · search        · full-text');
+  console.log('      · migrations    · versionado de schema');
+  console.log('      · backup        · snapshots + restore');
   console.log('');
-  console.log('  ✅  v7.0 · historial + abort + refund + rate limit headers');
+  console.log('  🎛️   ADMIN PANEL');
+  console.log(`      /admin.html`);
   console.log('');
   console.log('  💡 Ctrl+C para detener');
   console.log('');
@@ -1474,11 +1710,17 @@ if (!IS_VERCEL) {
 
 function shutdown(signal) {
   LOG.warn(`Recibido ${signal}. Cerrando...`);
-  if (!server) return process.exit(0);
 
-  server.close(() => {
-    LOG.ok('Servidor cerrado limpiamente');
-    process.exit(0);
+  Promise.all([
+    flushAnalytics().catch(() => {}),
+    flushNotifications().catch(() => {}),
+    flushWebhooks().catch(() => {}),
+  ]).finally(() => {
+    if (!server) return process.exit(0);
+    server.close(() => {
+      LOG.ok('Servidor cerrado limpiamente');
+      process.exit(0);
+    });
   });
 
   setTimeout(() => {
@@ -1490,17 +1732,6 @@ function shutdown(signal) {
 process.on('SIGINT', () => shutdown('SIGINT'));
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 
-process.on('uncaughtException', (err) => {
-  LOG.error('Uncaught:', err.message);
-  if (!IS_PROD) {
-    LOG.error(err.stack);
-    return;
-  }
-  shutdown('uncaughtException');
-});
-
-process.on('unhandledRejection', (reason) => {
-  LOG.error('Unhandled rejection:', String(reason));
-});
+installProcessHandlers();
 
 export default app;

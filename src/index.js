@@ -1,17 +1,8 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   
-                            ███╗   ██╗██╗   ██╗███╗   ███╗██╗
-                            ████╗  ██║██║   ██║████╗ ████║██║
-                            ██╔██╗ ██║██║   ██║██╔████╔██║██║
-                            ██║╚██╗██║██║   ██║██║╚██╔╝██║██║
-                            ██║ ╚████║╚██████╔╝██║ ╚═╝ ██║███████╗
-                            ╚═╝  ╚═══╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝
-   
-                              I N D E X   ·   v 6 . 6
-   
+   NUMINATION · index.js · v7.0
    ─────────────────────────────────────────────────────────────────────────
-   Punto de entrada del servidor. Monta TODOS los módulos en el orden correcto.
-   
+   Orquestador del servidor. Monta todos los módulos.
+
    MÓDULOS:
      auth.js         · 15 endpoints de autenticación
      chats.js        · 8 endpoints de chats (streaming movido a index.js)
@@ -19,33 +10,27 @@
      skills.js       · 3+ endpoints de skills
      connectors.js   · 15 endpoints de 13 APIs externas
      email.js        · 8 endpoints de email transaccional
-   
+
    MOTORES DE IA:
      Texto     → Groq → Gemini → Kimi
      Archivos  → Gemini → Kimi → Groq
-   
-   v6.6 · SYSTEM PROMPT Y IDENTIDAD
-     · Nuevo system prompt con identidad Numi OT / Numination AI
-     · Misión: ser el asistente técnico más útil, no el más amable
-     · Sección de lenguaje: adapta al idioma del usuario
-     · Reglas de comportamiento técnico (no inventar, no presentar
-       visión como producto terminado, concurrencia como requisito)
-     · Contexto Colombia mantenido sin inflar
-   
-   v6.5 · FIX CRÍTICO DEL SSE
-     · ELIMINADO req.on('close') dentro de setupSSE (cerraba el SSE
-       apenas express.json() terminaba de leer el body).
-     · ELIMINADO req.on('aborted'): deprecado en Node moderno.
-     · req.destroyed → res.destroyed || res.writableEnded en TODO
-       el loop de motores.
-   
-   v6.4 · CAMBIOS SOBRE v6.3
-     · Modelos configurables por env (GROQ_MODEL, GEMINI_MODEL, KIMI_MODEL)
-     · Timeout de primer token (AI_FIRST_TOKEN_TIMEOUT_MS = 25s)
-     · SSE keepalive cada 8s
-     · sseMaxDurationMs subido a 300s
-     · Mejor logging con duración y motivo de cierre
-   ───────────────────────────────────────────────────────────────────────── */
+
+   v7.0 · ORQUESTADOR CONSOLIDADO
+     · Historial: se extrae del body y se pasa a los 3 motores
+     · Kimi con streaming real (streamKimi de streaming.js v2.0)
+     · AbortController ligado al SSE: si el cliente se desconecta,
+       se aborta el fetch al motor (ahorra cuota y evita tokens
+       fantasma)
+     · X-RateLimit-* headers en cada respuesta (limits.js v2.0)
+     · Refund automático si los 3 motores fallan
+     · Métricas del stream capturadas vía onDone (tokens, TPS)
+     · /api/health incluye ping real a Upstash
+     · /api/limits/usage usa getUsageStats (porcentajes, reset)
+
+   v6.6 · SYSTEM PROMPT Y IDENTIDAD (identidad Numi OT)
+   v6.5 · FIX CRÍTICO DEL SSE (req.on('close') eliminado)
+   v6.4 · Modelos por env + timeouts de primer token
+   ═══════════════════════════════════════════════════════════════════════════ */
 
 import express from 'express';
 import path from 'node:path';
@@ -58,9 +43,27 @@ import Groq from 'groq-sdk';
 import OpenAI from 'openai';
 
 /* ─── Servicios internos ─── */
-import { streamGroq, streamGemini } from './services/streaming.js';
-import { verificarLimite, consultarUso, registrarUso } from './services/limits.js';
-import { supabaseDisponible, listarMemories, pingDatabase } from './services/supabase.js';
+import {
+  streamGroq,
+  streamGemini,
+  streamKimi,
+} from './services/streaming.js';
+
+import {
+  verificarLimite,
+  consultarUso,
+  registrarUso,
+  reembolsarUso,
+  getUsageStats,
+  buildRateLimitHeaders,
+  pingLimits,
+} from './services/limits.js';
+
+import {
+  supabaseDisponible,
+  listarMemories,
+  pingDatabase,
+} from './services/supabase.js';
 
 /* ─── Routers ─── */
 import { mountAuthRoutes, attachUser, requireAuth } from './auth.js';
@@ -73,7 +76,7 @@ import { mountEmailRoutes } from './email.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, '..', 'public');
 
-const VERSION = '6.6.0';
+const VERSION = '7.0.0';
 
 /* ═══════════════════════════════════════════════════════════════════════════
    CONFIGURACIÓN
@@ -134,7 +137,7 @@ const LOG = {
 };
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   API KEYS
+   API KEYS Y MODELOS
    ═══════════════════════════════════════════════════════════════════════════ */
 
 let TEST_KEYS = {};
@@ -219,8 +222,10 @@ function isRateLimit(err) {
 }
 
 function isClientAbort(err) {
+  if (!err) return false;
+  if (err.name === 'AbortError') return true;
   const msg = String(err?.message || '').toLowerCase();
-  return msg.includes('aborted') && !msg.includes('timeout');
+  return (msg.includes('aborted') || msg.includes('abort')) && !msg.includes('timeout');
 }
 
 /**
@@ -276,9 +281,7 @@ const _ipCleanup = setInterval(() => {
 if (_ipCleanup.unref) _ipCleanup.unref();
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   SYSTEM PROMPTS · v6.6
-   ─────────────────────────────────────────────────────────────────────────
-   Identidad Numi OT + contexto Colombia + reglas pedagógicas + lenguaje
+   SYSTEM PROMPTS · v6.6 (identidad Numi OT)
    ═══════════════════════════════════════════════════════════════════════════ */
 
 const NUMINATION_BASE = `
@@ -431,79 +434,6 @@ function enrichColombia(prompt) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   LLAMADAS A MOTORES (no streaming)
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-async function callGroq(systemPrompt, message, file) {
-  if (!groq) throw new Error('Groq no configurado');
-  const note = file?.data ? '\n\n[El usuario adjuntó un archivo.]' : '';
-  const r = await groq.chat.completions.create({
-    model: MODELS.GROQ,
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: (message || '(sin texto)') + note },
-    ],
-    temperature: 0.7,
-    max_tokens: 2048,
-  });
-  return r.choices?.[0]?.message?.content ?? '';
-}
-
-async function callGemini(systemPrompt, message, file) {
-  const first = geminiPool[0];
-  if (!first) throw new Error('Gemini no configurado');
-
-  const parts = [{ text: message || '(analiza el archivo adjunto)' }];
-  if (file?.data) {
-    parts.push({ inlineData: { mimeType: file.mimeType, data: file.data } });
-  }
-
-  first.requests++;
-  const r = await first.client.models.generateContent({
-    model: MODELS.GEMINI,
-    contents: [{ role: 'user', parts }],
-    config: {
-      systemInstruction: systemPrompt,
-      thinkingConfig: { thinkingBudget: 0 },
-    },
-  });
-  return r.text ?? '';
-}
-
-async function callNvidia(systemPrompt, message, file) {
-  if (!nvidia) throw new Error('NVIDIA no configurado');
-  const messages = [{ role: 'system', content: systemPrompt }];
-  const isImg = file?.data && file.mimeType?.startsWith('image/');
-
-  if (isImg) {
-    messages.push({
-      role: 'user',
-      content: [
-        { type: 'text', text: message || 'Analiza esta imagen.' },
-        { type: 'image_url', image_url: { url: `data:${file.mimeType};base64,${file.data}` } },
-      ],
-    });
-  } else {
-    messages.push({ role: 'user', content: (message || '(sin texto)') });
-  }
-
-  const r = await nvidia.chat.completions.create({
-    model: MODELS.KIMI,
-    messages,
-    temperature: 0.7,
-    max_tokens: 2048,
-  });
-  return r.choices?.[0]?.message?.content ?? '';
-}
-
-const CALLERS = { groq: callGroq, gemini: callGemini, nvidia: callNvidia };
-const NAMES = { groq: 'Groq', gemini: 'Gemini', nvidia: 'Kimi K3' };
-
-const orderMotors = (file) => file?.data
-  ? ['gemini', 'nvidia', 'groq']
-  : ['groq', 'gemini', 'nvidia'];
-
-/* ═══════════════════════════════════════════════════════════════════════════
    MEMORIAS · caché con TTL
    ═══════════════════════════════════════════════════════════════════════════ */
 
@@ -534,7 +464,7 @@ async function loadMemories(req) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   SSE HELPERS · v6.5/v6.6
+   SSE HELPERS · v7.0
 
    ⚠️  REGLA DE ORO: NUNCA usar req.on('close') ni req.destroyed para
    detectar desconexión del cliente. En Node.js 18+, `req.on('close')`
@@ -564,11 +494,19 @@ function setupSSE(req, res) {
   let closeReason = null;
   const startedAt = Date.now();
 
+  // Controller compartido: el SSE lo dispara al cerrar. Los motores lo
+  // reciben como opts.signal y así abortan el fetch de red en el acto.
+  const controller = new AbortController();
+  const abort = (reason) => {
+    try { controller.abort(reason); } catch {}
+  };
+
   const onClose = (reason) => {
     if (!closed) {
       closed = true;
       closeReason = reason;
       LOG.debug(`[${req.id}] SSE cerrado · ${reason} · ${Date.now() - startedAt}ms`);
+      abort(reason);
     }
   };
 
@@ -614,6 +552,7 @@ function setupSSE(req, res) {
       try { res.end(); } catch {}
       closed = true;
       closeReason = closeReason || 'graceful';
+      abort('graceful');
     }
   };
 
@@ -623,16 +562,24 @@ function setupSSE(req, res) {
     isClosed: () => closed,
     getReason: () => closeReason,
     elapsed: () => Date.now() - startedAt,
+    signal: controller.signal,
   };
 }
 
+/**
+ * Espera el primer token del generador con timeout.
+ * Si el motor nunca responde, tira error para que el caller
+ * pase al siguiente motor.
+ */
 function withFirstTokenTimeout(gen, timeoutMs, reqId, engineName) {
   return new Promise((resolve, reject) => {
     let settled = false;
     const timer = setTimeout(() => {
       if (settled) return;
       settled = true;
-      reject(new Error(`${engineName} no envió primer token en ${timeoutMs}ms`));
+      const err = new Error(`${engineName} no envió primer token en ${timeoutMs}ms`);
+      err.kind = 'timeout';
+      reject(err);
     }, timeoutMs);
 
     gen.next().then((result) => {
@@ -647,6 +594,34 @@ function withFirstTokenTimeout(gen, timeoutMs, reqId, engineName) {
       reject(err);
     });
   });
+}
+
+/**
+ * Construye el objeto `opts` que reciben los streamers de streaming.js.
+ * Incluye historial, señal, callbacks de métricas y timeout.
+ */
+function buildStreamOpts({ reasoning, history, signal, reqId, providerName }) {
+  const stats = { tokens: 0, chars: 0, elapsedMs: 0, tps: '0' };
+
+  return {
+    reasoning,
+    history,
+    signal,
+    timeoutMs: CFG.aiFirstTokenTimeoutMs,
+    onToken: () => { stats.tokens++; },
+    onDone: (s) => {
+      stats.tokens = s.tokens;
+      stats.chars = s.chars;
+      stats.elapsedMs = s.elapsedMs;
+      stats.tps = s.tps;
+      LOG.debug(
+        `[${reqId}] ${providerName} OK · ${s.tokens} tokens · ${s.chars} chars · ${s.elapsedMs}ms · ${s.tps} tps`
+      );
+    },
+    onError: (info) => {
+      LOG.debug(`[${reqId}] ${providerName} retry ${info.attempt + 1} · ${info.kind}`);
+    },
+  };
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -757,14 +732,14 @@ mountConnectorRoutes(app, requireAuth);
 mountEmailRoutes(app, requireAuth);
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   LÍMITES
+   LÍMITES · stats enriquecidos
    ═══════════════════════════════════════════════════════════════════════════ */
 
 app.get('/api/limits/usage', async (req, res) => {
   try {
-    const uso = await consultarUso(req);
-    if (!uso) return res.json({ ok: false, error: 'Límites no configurados' });
-    return res.json({ ok: true, ...uso });
+    const stats = await getUsageStats(req);
+    buildRateLimitHeaders(res, stats);
+    return res.json({ ok: true, ...stats });
   } catch (e) {
     LOG.error('limits/usage:', e.message);
     return res.status(500).json({ ok: false, error: 'Error consultando uso' });
@@ -777,7 +752,10 @@ app.get('/api/limits/usage', async (req, res) => {
 
 app.get('/api/health', async (req, res) => {
   const mem = process.memoryUsage();
-  const dbPing = await pingDatabase().catch(() => ({ ok: false }));
+  const [dbPing, limitsPing] = await Promise.all([
+    pingDatabase().catch(() => ({ ok: false })),
+    pingLimits().catch(() => ({ ok: false })),
+  ]);
 
   return res.json({
     ok: true,
@@ -791,6 +769,17 @@ app.get('/api/health', async (req, res) => {
       files: ['gemini', 'nvidia', 'groq'],
     },
     models: MODELS,
+    engines: {
+      groq: Boolean(groq),
+      gemini: geminiPool.length > 0,
+      nvidia: Boolean(nvidia),
+      geminiPool: geminiPool.map((e) => ({
+        id: e.id,
+        cooldown: e.cooldownUntil > Date.now(),
+        requests: e.requests,
+        errors: e.errors,
+      })),
+    },
     keys: {
       groq: Boolean(KEYS.GROQ),
       gemini_1: Boolean(KEYS.GM1),
@@ -798,13 +787,8 @@ app.get('/api/health', async (req, res) => {
       gemini_3: Boolean(KEYS.GM3),
       nvidia: Boolean(KEYS.NV),
     },
-    geminiPool: geminiPool.map((e) => ({
-      id: e.id,
-      cooldown: e.cooldownUntil > Date.now(),
-      requests: e.requests,
-      errors: e.errors,
-    })),
     database: { connected: supabaseDisponible(), ping: dbPing },
+    limits: limitsPing,
     auth: {
       session: Boolean(req.user),
       email: req.user?.email || null,
@@ -836,14 +820,17 @@ app.get('/api/ping', (_req, res) => {
 });
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   CHAT STREAMING · SSE · v6.6
+   CHAT STREAMING · SSE · v7.0
    ═══════════════════════════════════════════════════════════════════════════ */
 
 app.post('/api/chat/stream', async (req, res) => {
   const t0 = Date.now();
 
   try {
+    /* ─── Límite (con headers X-RateLimit-*) ─── */
     const lim = await verificarLimite(req);
+    buildRateLimitHeaders(res, lim);
+
     if (!lim.permitido) {
       if (lim.retryAfter) res.setHeader('Retry-After', String(lim.retryAfter));
       return res.status(429).json({
@@ -857,7 +844,14 @@ app.post('/api/chat/stream', async (req, res) => {
       });
     }
 
-    const { message, role = 'student', file = null, incognito = false } = req.body ?? {};
+    /* ─── Extraer payload incluyendo historial ─── */
+    const {
+      message,
+      role = 'student',
+      file = null,
+      incognito = false,
+      history = [],
+    } = req.body ?? {};
 
     const hasText = message && String(message).trim();
     const hasFile = file?.data;
@@ -890,9 +884,10 @@ app.post('/api/chat/stream', async (req, res) => {
     const systemPrompt = buildSystemPrompt(effectiveRole, memories);
 
     LOG.debug(
-      `[${req.id}] stream · ${effectiveRole}${incognito ? ' · incognito' : ''} · mem=${memories.length} · file=${hasFile ? 'sí' : 'no'}`
+      `[${req.id}] stream · ${effectiveRole}${incognito ? ' · incognito' : ''} · mem=${memories.length} · hist=${Array.isArray(history) ? history.length : 0} · file=${hasFile ? 'sí' : 'no'}`
     );
 
+    /* ─── SSE ─── */
     const sse = setupSSE(req, res);
 
     sse.send({
@@ -902,6 +897,7 @@ app.post('/api/chat/stream', async (req, res) => {
         restanteMin: lim.restanteMin,
         mode: effectiveRole,
         memories: memories.length,
+        history: Array.isArray(history) ? history.length : 0,
         incognito,
         requestId: req.id,
         version: VERSION,
@@ -915,7 +911,7 @@ app.post('/api/chat/stream', async (req, res) => {
     /* ═══ Iteración por motores ═══ */
     for (const prov of orderMotors(file)) {
       if (sseDisconnected(sse, res)) {
-        LOG.debug(`[${req.id}] cliente desconectado, abortando loop de motores`);
+        LOG.debug(`[${req.id}] cliente desconectado, abortando loop`);
         break;
       }
 
@@ -930,6 +926,15 @@ app.post('/api/chat/stream', async (req, res) => {
         let ok = false;
         for (const entry of candidates) {
           if (sseDisconnected(sse, res)) break;
+
+          const opts = buildStreamOpts({
+            reasoning: isReasoning,
+            history,
+            signal: sse.signal,
+            reqId: req.id,
+            providerName: `Gemini#${entry.id}`,
+          });
+
           try {
             LOG.debug(`[${req.id}] Gemini #${entry.id} streaming...`);
             let local = 0;
@@ -940,12 +945,17 @@ app.post('/api/chat/stream', async (req, res) => {
               systemPrompt,
               finalMessage,
               file,
-              { reasoning: isReasoning }
+              opts
             );
 
             let first;
             try {
-              first = await withFirstTokenTimeout(gen, CFG.aiFirstTokenTimeoutMs, req.id, `Gemini#${entry.id}`);
+              first = await withFirstTokenTimeout(
+                gen,
+                CFG.aiFirstTokenTimeoutMs,
+                req.id,
+                `Gemini#${entry.id}`
+              );
             } catch (e) {
               throw new Error(`Gemini#${entry.id} timeout primer token: ${e.message}`);
             }
@@ -974,6 +984,7 @@ app.post('/api/chat/stream', async (req, res) => {
             throw new Error('Gemini no devolvió tokens');
           } catch (err) {
             LOG.warn(`[${req.id}] Gemini #${entry.id} falló: ${short(err.message, 100)}`);
+
             if (isClientAbort(err) || sseDisconnected(sse, res)) {
               LOG.debug(`[${req.id}] abort por cliente, no reintentar`);
               break;
@@ -1004,7 +1015,19 @@ app.post('/api/chat/stream', async (req, res) => {
 
       /* ─────── GROQ ─────── */
       else if (prov === 'groq') {
-        if (!groq) { LOG.debug(`[${req.id}] Groq no configurado, skip`); continue; }
+        if (!groq) {
+          LOG.debug(`[${req.id}] Groq no configurado, skip`);
+          continue;
+        }
+
+        const opts = buildStreamOpts({
+          reasoning: isReasoning,
+          history,
+          signal: sse.signal,
+          reqId: req.id,
+          providerName: 'Groq',
+        });
+
         try {
           LOG.debug(`[${req.id}] Groq streaming...`);
           let local = 0;
@@ -1014,12 +1037,17 @@ app.post('/api/chat/stream', async (req, res) => {
             systemPrompt,
             finalMessage,
             file,
-            { reasoning: isReasoning }
+            opts
           );
 
           let first;
           try {
-            first = await withFirstTokenTimeout(gen, CFG.aiFirstTokenTimeoutMs, req.id, 'Groq');
+            first = await withFirstTokenTimeout(
+              gen,
+              CFG.aiFirstTokenTimeoutMs,
+              req.id,
+              'Groq'
+            );
           } catch (e) {
             throw new Error(`Groq timeout primer token: ${e.message}`);
           }
@@ -1062,33 +1090,88 @@ app.post('/api/chat/stream', async (req, res) => {
         }
       }
 
-      /* ─────── NVIDIA / KIMI ─────── */
+      /* ─────── NVIDIA / KIMI (con streaming real) ─────── */
       else if (prov === 'nvidia') {
-        if (!nvidia) { LOG.debug(`[${req.id}] NVIDIA no configurado, skip`); continue; }
-        try {
-          LOG.debug(`[${req.id}] Kimi K3 sin streaming`);
-          const reply = await callNvidia(systemPrompt, finalMessage, file);
+        if (!nvidia) {
+          LOG.debug(`[${req.id}] NVIDIA no configurado, skip`);
+          continue;
+        }
 
-          if (reply && reply.trim()) {
-            sse.send({ token: reply, done: false });
-            sse.send({ token: '', done: true, provider: 'nvidia', noStream: true });
-            finishSSE(sse, req, incognito, t0, Math.ceil(reply.length / 4), 'nvidia');
+        const opts = buildStreamOpts({
+          reasoning: isReasoning,
+          history,
+          signal: sse.signal,
+          reqId: req.id,
+          providerName: 'Kimi',
+        });
+
+        try {
+          LOG.debug(`[${req.id}] Kimi streaming...`);
+          let local = 0;
+
+          const gen = streamKimi(
+            nvidia,
+            systemPrompt,
+            finalMessage,
+            file,
+            opts
+          );
+
+          let first;
+          try {
+            first = await withFirstTokenTimeout(
+              gen,
+              CFG.aiFirstTokenTimeoutMs,
+              req.id,
+              'Kimi'
+            );
+          } catch (e) {
+            throw new Error(`Kimi timeout primer token: ${e.message}`);
+          }
+
+          if (!first.done && first.value) {
+            sse.send({ token: first.value, done: false });
+            responded = true;
+            tokens++;
+            local++;
+          }
+
+          for await (const token of gen) {
+            if (sseDisconnected(sse, res)) break;
+            sse.send({ token, done: false });
+            responded = true;
+            tokens++;
+            local++;
+          }
+
+          if (local > 0) {
+            sse.send({ token: '', done: true, provider: 'nvidia' });
+            finishSSE(sse, req, incognito, t0, tokens, 'nvidia');
             return;
           }
-          throw new Error('Respuesta vacía');
+          throw new Error('Kimi no devolvió tokens');
         } catch (err) {
-          LOG.warn(`[${req.id}] Kimi K3 falló: ${short(err.message, 100)}`);
+          LOG.warn(`[${req.id}] Kimi falló: ${short(err.message, 100)}`);
+
           if (isClientAbort(err) || sseDisconnected(sse, res)) {
             finishSSE(sse, req, incognito, t0, tokens, 'nvidia-aborted');
+            return;
+          }
+
+          if (responded) {
+            sse.send({ token: '', done: true, provider: 'nvidia', partial: true });
+            finishSSE(sse, req, incognito, t0, tokens, 'nvidia');
             return;
           }
         }
       }
     }
 
-    /* ─── Todos fallaron ─── */
+    /* ─── Todos fallaron: reembolsar y avisar ─── */
     if (!responded && !sseDisconnected(sse, res)) {
-      LOG.error(`[${req.id}] Todos los motores fallaron`);
+      LOG.error(`[${req.id}] Todos los motores fallaron · reembolsando`);
+      if (!incognito) reembolsarUso(req).catch(() => {});
+
       sse.send({
         error: 'Los motores de IA están saturados. Intenta de nuevo en unos segundos.',
         done: true,
@@ -1123,6 +1206,8 @@ app.post('/api/chat', async (req, res) => {
 
   try {
     const lim = await verificarLimite(req);
+    buildRateLimitHeaders(res, lim);
+
     if (!lim.permitido) {
       if (lim.retryAfter) res.setHeader('Retry-After', String(lim.retryAfter));
       return res.status(429).json({
@@ -1136,7 +1221,14 @@ app.post('/api/chat', async (req, res) => {
       });
     }
 
-    const { message, role = 'student', file = null, incognito = false } = req.body ?? {};
+    const {
+      message,
+      role = 'student',
+      file = null,
+      incognito = false,
+      history = [],
+    } = req.body ?? {};
+
     const hasText = message && String(message).trim();
     const hasFile = file?.data;
 
@@ -1158,6 +1250,7 @@ app.post('/api/chat', async (req, res) => {
     const effectiveRole = isReasoning ? 'reasoning' : role;
     const finalMessage = buildFinalMessage(message, isReasoning);
 
+    /* ─── Imagen ─── */
     if (hasText && !hasFile && !isReasoning && isImageRequest(message)) {
       const imgPrompt = extractImagePrompt(message);
       if (imgPrompt.length > 3) {
@@ -1178,7 +1271,9 @@ app.post('/api/chat', async (req, res) => {
     const systemPrompt = buildSystemPrompt(effectiveRole, memories);
     const order = orderMotors(file);
 
+    /* ─── Streaming interno para respuesta completa ─── */
     const attempts = [order[0], order[0], order[1], order[2], order[1], order[2]];
+    let lastErr = null;
 
     for (let i = 0; i < attempts.length; i++) {
       const prov = attempts[i];
@@ -1186,7 +1281,7 @@ app.post('/api/chat', async (req, res) => {
 
       try {
         LOG.debug(`[${req.id}] Intento ${i + 1}/${attempts.length} · ${NAMES[prov]}`);
-        const reply = await CALLERS[prov](systemPrompt, finalMessage, file);
+        const reply = await collectStream(prov, systemPrompt, finalMessage, file, history, isReasoning);
 
         if (reply && reply.trim()) {
           const dur = Date.now() - t0;
@@ -1202,12 +1297,16 @@ app.post('/api/chat', async (req, res) => {
         }
         throw new Error('Respuesta vacía');
       } catch (err) {
+        lastErr = err;
         LOG.warn(`[${req.id}] ${NAMES[prov]} falló: ${short(err.message, 100)}`);
         if (!isRateLimit(err)) break;
       }
     }
 
-    LOG.error(`[${req.id}] Todos los intentos fallaron`);
+    /* ─── Todos fallaron ─── */
+    LOG.error(`[${req.id}] Todos los intentos fallaron · reembolsando`);
+    if (!incognito) reembolsarUso(req).catch(() => {});
+
     return res.status(503).json({
       ok: false,
       error: 'Los motores de IA están saturados. Espera unos segundos e intenta de nuevo.',
@@ -1217,6 +1316,48 @@ app.post('/api/chat', async (req, res) => {
     res.status(500).json({ ok: false, error: 'Error interno del servidor' });
   }
 });
+
+/**
+ * Recolecta el stream completo del motor indicado y devuelve el texto.
+ * Usado por /api/chat (sin SSE).
+ */
+async function collectStream(prov, systemPrompt, finalMessage, file, history, isReasoning) {
+  const opts = {
+    reasoning: isReasoning,
+    history,
+    timeoutMs: CFG.aiFirstTokenTimeoutMs,
+  };
+
+  let gen;
+  if (prov === 'groq') {
+    if (!groq) throw new Error('Groq no configurado');
+    gen = streamGroq(groq, systemPrompt, finalMessage, file, opts);
+  } else if (prov === 'gemini') {
+    const first = geminiAvailable()[0];
+    if (!first) throw new Error('Gemini no disponible');
+    first.requests++;
+    gen = streamGemini(first.client, systemPrompt, finalMessage, file, opts);
+  } else if (prov === 'nvidia') {
+    if (!nvidia) throw new Error('Kimi no configurado');
+    gen = streamKimi(nvidia, systemPrompt, finalMessage, file, opts);
+  } else {
+    throw new Error('Motor desconocido: ' + prov);
+  }
+
+  const parts = [];
+  for await (const token of gen) {
+    parts.push(token);
+  }
+  return parts.join('');
+}
+
+const NAMES = { groq: 'Groq', gemini: 'Gemini', nvidia: 'Kimi K3' };
+
+function orderMotors(file) {
+  return file?.data
+    ? ['gemini', 'nvidia', 'groq']
+    : ['groq', 'gemini', 'nvidia'];
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    CATCH-ALL
@@ -1319,7 +1460,7 @@ function banner() {
   console.log(`      Max duración:   ${CFG.sseMaxDurationMs / 1000}s`);
   console.log(`      Primer token:   ${CFG.aiFirstTokenTimeoutMs / 1000}s`);
   console.log('');
-  console.log('  ✅  SSE v6.6: solo res.on(\'close\') · identidad Numi OT');
+  console.log('  ✅  v7.0 · historial + abort + refund + rate limit headers');
   console.log('');
   console.log('  💡 Ctrl+C para detener');
   console.log('');

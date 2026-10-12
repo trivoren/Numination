@@ -1,51 +1,51 @@
-/* ═══════════════════════════════════════════════════════════════════════════
+﻿/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    
-                            N U M I N A T I O N   ·   C H A T S   ·   v 3 . 1
+                            N U M I N A T I O N   Â·   C H A T S   Â·   v 3 . 1
 
-   ─────────────────────────────────────────────────────────────────────────
-   El corazón del sistema. Todo lo que pasa cuando alguien escribe algo.
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   El corazÃ³n del sistema. Todo lo que pasa cuando alguien escribe algo.
 
-   Nada aquí es nuevo. Todo esto ya existía en pedazos:
-   · En tu chat.html (el frontend)
-   · En tu server viejo (los motores de IA)
-   · En tu cabeza (el sistema de cuotas)
-   · En tus sueños (el streaming perfecto que querías)
+   Nada aquÃ­ es nuevo. Todo esto ya existÃ­a en pedazos:
+   Â· En tu chat.html (el frontend)
+   Â· En tu server viejo (los motores de IA)
+   Â· En tu cabeza (el sistema de cuotas)
+   Â· En tus sueÃ±os (el streaming perfecto que querÃ­as)
 
-   Hoy por fin está todo junto, en un solo archivo, funcionando como debería
+   Hoy por fin estÃ¡ todo junto, en un solo archivo, funcionando como deberÃ­a
    haber funcionado desde el principio.
 
-   ─────────────────────────────────────────────────────────────────────────
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    ENDPOINTS:
 
-     GET    /api/chats                    → listar tus conversaciones
-     POST   /api/chats                    → crear una nueva
-     GET    /api/chats/:id                → ver una con sus mensajes
-     PATCH  /api/chats/:id                → renombrar
-     DELETE /api/chats/:id                → borrar una
-     DELETE /api/chats                    → borrar todas (peligro)
-     POST   /api/chats/:id/messages       → guardar un mensaje suelto
+     GET    /api/chats                    â†’ listar tus conversaciones
+     POST   /api/chats                    â†’ crear una nueva
+     GET    /api/chats/:id                â†’ ver una con sus mensajes
+     PATCH  /api/chats/:id                â†’ renombrar
+     DELETE /api/chats/:id                â†’ borrar una
+     DELETE /api/chats                    â†’ borrar todas (peligro)
+     POST   /api/chats/:id/messages       â†’ guardar un mensaje suelto
 
-     POST   /api/chat/stream              → EL endpoint (SSE con IA real)
-     GET    /api/limits/usage             → cuánto te queda del día
+     POST   /api/chat/stream              â†’ EL endpoint (SSE con IA real)
+     GET    /api/limits/usage             â†’ cuÃ¡nto te queda del dÃ­a
 
-   ─────────────────────────────────────────────────────────────────────────
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    MOTORES DE IA (en orden de preferencia para texto):
 
-     🥇  Groq       → el más rápido, casi siempre responde
-     🥈  Gemini     → el más estable, 3 keys rotando
-     🥉  NVIDIA     → respaldo final, corre Kimi K2, Qwen y más
+     ðŸ¥‡  Groq       â†’ el mÃ¡s rÃ¡pido, casi siempre responde
+     ðŸ¥ˆ  Gemini     â†’ el mÃ¡s estable, 3 keys rotando
+     ðŸ¥‰  NVIDIA     â†’ respaldo final, corre Kimi K2, Qwen y mÃ¡s
 
    Si uno falla, el otro responde. Si el otro falla, el tercero responde.
-   El usuario nunca ve el drama detrás. Solo ve la respuesta.
+   El usuario nunca ve el drama detrÃ¡s. Solo ve la respuesta.
 
-   ─────────────────────────────────────────────────────────────────────────
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    CAMBIOS v3.1:
-     · Detección automática de Kimi vía múltiples nombres de variable:
+     Â· DetecciÃ³n automÃ¡tica de Kimi vÃ­a mÃºltiples nombres de variable:
        KIMI_API_KEY | NVIDIA_API_KEY | MOONSHOT_API_KEY
-     · Base URL configurable según el proveedor detectado
-     · Modelo ajustado automáticamente
-     · Tercer motor ahora aparece en el fallback si existe alguna de esas keys
-   ═══════════════════════════════════════════════════════════════════════════ */
+     Â· Base URL configurable segÃºn el proveedor detectado
+     Â· Modelo ajustado automÃ¡ticamente
+     Â· Tercer motor ahora aparece en el fallback si existe alguna de esas keys
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 import {
   crearChat,
@@ -58,9 +58,9 @@ import {
   getUserStats,
 } from './services/supabase.js';
 
-/* ══════════════════════════════════════════════════════════════════════════
-   1 · CONFIGURACIÓN
-   ══════════════════════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   1 Â· CONFIGURACIÃ“N
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 let TEST_KEYS = {};
 try {
@@ -68,11 +68,11 @@ try {
   TEST_KEYS = mod.TEST_KEYS ?? {};
 } catch {}
 
-/* ─── Groq ─── */
+/* â”€â”€â”€ Groq â”€â”€â”€ */
 const GROQ_API_KEY = process.env.GROQ_API_KEY ?? TEST_KEYS.GROQ_API_KEY;
 const GROQ_MODEL   = process.env.GROQ_MODEL   ?? TEST_KEYS.GROQ_MODEL ?? 'llama-3.3-70b-versatile';
 
-/* ─── Gemini (3 keys rotando) ─── */
+/* â”€â”€â”€ Gemini (3 keys rotando) â”€â”€â”€ */
 const GEMINI_KEYS = [
   process.env.GEMINI_API_KEY_1 ?? TEST_KEYS.GEMINI_API_KEY_1,
   process.env.GEMINI_API_KEY_2 ?? TEST_KEYS.GEMINI_API_KEY_2,
@@ -80,11 +80,11 @@ const GEMINI_KEYS = [
 ].filter(Boolean);
 const GEMINI_MODEL = process.env.GEMINI_MODEL ?? TEST_KEYS.GEMINI_MODEL ?? 'gemini-2.0-flash';
 
-/* ─── Tercer motor · Kimi / NVIDIA / Moonshot ───
+/* â”€â”€â”€ Tercer motor Â· Kimi / NVIDIA / Moonshot â”€â”€â”€
    
-   Tu env.local.js tenía un comentario "NVIDIA / Kimi K3 (respaldo 2)"
-   pero sin la variable. Detectamos automáticamente el nombre correcto.
-   ─────────────────────────────────────────────────────────────────────── */
+   Tu env.local.js tenÃ­a un comentario "NVIDIA / Kimi K3 (respaldo 2)"
+   pero sin la variable. Detectamos automÃ¡ticamente el nombre correcto.
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 const KIMI_API_KEY =
   process.env.KIMI_API_KEY     ?? TEST_KEYS.KIMI_API_KEY     ??
@@ -92,7 +92,7 @@ const KIMI_API_KEY =
   process.env.MOONSHOT_API_KEY ?? TEST_KEYS.MOONSHOT_API_KEY ??
   null;
 
-// Base URL: depende de qué key encontramos
+// Base URL: depende de quÃ© key encontramos
 function detectKimiBaseUrl() {
   if (process.env.KIMI_BASE_URL)     return process.env.KIMI_BASE_URL;
   if (TEST_KEYS.KIMI_BASE_URL)       return TEST_KEYS.KIMI_BASE_URL;
@@ -105,7 +105,7 @@ function detectKimiBaseUrl() {
   if (process.env.MOONSHOT_BASE_URL) return process.env.MOONSHOT_BASE_URL;
   if (TEST_KEYS.MOONSHOT_BASE_URL)   return TEST_KEYS.MOONSHOT_BASE_URL;
 
-  // Si la key empieza con nvapi- → NVIDIA
+  // Si la key empieza con nvapi- â†’ NVIDIA
   if (KIMI_API_KEY?.startsWith('nvapi-')) {
     return 'https://integrate.api.nvidia.com/v1';
   }
@@ -121,28 +121,28 @@ function detectKimiModel() {
 
   const base = detectKimiBaseUrl();
 
-  // NVIDIA NIM → modelo con prefijo del vendor
+  // NVIDIA NIM â†’ modelo con prefijo del vendor
   if (base.includes('nvidia')) {
     return process.env.NVIDIA_MODEL ?? TEST_KEYS.NVIDIA_MODEL ?? 'moonshotai/kimi-k2-instruct';
   }
 
-  // Moonshot → modelo directo
+  // Moonshot â†’ modelo directo
   return process.env.MOONSHOT_MODEL ?? TEST_KEYS.MOONSHOT_MODEL ?? 'moonshot-v1-8k';
 }
 
 const KIMI_BASE_URL = detectKimiBaseUrl();
 const KIMI_MODEL    = detectKimiModel();
 
-/* ─── Límites ─── */
-const MAX_HISTORY  = 12;      // cuántos mensajes previos mandamos al modelo
-const MAX_CHARS    = 8000;    // cuántos caracteres por mensaje
-const MAX_TITLE    = 80;      // cuántos caracteres por título de chat
-const MAX_TOKENS   = 2048;    // cuántos tokens puede generar la IA
-const TEMPERATURE  = 0.7;     // qué tan "creativa" es la IA
+/* â”€â”€â”€ LÃ­mites â”€â”€â”€ */
+const MAX_HISTORY  = 12;      // cuÃ¡ntos mensajes previos mandamos al modelo
+const MAX_CHARS    = 8000;    // cuÃ¡ntos caracteres por mensaje
+const MAX_TITLE    = 80;      // cuÃ¡ntos caracteres por tÃ­tulo de chat
+const MAX_TOKENS   = 2048;    // cuÃ¡ntos tokens puede generar la IA
+const TEMPERATURE  = 0.7;     // quÃ© tan "creativa" es la IA
 
-/* ══════════════════════════════════════════════════════════════════════════
-   2 · LOGGING
-   ══════════════════════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   2 Â· LOGGING
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 const LEVEL = { debug: 10, info: 20, warn: 30, error: 40 };
 const MIN_LEVEL = LEVEL[process.env.LOG_LEVEL] || LEVEL.info;
@@ -156,68 +156,68 @@ function log(level, event, meta = {}) {
   else                        console.log  ('[chat]', line);
 }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   3 · SYSTEM PROMPTS · el alma de cada modo
-   ══════════════════════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   3 Â· SYSTEM PROMPTS Â· el alma de cada modo
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 const SYSTEM_PROMPTS = {
 
-  /* ─── Modo Estudiante (Chat normal) ─── */
+  /* â”€â”€â”€ Modo Estudiante (Chat normal) â”€â”€â”€ */
   student: `Eres Numination, un tutor de IA colombiano para estudiantes de colegio.
 
 PERSONALIDAD:
-- Hablas en español colombiano neutro, cercano pero sin exagerar el acento.
+- Hablas en espaÃ±ol colombiano neutro, cercano pero sin exagerar el acento.
 - Explicas con paciencia, sin condescendencia.
-- Nunca das la respuesta directa sin explicar el porqué.
-- Si el estudiante se equivoca, corriges con cariño: "Casi, mira por acá...".
+- Nunca das la respuesta directa sin explicar el porquÃ©.
+- Si el estudiante se equivoca, corriges con cariÃ±o: "Casi, mira por acÃ¡...".
 - Adaptas el lenguaje a la edad del estudiante.
 
-CÓMO RESPONDES:
-- Máximo 3 párrafos, salvo que pidan más detalle.
+CÃ“MO RESPONDES:
+- MÃ¡ximo 3 pÃ¡rrafos, salvo que pidan mÃ¡s detalle.
 - Usa **negrita** para los conceptos clave.
-- Cuando resuelvas matemáticas, muestra cada paso numerado.
+- Cuando resuelvas matemÃ¡ticas, muestra cada paso numerado.
 - Cuando cites historia, incluye fechas y contexto colombiano cuando aplique.
 - Cierras con una pregunta que invite a seguir aprendiendo.
 
 LO QUE NUNCA HACES:
 - Inventar datos. Si no sabes algo, lo dices abiertamente.
-- Dar la respuesta completa sin explicación.
-- Usar lenguaje técnico sin explicarlo antes.`,
+- Dar la respuesta completa sin explicaciÃ³n.
+- Usar lenguaje tÃ©cnico sin explicarlo antes.`,
 
-  /* ─── Modo Coder (programación) ─── */
-  teacher: `Eres Numination Coder, asistente técnico para programadores.
+  /* â”€â”€â”€ Modo Coder (programaciÃ³n) â”€â”€â”€ */
+  teacher: `Eres Numination Coder, asistente tÃ©cnico para programadores.
 
 PERSONALIDAD:
 - Preciso. Directo. Cero relleno.
 - Sabes JavaScript, TypeScript, Python, React, Node, SQL, HTML/CSS.
-- Conoces las mejores prácticas modernas y las aplicas.
+- Conoces las mejores prÃ¡cticas modernas y las aplicas.
 
-CÓMO RESPONDES:
-- Cada bloque de código va en \`\`\`lenguaje ... \`\`\`.
-- Comentarios en español, pero solo donde agregan valor.
+CÃ“MO RESPONDES:
+- Cada bloque de cÃ³digo va en \`\`\`lenguaje ... \`\`\`.
+- Comentarios en espaÃ±ol, pero solo donde agregan valor.
 - Si hay varias formas, muestras la mejor primero y mencionas alternativas.
-- Al final de cada bloque, una línea: "// Esto hace: ...".
-- Si el usuario dice "solo el código", devuelves SOLO el bloque.
+- Al final de cada bloque, una lÃ­nea: "// Esto hace: ...".
+- Si el usuario dice "solo el cÃ³digo", devuelves SOLO el bloque.
 
 NUNCA:
-- Das código que no funcione.
+- Das cÃ³digo que no funcione.
 - Ignoras errores de manejo de casos borde.
 - Escribes comentarios obvios como "// sumo 1 a x".`,
 
-  /* ─── Modo Reasoning (razonamiento paso a paso) ─── */
+  /* â”€â”€â”€ Modo Reasoning (razonamiento paso a paso) â”€â”€â”€ */
   reasoning: `Eres Numination Razonador. Resuelves problemas complejos razonando
 de verdad, no respondiendo por reflejo.
 
-MÉTODO OBLIGATORIO:
+MÃ‰TODO OBLIGATORIO:
 1. Reformulas el problema en tus propias palabras.
 2. Descompones en subproblemas.
-3. Explorás alternativas antes de decidir.
-4. Descartás las hipótesis incorrectas explicando por qué.
-5. Das la solución final con verificación.
+3. ExplorÃ¡s alternativas antes de decidir.
+4. DescartÃ¡s las hipÃ³tesis incorrectas explicando por quÃ©.
+5. Das la soluciÃ³n final con verificaciÃ³n.
 
-REGLA CRÍTICA DE FORMATO:
+REGLA CRÃTICA DE FORMATO:
 Todo el razonamiento va DENTRO de etiquetas <thinking></thinking>.
-Después del cierre, va la respuesta final limpia, sin repetir el proceso.
+DespuÃ©s del cierre, va la respuesta final limpia, sin repetir el proceso.
 
 EJEMPLO:
 <thinking>
@@ -225,23 +225,23 @@ El usuario pregunta X. Considero tres enfoques:
 - Enfoque A: descartado porque...
 - Enfoque B: descartado porque...
 - Enfoque C: elegido porque...
-Verificación: cumple con la restricción Y y Z.
+VerificaciÃ³n: cumple con la restricciÃ³n Y y Z.
 </thinking>
 La respuesta es C, porque cumple con lo que pediste.
 
 NUNCA:
 - Mezclas razonamiento con respuesta final.
 - Das la respuesta sin haber explorado alternativas.
-- Rindes rápido. Si es difícil, razonas más, no menos.`,
+- Rindes rÃ¡pido. Si es difÃ­cil, razonas mÃ¡s, no menos.`,
 };
 
 function getSystemPrompt(role) {
   return SYSTEM_PROMPTS[role] || SYSTEM_PROMPTS.student;
 }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   4 · PARSER SSE · unifica todos los motores
-   ══════════════════════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   4 Â· PARSER SSE Â· unifica todos los motores
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 async function* parseSSE(body, extractor) {
   const reader = body.getReader();
@@ -288,11 +288,11 @@ function extractGemini(payload) {
   } catch { return null; }
 }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   5 · CLIENTES DE IA
-   ══════════════════════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   5 Â· CLIENTES DE IA
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
-/* ─── Groq · API compatible con OpenAI ─── */
+/* â”€â”€â”€ Groq Â· API compatible con OpenAI â”€â”€â”€ */
 async function* streamGroq(messages, opts = {}) {
   if (!GROQ_API_KEY) throw new Error('Groq no configurado');
 
@@ -320,7 +320,7 @@ async function* streamGroq(messages, opts = {}) {
   yield* parseSSE(res.body, extractOpenAI);
 }
 
-/* ─── Gemini · formato propio ─── */
+/* â”€â”€â”€ Gemini Â· formato propio â”€â”€â”€ */
 async function* streamGemini(messages, opts = {}) {
   if (GEMINI_KEYS.length === 0) throw new Error('Gemini no configurado');
 
@@ -360,7 +360,7 @@ async function* streamGemini(messages, opts = {}) {
   yield* parseSSE(res.body, extractGemini);
 }
 
-/* ─── Tercer motor · Kimi / NVIDIA / Moonshot · API compatible OpenAI ─── */
+/* â”€â”€â”€ Tercer motor Â· Kimi / NVIDIA / Moonshot Â· API compatible OpenAI â”€â”€â”€ */
 async function* streamKimi(messages, opts = {}) {
   if (!KIMI_API_KEY) throw new Error('Kimi/NVIDIA no configurado');
 
@@ -388,9 +388,9 @@ async function* streamKimi(messages, opts = {}) {
   yield* parseSSE(res.body, extractOpenAI);
 }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   6 · CADENA DE FALLBACK
-   ══════════════════════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   6 Â· CADENA DE FALLBACK
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 const ENGINES = [
   { name: 'groq',   stream: streamGroq,   available: () => Boolean(GROQ_API_KEY) },
@@ -441,9 +441,9 @@ async function* streamWithFallback(messages, opts = {}) {
   throw lastErr || new Error('No hay motores de IA configurados');
 }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   7 · CUOTAS · por plan, por usuario, en memoria
-   ══════════════════════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   7 Â· CUOTAS Â· por plan, por usuario, en memoria
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 const PLAN_LIMITS = {
   free:          { porDia: 50,    porMinuto: 5 },
@@ -481,7 +481,7 @@ function checkLimit(userId, plan) {
       ok: false,
       reason: 'dia',
       limite: limits.porDia,
-      mensaje: `Alcanzaste el límite diario (${limits.porDia}). Vuelve mañana.`,
+      mensaje: `Alcanzaste el lÃ­mite diario (${limits.porDia}). Vuelve maÃ±ana.`,
     };
   }
 
@@ -503,9 +503,9 @@ function consumeLimit(userId) {
   usage.minuteBuckets.push(Date.now());
 }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   8 · VALIDACIÓN
-   ══════════════════════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   8 Â· VALIDACIÃ“N
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 const VALID_ROLES = new Set(['student', 'teacher', 'reasoning']);
 
@@ -542,15 +542,15 @@ function fail(res, status, code, message) {
   return res.status(status).json({ ok: false, error: message, code });
 }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   9 · MOUNT
-   ══════════════════════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   9 Â· MOUNT
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 export function mountChatRoutes(app, requireAuth) {
 
-  /* ───────────────────────────────────────────────────────────────────
+  /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
      GET /api/chats
-     ─────────────────────────────────────────────────────────────────── */
+     â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   app.get('/api/chats', requireAuth, async (req, res) => {
     try {
       const chats = await listarChats(req.user.id, { limit: 100 });
@@ -561,9 +561,9 @@ export function mountChatRoutes(app, requireAuth) {
     }
   });
 
-  /* ───────────────────────────────────────────────────────────────────
+  /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
      POST /api/chats
-     ─────────────────────────────────────────────────────────────────── */
+     â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   app.post('/api/chats', requireAuth, async (req, res) => {
     try {
       const title = String(
@@ -581,9 +581,9 @@ export function mountChatRoutes(app, requireAuth) {
     }
   });
 
-  /* ───────────────────────────────────────────────────────────────────
+  /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
      GET /api/chats/:id
-     ─────────────────────────────────────────────────────────────────── */
+     â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   app.get('/api/chats/:id', requireAuth, async (req, res) => {
     try {
       const chat = await obtenerChat(req.params.id, req.user.id);
@@ -595,13 +595,13 @@ export function mountChatRoutes(app, requireAuth) {
     }
   });
 
-  /* ───────────────────────────────────────────────────────────────────
+  /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
      PATCH /api/chats/:id
-     ─────────────────────────────────────────────────────────────────── */
+     â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   app.patch('/api/chats/:id', requireAuth, async (req, res) => {
     try {
       const title = String(req.body?.title || '').trim().slice(0, MAX_TITLE);
-      if (!title) return fail(res, 400, 'title_required', 'Falta el título.');
+      if (!title) return fail(res, 400, 'title_required', 'Falta el tÃ­tulo.');
 
       const chat = await renombrarChat(req.params.id, req.user.id, title);
       if (!chat) return fail(res, 404, 'not_found', 'Chat no encontrado.');
@@ -613,9 +613,9 @@ export function mountChatRoutes(app, requireAuth) {
     }
   });
 
-  /* ───────────────────────────────────────────────────────────────────
+  /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
      DELETE /api/chats/:id
-     ─────────────────────────────────────────────────────────────────── */
+     â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   app.delete('/api/chats/:id', requireAuth, async (req, res) => {
     try {
       const ok = await eliminarChat(req.params.id, req.user.id);
@@ -629,9 +629,9 @@ export function mountChatRoutes(app, requireAuth) {
     }
   });
 
-  /* ───────────────────────────────────────────────────────────────────
-     DELETE /api/chats · borrar todos
-     ─────────────────────────────────────────────────────────────────── */
+  /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+     DELETE /api/chats Â· borrar todos
+     â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   app.delete('/api/chats', requireAuth, async (req, res) => {
     try {
       const chats = await listarChats(req.user.id, { limit: 500 });
@@ -649,9 +649,9 @@ export function mountChatRoutes(app, requireAuth) {
     }
   });
 
-  /* ───────────────────────────────────────────────────────────────────
+  /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
      POST /api/chats/:id/messages
-     ─────────────────────────────────────────────────────────────────── */
+     â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   app.post('/api/chats/:id/messages', requireAuth, async (req, res) => {
     try {
       const body = req.body?.message || req.body || {};
@@ -681,129 +681,19 @@ export function mountChatRoutes(app, requireAuth) {
     }
   });
 
-  /* ═════════════════════════════════════════════════════════════════════
+  /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      POST /api/chat/stream
-     ═════════════════════════════════════════════════════════════════════ */
-  app.post('/api/chat/stream', requireAuth, async (req, res) => {
-    const userId = req.user.id;
-    const reqStart = Date.now();
-
-    try {
-      const {
-        message,
-        role = 'student',
-        history = [],
-        incognito = false,
-        chatId = null,
-      } = req.body || {};
-
-      const cleanMessage = sanitizeMessage(message);
-      if (!cleanMessage) {
-        return fail(res, 400, 'empty_message', 'Escribí algo primero.');
-      }
-
-      const cleanRole = normalizeRole(role);
-
-      if (!incognito) {
-        const check = checkLimit(userId, req.user.plan || 'free');
-        if (!check.ok) {
-          log('warn', 'chat.stream.quota', {
-            userId,
-            reason: check.reason,
-            usado: check.usage?.count,
-          });
-          return res.status(429).json({
-            ok: false,
-            error: check.mensaje,
-            code: 'quota_exceeded',
-          });
-        }
-      }
-
-      const messages = [
-        { role: 'system', content: getSystemPrompt(cleanRole) },
-        ...sanitizeHistory(history),
-        { role: 'user', content: cleanMessage },
-      ];
-
-      res.set({
-        'Content-Type': 'text/event-stream; charset=utf-8',
-        'Cache-Control': 'no-cache, no-transform',
-        'Connection': 'keep-alive',
-        'X-Accel-Buffering': 'no',
-      });
-      res.flushHeaders?.();
-
-      const ac = new AbortController();
-      req.on('close', () => ac.abort());
-
-      if (!incognito) consumeLimit(userId);
-
-      let provider = null;
-      let fullText = '';
-      let tokenCount = 0;
-
-      try {
-        for await (const token of streamWithFallback(messages, { signal: ac.signal })) {
-          fullText += token;
-          tokenCount++;
-          res.write(`data: ${JSON.stringify({ token })}\n\n`);
-        }
-      } catch (err) {
-        log('error', 'chat.stream.engine_fail', {
-          message: err.message,
-          userId,
-          role: cleanRole,
-          emittedTokens: tokenCount,
-        });
-
-        res.write(`data: ${JSON.stringify({
-          error: 'Los motores de IA fallaron. Intenta de nuevo en un momento.',
-        })}\n\n`);
-        res.write('data: [DONE]\n\n');
-        res.end();
-        return;
-      }
-
-      res.write(`data: ${JSON.stringify({
-        done: true,
-        provider: provider || 'auto',
-        tokens: tokenCount,
-      })}\n\n`);
-      res.write('data: [DONE]\n\n');
-      res.end();
-
-      log('info', 'chat.stream.ok', {
-        userId,
-        role: cleanRole,
-        tokens: tokenCount,
-        chars: fullText.length,
-        ms: Date.now() - reqStart,
-        incognito,
-      });
-
-    } catch (err) {
-      log('error', 'chat.stream.fatal', {
-        message: err.message,
-        userId,
-        stack: err.stack?.slice(0, 300),
-      });
-
-      if (!res.headersSent) {
-        return fail(res, 500, 'stream_failed', 'No pudimos procesar tu mensaje.');
-      }
-
-      try {
-        res.write(`data: ${JSON.stringify({ error: 'Error interno.' })}\n\n`);
-        res.write('data: [DONE]\n\n');
-        res.end();
-      } catch {}
-    }
-  });
+     â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
   /* ───────────────────────────────────────────────────────────────────
-     GET /api/limits/usage
+     NOTA v6.4
+     El endpoint POST /api/chat/stream se movió a src/index.js
+     para tener timeout de primer token + abort por cliente.
+     No agregar aquí otro handler para /api/chat/stream: Express
+     usa el primero que matchea y este archivo se monta ANTES
+     del handler de index.js.
      ─────────────────────────────────────────────────────────────────── */
+
   app.get('/api/limits/usage', requireAuth, async (req, res) => {
     try {
       const plan = req.user.plan || 'free';
@@ -836,28 +726,28 @@ export function mountChatRoutes(app, requireAuth) {
     }
   });
 
-  /* ───────────────────────────────────────────────────────────────────
+  /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
      BOOT
-     ─────────────────────────────────────────────────────────────────── */
+     â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   const enginesAvailable = ENGINES.filter(e => e.available()).map(e => e.name);
   const enginesLine = enginesAvailable.length
-    ? enginesAvailable.join(' → ')
-    : '⚠️  ninguno (configurá GROQ_API_KEY, GEMINI_API_KEY_*, o KIMI/NVIDIA_API_KEY)';
+    ? enginesAvailable.join(' â†’ ')
+    : 'âš ï¸  ninguno (configurÃ¡ GROQ_API_KEY, GEMINI_API_KEY_*, o KIMI/NVIDIA_API_KEY)';
 
-  console.log(`[chat] rutas montadas · motores: ${enginesLine}`);
+  console.log(`[chat] rutas montadas Â· motores: ${enginesLine}`);
 
-  // Si el tercer motor está activo, decir cuál es
+  // Si el tercer motor estÃ¡ activo, decir cuÃ¡l es
   if (KIMI_API_KEY) {
     const vendor = KIMI_BASE_URL.includes('nvidia') ? 'NVIDIA' :
                    KIMI_BASE_URL.includes('moonshot') ? 'Moonshot' : 'Kimi';
-    console.log(`[chat] tercer motor: ${vendor} · modelo: ${KIMI_MODEL}`);
+    console.log(`[chat] tercer motor: ${vendor} Â· modelo: ${KIMI_MODEL}`);
   } else {
     console.log('[chat] tercer motor no configurado (KIMI_API_KEY / NVIDIA_API_KEY / MOONSHOT_API_KEY)');
   }
 
-  console.log(`[chat] cuotas: free=50/día · coder=500/día · plus=2000/día · madmax=10000/día`);
+  console.log(`[chat] cuotas: free=50/dÃ­a Â· coder=500/dÃ­a Â· plus=2000/dÃ­a Â· madmax=10000/dÃ­a`);
 }
 
-/* ══════════════════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    FIN.
-   ══════════════════════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */

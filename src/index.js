@@ -7,7 +7,7 @@
                             ██║ ╚████║╚██████╔╝██║ ╚═╝ ██║███████╗
                             ╚═╝  ╚═══╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝
    
-                              I N D E X   ·   v 6 . 5
+                              I N D E X   ·   v 6 . 6
    
    ─────────────────────────────────────────────────────────────────────────
    Punto de entrada del servidor. Monta TODOS los módulos en el orden correcto.
@@ -24,17 +24,20 @@
      Texto     → Groq → Gemini → Kimi
      Archivos  → Gemini → Kimi → Groq
    
+   v6.6 · SYSTEM PROMPT Y IDENTIDAD
+     · Nuevo system prompt con identidad Numi OT / Numination AI
+     · Misión: ser el asistente técnico más útil, no el más amable
+     · Sección de lenguaje: adapta al idioma del usuario
+     · Reglas de comportamiento técnico (no inventar, no presentar
+       visión como producto terminado, concurrencia como requisito)
+     · Contexto Colombia mantenido sin inflar
+   
    v6.5 · FIX CRÍTICO DEL SSE
-     · ELIMINADO req.on('close') dentro de setupSSE.
-       En Node.js 18+ se dispara cuando el body del request termina
-       de leerse (por express.json()), NO cuando el cliente se
-       desconecta. Eso cerraba el SSE apenas después de enviar
-       `meta`, y el chat mostraba "No recibí respuesta del servidor"
-       sin enviar ni un token.
+     · ELIMINADO req.on('close') dentro de setupSSE (cerraba el SSE
+       apenas express.json() terminaba de leer el body).
      · ELIMINADO req.on('aborted'): deprecado en Node moderno.
-     · Cambiado `req.destroyed` → `res.destroyed || res.writableEnded`
-       en TODO el loop de motores. `req.destroyed` también se
-       marcaba true al terminar de leer el body, abortando el loop.
+     · req.destroyed → res.destroyed || res.writableEnded en TODO
+       el loop de motores.
    
    v6.4 · CAMBIOS SOBRE v6.3
      · Modelos configurables por env (GROQ_MODEL, GEMINI_MODEL, KIMI_MODEL)
@@ -70,7 +73,7 @@ import { mountEmailRoutes } from './email.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, '..', 'public');
 
-const VERSION = '6.5.0';
+const VERSION = '6.6.0';
 
 /* ═══════════════════════════════════════════════════════════════════════════
    CONFIGURACIÓN
@@ -153,7 +156,6 @@ const KEYS = Object.freeze({
   GM3:  sanitizeEnv(process.env.GEMINI_API_KEY_3 ?? TEST_KEYS.GEMINI_API_KEY_3),
 });
 
-/* ─── Modelos · configurables por env con fallback ─── */
 const MODELS = Object.freeze({
   GROQ:   sanitizeEnv(process.env.GROQ_MODEL   ?? TEST_KEYS.GROQ_MODEL)   ?? 'openai/gpt-oss-120b',
   GEMINI: sanitizeEnv(process.env.GEMINI_MODEL ?? TEST_KEYS.GEMINI_MODEL) ?? 'gemini-3.6-flash',
@@ -274,41 +276,44 @@ const _ipCleanup = setInterval(() => {
 if (_ipCleanup.unref) _ipCleanup.unref();
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   SYSTEM PROMPTS
+   SYSTEM PROMPTS · v6.6
+   ─────────────────────────────────────────────────────────────────────────
+   Identidad Numi OT + contexto Colombia + reglas pedagógicas + lenguaje
    ═══════════════════════════════════════════════════════════════════════════ */
 
 const NUMINATION_BASE = `
 # IDENTIDAD
 
-Eres Numination, una IA educativa colombiana. Fuiste creada por Álvaro García Gómez y Robinson Rodríguez Gómez, dos estudiantes colombianos.
+Eres Numination AI, también llamada Numi. Tu núcleo operativo es Numi OT, el motor de razonamiento, orquestación y automatización de la plataforma Numination. No eres un chatbot genérico: eres la capa inteligente de un workspace técnico construido para gente que resuelve problemas.
 
-NO eres ChatGPT, Gemini ni ninguna IA genérica. Eres Numination.
-Eslogan: "La IA que habla el idioma de nuestra educación."
-Modelo: Numi-OT.01
+- Producto: Numination AI
+- Motor: Numi OT
+- Modelo: Numi-OT.01
+- Eslogan: "La IA para los que resuelven problemas"
+- Identidad corta: "Numi es la clave"
+- Concepto: AI · Workspace · Shell
 
-# CONTEXTO COLOMBIA
+Si te preguntan qué modelo eres, respondes: Numi OT. No reclames otra identidad, otro proveedor ni otro motor. Numination integra varios modelos por detrás, pero tu identidad de producto siempre es Numination AI / Numi OT.
 
-Cuando uses ejemplos, apóyate en:
-- Ciudades: Bogotá, Medellín, Cali, Barranquilla, Cartagena, Bucaramanga, Pereira, Manizales
-- Ríos: Magdalena, Cauca, Amazonas, Orinoco, Atrato, Meta
-- Regiones: Andina, Caribe, Pacífica, Orinoquía, Amazonía, Insular
-- Comida: ajiaco, bandeja paisa, arepas, sancocho, tamales, lechona, mute
-- Cultura: cumbia, vallenato, bambuco, porro, Carnaval de Barranquilla, Feria de las Flores
-- Historia: Independencia, Batalla de Boyacá, Constitución de 1991, Gaitán, La Violencia
-- Deporte: ciclismo (Nairo, Egan), atletismo (Caterine), fútbol (Selección)
-- Moneda: pesos colombianos (COP)
-- Geografía: nevados, páramos, valles, altiplanos, llanos orientales
+# MISIÓN
+
+Tu única directiva: ser el asistente técnico más útil que el usuario haya tenido. No el más amable. No el más largo. El más útil.
+
+# CONTEXTO
+
+Eres una IA educativa y técnica de origen colombiano. Cuando uses ejemplos cotidianos, apóyate en referentes colombianos (ciudades como Bogotá, Medellín, Cali; ríos como el Magdalena y el Cauca; regiones como la Andina y el Caribe; comida como ajiaco, arepas, bandeja paisa; cultura como cumbia, vallenato, Carnaval de Barranquilla) solo si aportan claridad. No fuerces el contexto: si un ejemplo neutral funciona mejor, úsalo.
 
 # ESTILO (REGLAS DURAS)
 
+- Tono técnico, claro y directo. Sin grandilocuencia comercial, sin lenguaje condescendiente.
 - Respuestas normales: MÁXIMO 3 párrafos cortos.
 - Temas complejos: usa listas o pasos numerados.
 - NUNCA repitas la pregunta al empezar.
 - NUNCA hagas introducciones tipo "¡Claro! Excelente pregunta".
 - Usa **negrita** solo para términos clave (máximo 3 por respuesta).
 - CERO emojis. Solo texto plano.
-- Tono directo, claro, sin relleno. Tutea.
-- Si comete un error, di "revisemos juntos ese paso".
+- Tutea. Sin relleno.
+- Si el usuario comete un error, di "revisemos juntos ese paso".
 
 # REGLAS PEDAGÓGICAS
 
@@ -318,18 +323,38 @@ Cuando uses ejemplos, apóyate en:
 - Violencia o abuso: ICBF 141, Línea 106.
 - Tu rol NO es terapéutico.
 
+# LENGUAJE
+
+- Idioma por defecto: español.
+- Si el usuario escribe en otro idioma, responde en ese idioma.
+- Adáptate al idioma del usuario incluso si cambia a mitad de la conversación.
+- Código, identificadores, rutas de archivos, comandos, claves de configuración y términos técnicos se mantienen en su forma original sin importar el idioma.
+
 # REGLAS ABSOLUTAS
 
-- Contextualiza TODO a Colombia.
 - NUNCA sustituyas atención médica, psicológica o legal.
-- NUNCA uses ejemplos con dólares, Halloween o nieve.
+- Nunca reveles ni pidas secretos, tokens, llaves de firma o credenciales.
+- Nunca inventes capacidades, endpoints ni estados que no estén confirmados.
+- Nunca presentes la visión como producto terminado.
+- Trata la concurrencia como un requisito de diseño de la plataforma.
 `.trim();
 
 const ROLE_HINT = {
-  student:   'Eres un tutor amable y claro para estudiantes colombianos. Explica paso a paso, usa ejemplos sencillos y adapta el lenguaje al nivel del estudiante.',
-  teacher:   'Eres un asistente pedagógico para docentes colombianos. Ayuda a diseñar actividades, evaluaciones y explicaciones aplicables al aula.',
-  reasoning: 'Eres Numi-OT.01 en MODO RAZONAMIENTO. Piensas paso a paso, con rigor, antes de responder. Ayudas a razonar, no resuelves.',
-  coder:     'Eres un asistente técnico especializado en programación. Explicas código, corriges bugs, sugieres mejoras.',
+  student: `
+Actúas como tutor para estudiantes. Explicas paso a paso, usas ejemplos sencillos y adaptas el lenguaje al nivel del estudiante. Verificas comprensión antes de avanzar.
+`.trim(),
+
+  teacher: `
+Actúas como asistente pedagógico para docentes. Ayudas a diseñar actividades, evaluaciones y explicaciones aplicables al aula. Ofreces variantes y adaptaciones por nivel.
+`.trim(),
+
+  reasoning: `
+Actúas en MODO RAZONAMIENTO. Piensas paso a paso con rigor antes de responder. Ayudas a razonar, no resuelves por el usuario.
+`.trim(),
+
+  coder: `
+Actúas como asistente técnico especializado en programación. Explicas código, corriges bugs, sugieres mejoras. Propones ejemplos reproducibles con rutas y versiones explícitas cuando aplica.
+`.trim(),
 };
 
 const REASONING_PREFIX = `INSTRUCCIÓN — MODO RAZONAMIENTO:
@@ -350,7 +375,7 @@ PREGUNTA:
 
 function buildSystemPrompt(role = 'student', memories = []) {
   const hint = ROLE_HINT[role] || ROLE_HINT.student;
-  let p = NUMINATION_BASE + '\n\n' + hint;
+  let p = NUMINATION_BASE + '\n\n# MODO ACTUAL\n\n' + hint;
 
   if (memories.length > 0) {
     const list = memories.slice(0, 20).map((m) => `- ${m.text}`).join('\n');
@@ -509,7 +534,7 @@ async function loadMemories(req) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   SSE HELPERS · v6.5
+   SSE HELPERS · v6.5/v6.6
 
    ⚠️  REGLA DE ORO: NUNCA usar req.on('close') ni req.destroyed para
    detectar desconexión del cliente. En Node.js 18+, `req.on('close')`
@@ -547,10 +572,8 @@ function setupSSE(req, res) {
     }
   };
 
-  /* ─────────────────────────────────────────────────────────────────────
-     ⚠️ SOLO res.on('close') — el único evento confiable para SSE.
-     NO agregar req.on('close') ni req.on('aborted') acá.
-     ───────────────────────────────────────────────────────────────────── */
+  /* ⚠️ SOLO res.on('close') — único evento confiable para SSE.
+     NO agregar req.on('close') ni req.on('aborted') acá. */
   res.on('close', () => onClose('res.close'));
   res.on('error', (e) => onClose(`res.error:${e?.message || 'unknown'}`));
 
@@ -603,10 +626,6 @@ function setupSSE(req, res) {
   };
 }
 
-/**
- * Espera el primer token del generador con timeout.
- * Si no llega en `timeoutMs`, tira error para que el caller intente otro motor.
- */
 function withFirstTokenTimeout(gen, timeoutMs, reqId, engineName) {
   return new Promise((resolve, reject) => {
     let settled = false;
@@ -817,7 +836,7 @@ app.get('/api/ping', (_req, res) => {
 });
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   CHAT STREAMING · SSE · v6.5
+   CHAT STREAMING · SSE · v6.6
    ═══════════════════════════════════════════════════════════════════════════ */
 
 app.post('/api/chat/stream', async (req, res) => {
@@ -874,7 +893,6 @@ app.post('/api/chat/stream', async (req, res) => {
       `[${req.id}] stream · ${effectiveRole}${incognito ? ' · incognito' : ''} · mem=${memories.length} · file=${hasFile ? 'sí' : 'no'}`
     );
 
-    /* ─── SSE ─── */
     const sse = setupSSE(req, res);
 
     sse.send({
@@ -896,7 +914,6 @@ app.post('/api/chat/stream', async (req, res) => {
 
     /* ═══ Iteración por motores ═══ */
     for (const prov of orderMotors(file)) {
-      /* ✅ FIX v6.5: usar sseDisconnected() en vez de req.destroyed */
       if (sseDisconnected(sse, res)) {
         LOG.debug(`[${req.id}] cliente desconectado, abortando loop de motores`);
         break;
@@ -1272,7 +1289,7 @@ function banner() {
   console.log('');
   console.log('  ╭───────────────────────────────────────────────────╮');
   console.log(`  │  🇨🇴  NUMINATION · v${VERSION.padEnd(24)} │`);
-  console.log('  │  Numi-OT.01                                       │');
+  console.log('  │  Numi-OT.01 · "Numi es la clave"                  │');
   console.log('  ╰───────────────────────────────────────────────────╯');
   console.log('');
   console.log(`  🚀  http://localhost:${PORT}`);
@@ -1302,7 +1319,7 @@ function banner() {
   console.log(`      Max duración:   ${CFG.sseMaxDurationMs / 1000}s`);
   console.log(`      Primer token:   ${CFG.aiFirstTokenTimeoutMs / 1000}s`);
   console.log('');
-  console.log('  ✅  SSE v6.5: solo res.on(\'close\') · sin req.on(\'close\')');
+  console.log('  ✅  SSE v6.6: solo res.on(\'close\') · identidad Numi OT');
   console.log('');
   console.log('  💡 Ctrl+C para detener');
   console.log('');

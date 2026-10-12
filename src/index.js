@@ -7,34 +7,41 @@
                             ██║ ╚████║╚██████╔╝██║ ╚═╝ ██║███████╗
                             ╚═╝  ╚═══╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝
    
-                              I N D E X   ·   v 6 . 3
+                              I N D E X   ·   v 6 . 5
    
    ─────────────────────────────────────────────────────────────────────────
    Punto de entrada del servidor. Monta TODOS los módulos en el orden correcto.
    
    MÓDULOS:
      auth.js         · 15 endpoints de autenticación
-     chats.js        · 8 endpoints de chats + streaming SSE
+     chats.js        · 8 endpoints de chats (streaming movido a index.js)
      memories.js     · 14 endpoints de memorias
      skills.js       · 3+ endpoints de skills
      connectors.js   · 15 endpoints de 13 APIs externas
      email.js        · 8 endpoints de email transaccional
    
-   ORDEN CRÍTICO:
-     1. Middlewares base       → requestId, security, CORS, rate limit, JSON, cookies
-     2. Auth                   → attachUser + rutas /api/auth/*
-     3. Routers                → chats, memories, skills, connectors, email
-     4. Chat streaming         → /api/chat/stream + /api/chat (SSE)
-     5. Límites y health       → /api/limits/usage, /api/health, /api/version, /api/ping
-     6. Estáticos              → /public
-     7. Raíz                   → redirige a /login.html
-     8. Catch-all              → 404 JSON para /api/*, HTML para el resto
-     9. Error handler          → 500 con requestId
-    10. Listen                 → puerto 8080 (excepto en Vercel)
-   
    MOTORES DE IA:
      Texto     → Groq → Gemini → Kimi
      Archivos  → Gemini → Kimi → Groq
+   
+   v6.5 · FIX CRÍTICO DEL SSE
+     · ELIMINADO req.on('close') dentro de setupSSE.
+       En Node.js 18+ se dispara cuando el body del request termina
+       de leerse (por express.json()), NO cuando el cliente se
+       desconecta. Eso cerraba el SSE apenas después de enviar
+       `meta`, y el chat mostraba "No recibí respuesta del servidor"
+       sin enviar ni un token.
+     · ELIMINADO req.on('aborted'): deprecado en Node moderno.
+     · Cambiado `req.destroyed` → `res.destroyed || res.writableEnded`
+       en TODO el loop de motores. `req.destroyed` también se
+       marcaba true al terminar de leer el body, abortando el loop.
+   
+   v6.4 · CAMBIOS SOBRE v6.3
+     · Modelos configurables por env (GROQ_MODEL, GEMINI_MODEL, KIMI_MODEL)
+     · Timeout de primer token (AI_FIRST_TOKEN_TIMEOUT_MS = 25s)
+     · SSE keepalive cada 8s
+     · sseMaxDurationMs subido a 300s
+     · Mejor logging con duración y motivo de cierre
    ───────────────────────────────────────────────────────────────────────── */
 
 import express from 'express';
@@ -63,7 +70,7 @@ import { mountEmailRoutes } from './email.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, '..', 'public');
 
-const VERSION = '6.3.0';
+const VERSION = '6.5.0';
 
 /* ═══════════════════════════════════════════════════════════════════════════
    CONFIGURACIÓN
@@ -76,16 +83,26 @@ const PORT = parseInt(process.env.PORT || '8080', 10);
 const CFG = Object.freeze({
   maxMsgLen: 8000,
   jsonLimit: '15mb',
+
   geminiCooldownMs: 60_000,
   geminiSoftCooldownMs: 15_000,
+
   rateLimitIPWindow: 60_000,
   rateLimitIPMax: 240,
+
   retryAttempts: 6,
   retryBaseDelayMs: 900,
-  sseHeartbeatMs: 15_000,
-  sseMaxDurationMs: 120_000,
+
+  /* ─── SSE ─── */
+  sseHeartbeatMs: 8_000,
+  sseMaxDurationMs: 300_000,
+
+  /* ─── Timeout de primer token del motor ─── */
+  aiFirstTokenTimeoutMs: 25_000,
+
   memCacheTtlMs: 30_000,
   memCacheMax: 200,
+
   keepAliveTimeout: 65_000,
   headersTimeout: 66_000,
   shutdownTimeout: 10_000,
@@ -123,12 +140,24 @@ try {
   TEST_KEYS = mod.TEST_KEYS ?? {};
 } catch {}
 
+function sanitizeEnv(v) {
+  if (typeof v !== 'string') return v;
+  return v.trim().replace(/^["']|["']$/g, '').replace(/[\r\n\t]/g, '');
+}
+
 const KEYS = Object.freeze({
-  GROQ: process.env.GROQ_API_KEY     ?? TEST_KEYS.GROQ_API_KEY,
-  NV:   process.env.NVIDIA_API_KEY   ?? TEST_KEYS.NVIDIA_API_KEY,
-  GM1:  process.env.GEMINI_API_KEY   ?? TEST_KEYS.GEMINI_API_KEY,
-  GM2:  process.env.GEMINI_API_KEY_2 ?? TEST_KEYS.GEMINI_API_KEY_2,
-  GM3:  process.env.GEMINI_API_KEY_3 ?? TEST_KEYS.GEMINI_API_KEY_3,
+  GROQ: sanitizeEnv(process.env.GROQ_API_KEY     ?? TEST_KEYS.GROQ_API_KEY),
+  NV:   sanitizeEnv(process.env.NVIDIA_API_KEY   ?? TEST_KEYS.NVIDIA_API_KEY),
+  GM1:  sanitizeEnv(process.env.GEMINI_API_KEY   ?? TEST_KEYS.GEMINI_API_KEY),
+  GM2:  sanitizeEnv(process.env.GEMINI_API_KEY_2 ?? TEST_KEYS.GEMINI_API_KEY_2),
+  GM3:  sanitizeEnv(process.env.GEMINI_API_KEY_3 ?? TEST_KEYS.GEMINI_API_KEY_3),
+});
+
+/* ─── Modelos · configurables por env con fallback ─── */
+const MODELS = Object.freeze({
+  GROQ:   sanitizeEnv(process.env.GROQ_MODEL   ?? TEST_KEYS.GROQ_MODEL)   ?? 'openai/gpt-oss-120b',
+  GEMINI: sanitizeEnv(process.env.GEMINI_MODEL ?? TEST_KEYS.GEMINI_MODEL) ?? 'gemini-3.6-flash',
+  KIMI:   sanitizeEnv(process.env.KIMI_MODEL   ?? TEST_KEYS.KIMI_MODEL)   ?? 'moonshotai/kimi-k3',
 });
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -185,6 +214,20 @@ function isRateLimit(err) {
   return st === 429 || st === 503 ||
     msg.includes('429') || msg.includes('503') ||
     msg.includes('quota') || msg.includes('rate limit') || msg.includes('overloaded');
+}
+
+function isClientAbort(err) {
+  const msg = String(err?.message || '').toLowerCase();
+  return msg.includes('aborted') && !msg.includes('timeout');
+}
+
+/**
+ * ¿El SSE ya está cerrado por el cliente?
+ * IMPORTANTE: en Node.js 18+ NO usar req.destroyed ni req.on('close').
+ * Solo res.destroyed / res.writableEnded reflejan desconexión real del SSE.
+ */
+function sseDisconnected(sse, res) {
+  return sse.isClosed() || res.destroyed || res.writableEnded;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -370,7 +413,7 @@ async function callGroq(systemPrompt, message, file) {
   if (!groq) throw new Error('Groq no configurado');
   const note = file?.data ? '\n\n[El usuario adjuntó un archivo.]' : '';
   const r = await groq.chat.completions.create({
-    model: 'openai/gpt-oss-120b',
+    model: MODELS.GROQ,
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: (message || '(sin texto)') + note },
@@ -392,7 +435,7 @@ async function callGemini(systemPrompt, message, file) {
 
   first.requests++;
   const r = await first.client.models.generateContent({
-    model: 'gemini-3.6-flash',
+    model: MODELS.GEMINI,
     contents: [{ role: 'user', parts }],
     config: {
       systemInstruction: systemPrompt,
@@ -420,7 +463,7 @@ async function callNvidia(systemPrompt, message, file) {
   }
 
   const r = await nvidia.chat.completions.create({
-    model: 'moonshotai/kimi-k3',
+    model: MODELS.KIMI,
     messages,
     temperature: 0.7,
     max_tokens: 2048,
@@ -466,7 +509,15 @@ async function loadMemories(req) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   SSE HELPERS
+   SSE HELPERS · v6.5
+
+   ⚠️  REGLA DE ORO: NUNCA usar req.on('close') ni req.destroyed para
+   detectar desconexión del cliente. En Node.js 18+, `req.on('close')`
+   se dispara cuando el BODY del request termina de leerse (por
+   express.json()), no cuando el socket se cierra.
+
+   El evento correcto para SSE es: `res.on('close')`.
+   El flag correcto para chequear: `res.destroyed` o `res.writableEnded`.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 function setupSSE(req, res) {
@@ -474,39 +525,63 @@ function setupSSE(req, res) {
   res.setHeader('Cache-Control', 'no-cache, no-transform');
   res.setHeader('Connection', 'keep-alive');
   res.setHeader('X-Accel-Buffering', 'no');
+  res.setHeader('Content-Encoding', 'identity');
   res.flushHeaders?.();
 
   if (res.socket?.setNoDelay) {
     try { res.socket.setNoDelay(true); } catch {}
   }
+  if (res.socket?.setTimeout) {
+    try { res.socket.setTimeout(0); } catch {}
+  }
 
   let closed = false;
+  let closeReason = null;
   const startedAt = Date.now();
 
-  res.on('close', () => { closed = true; });
-  res.on('error', () => { closed = true; });
+  const onClose = (reason) => {
+    if (!closed) {
+      closed = true;
+      closeReason = reason;
+      LOG.debug(`[${req.id}] SSE cerrado · ${reason} · ${Date.now() - startedAt}ms`);
+    }
+  };
+
+  /* ─────────────────────────────────────────────────────────────────────
+     ⚠️ SOLO res.on('close') — el único evento confiable para SSE.
+     NO agregar req.on('close') ni req.on('aborted') acá.
+     ───────────────────────────────────────────────────────────────────── */
+  res.on('close', () => onClose('res.close'));
+  res.on('error', (e) => onClose(`res.error:${e?.message || 'unknown'}`));
 
   const send = (data) => {
-    if (closed) return false;
+    if (closed || res.writableEnded) return false;
     try {
       res.write(`data: ${JSON.stringify(data)}\n\n`);
       return true;
-    } catch {
-      closed = true;
+    } catch (e) {
+      onClose(`send.error:${e?.message || 'unknown'}`);
       return false;
     }
   };
 
   const heartbeat = setInterval(() => {
-    if (closed) return;
+    if (closed || res.writableEnded) return;
+
     if (Date.now() - startedAt > CFG.sseMaxDurationMs) {
-      send({ error: 'Timeout', done: true });
-      clearInterval(heartbeat);
+      LOG.warn(`[${req.id}] SSE excedió ${CFG.sseMaxDurationMs}ms, cerrando`);
+      try { res.write(`data: ${JSON.stringify({ done: true, reason: 'max_duration' })}\n\n`); } catch {}
       try { res.end(); } catch {}
-      closed = true;
+      onClose('max_duration');
+      clearInterval(heartbeat);
       return;
     }
-    try { res.write(': ping\n\n'); } catch { closed = true; }
+
+    try {
+      res.write(': keepalive\n\n');
+    } catch (e) {
+      onClose(`heartbeat.error:${e?.message || 'unknown'}`);
+    }
   }, CFG.sseHeartbeatMs);
   if (heartbeat.unref) heartbeat.unref();
 
@@ -515,10 +590,44 @@ function setupSSE(req, res) {
     if (!closed) {
       try { res.end(); } catch {}
       closed = true;
+      closeReason = closeReason || 'graceful';
     }
   };
 
-  return { send, close, isClosed: () => closed, elapsed: () => Date.now() - startedAt };
+  return {
+    send,
+    close,
+    isClosed: () => closed,
+    getReason: () => closeReason,
+    elapsed: () => Date.now() - startedAt,
+  };
+}
+
+/**
+ * Espera el primer token del generador con timeout.
+ * Si no llega en `timeoutMs`, tira error para que el caller intente otro motor.
+ */
+function withFirstTokenTimeout(gen, timeoutMs, reqId, engineName) {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      reject(new Error(`${engineName} no envió primer token en ${timeoutMs}ms`));
+    }, timeoutMs);
+
+    gen.next().then((result) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve(result);
+    }).catch((err) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      reject(err);
+    });
+  });
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -618,7 +727,7 @@ app.use(express.static(publicDir, {
 app.get('/', (req, res) => res.redirect('/login.html'));
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   ROUTERS (TODOS antes del catch-all)
+   ROUTERS
    ═══════════════════════════════════════════════════════════════════════════ */
 
 mountAuthRoutes(app);
@@ -662,6 +771,7 @@ app.get('/api/health', async (req, res) => {
       text: ['groq', 'gemini', 'nvidia'],
       files: ['gemini', 'nvidia', 'groq'],
     },
+    models: MODELS,
     keys: {
       groq: Boolean(KEYS.GROQ),
       gemini_1: Boolean(KEYS.GM1),
@@ -698,6 +808,7 @@ app.get('/api/version', (_req, res) => {
     name: 'Numination',
     codename: 'Numi-OT.01',
     env: process.env.NODE_ENV || 'development',
+    models: MODELS,
   });
 });
 
@@ -706,14 +817,13 @@ app.get('/api/ping', (_req, res) => {
 });
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   CHAT STREAMING · SSE
+   CHAT STREAMING · SSE · v6.5
    ═══════════════════════════════════════════════════════════════════════════ */
 
 app.post('/api/chat/stream', async (req, res) => {
   const t0 = Date.now();
 
   try {
-    /* ─── Límite ─── */
     const lim = await verificarLimite(req);
     if (!lim.permitido) {
       if (lim.retryAfter) res.setHeader('Retry-After', String(lim.retryAfter));
@@ -744,7 +854,6 @@ app.post('/api/chat/stream', async (req, res) => {
       });
     }
 
-    /* ─── Injection guard ─── */
     if (hasText && isInjection(message)) {
       LOG.warn(`[${req.id}] Injection bloqueado`);
       return res.status(403).json({
@@ -758,7 +867,6 @@ app.post('/api/chat/stream', async (req, res) => {
     const effectiveRole = isReasoning ? 'reasoning' : role;
     const finalMessage = buildFinalMessage(message, isReasoning);
 
-    /* ─── Memorias ─── */
     const memories = incognito ? [] : await loadMemories(req);
     const systemPrompt = buildSystemPrompt(effectiveRole, memories);
 
@@ -784,10 +892,15 @@ app.post('/api/chat/stream', async (req, res) => {
 
     let responded = false;
     let tokens = 0;
+    let chosenProvider = null;
 
     /* ═══ Iteración por motores ═══ */
     for (const prov of orderMotors(file)) {
-      if (sse.isClosed()) break;
+      /* ✅ FIX v6.5: usar sseDisconnected() en vez de req.destroyed */
+      if (sseDisconnected(sse, res)) {
+        LOG.debug(`[${req.id}] cliente desconectado, abortando loop de motores`);
+        break;
+      }
 
       /* ─────── GEMINI ─────── */
       if (prov === 'gemini') {
@@ -799,20 +912,36 @@ app.post('/api/chat/stream', async (req, res) => {
 
         let ok = false;
         for (const entry of candidates) {
-          if (sse.isClosed()) break;
+          if (sseDisconnected(sse, res)) break;
           try {
             LOG.debug(`[${req.id}] Gemini #${entry.id} streaming...`);
             let local = 0;
             entry.requests++;
 
-            for await (const token of streamGemini(
+            const gen = streamGemini(
               entry.client,
               systemPrompt,
               finalMessage,
               file,
               { reasoning: isReasoning }
-            )) {
-              if (sse.isClosed()) break;
+            );
+
+            let first;
+            try {
+              first = await withFirstTokenTimeout(gen, CFG.aiFirstTokenTimeoutMs, req.id, `Gemini#${entry.id}`);
+            } catch (e) {
+              throw new Error(`Gemini#${entry.id} timeout primer token: ${e.message}`);
+            }
+
+            if (!first.done && first.value) {
+              sse.send({ token: first.value, done: false });
+              responded = true;
+              tokens++;
+              local++;
+            }
+
+            for await (const token of gen) {
+              if (sseDisconnected(sse, res)) break;
               sse.send({ token, done: false });
               responded = true;
               tokens++;
@@ -822,11 +951,16 @@ app.post('/api/chat/stream', async (req, res) => {
             if (local > 0) {
               sse.send({ token: '', done: true, provider: `gemini-${entry.id}` });
               ok = true;
+              chosenProvider = `gemini-${entry.id}`;
               break;
             }
             throw new Error('Gemini no devolvió tokens');
           } catch (err) {
             LOG.warn(`[${req.id}] Gemini #${entry.id} falló: ${short(err.message, 100)}`);
+            if (isClientAbort(err) || sseDisconnected(sse, res)) {
+              LOG.debug(`[${req.id}] abort por cliente, no reintentar`);
+              break;
+            }
             if (isRateLimit(err) && !responded) {
               geminiCooldown(entry);
               continue;
@@ -834,6 +968,7 @@ app.post('/api/chat/stream', async (req, res) => {
             if (responded) {
               sse.send({ token: '', done: true, provider: `gemini-${entry.id}`, partial: true });
               ok = true;
+              chosenProvider = `gemini-${entry.id}`;
               break;
             }
             geminiCooldown(entry, CFG.geminiSoftCooldownMs);
@@ -841,25 +976,46 @@ app.post('/api/chat/stream', async (req, res) => {
         }
 
         if (ok) {
-          finishSSE(sse, req, incognito, t0, tokens, 'gemini');
+          finishSSE(sse, req, incognito, t0, tokens, chosenProvider);
+          return;
+        }
+        if (responded || sseDisconnected(sse, res)) {
+          finishSSE(sse, req, incognito, t0, tokens, chosenProvider || 'gemini-partial');
           return;
         }
       }
 
       /* ─────── GROQ ─────── */
       else if (prov === 'groq') {
+        if (!groq) { LOG.debug(`[${req.id}] Groq no configurado, skip`); continue; }
         try {
           LOG.debug(`[${req.id}] Groq streaming...`);
           let local = 0;
 
-          for await (const token of streamGroq(
+          const gen = streamGroq(
             groq,
             systemPrompt,
             finalMessage,
             file,
             { reasoning: isReasoning }
-          )) {
-            if (sse.isClosed()) break;
+          );
+
+          let first;
+          try {
+            first = await withFirstTokenTimeout(gen, CFG.aiFirstTokenTimeoutMs, req.id, 'Groq');
+          } catch (e) {
+            throw new Error(`Groq timeout primer token: ${e.message}`);
+          }
+
+          if (!first.done && first.value) {
+            sse.send({ token: first.value, done: false });
+            responded = true;
+            tokens++;
+            local++;
+          }
+
+          for await (const token of gen) {
+            if (sseDisconnected(sse, res)) break;
             sse.send({ token, done: false });
             responded = true;
             tokens++;
@@ -874,6 +1030,13 @@ app.post('/api/chat/stream', async (req, res) => {
           throw new Error('Groq no devolvió tokens');
         } catch (err) {
           LOG.warn(`[${req.id}] Groq falló: ${short(err.message, 100)}`);
+
+          if (isClientAbort(err) || sseDisconnected(sse, res)) {
+            LOG.debug(`[${req.id}] abort por cliente, cerrando sin retry`);
+            finishSSE(sse, req, incognito, t0, tokens, 'groq-aborted');
+            return;
+          }
+
           if (responded) {
             sse.send({ token: '', done: true, provider: 'groq', partial: true });
             finishSSE(sse, req, incognito, t0, tokens, 'groq');
@@ -884,6 +1047,7 @@ app.post('/api/chat/stream', async (req, res) => {
 
       /* ─────── NVIDIA / KIMI ─────── */
       else if (prov === 'nvidia') {
+        if (!nvidia) { LOG.debug(`[${req.id}] NVIDIA no configurado, skip`); continue; }
         try {
           LOG.debug(`[${req.id}] Kimi K3 sin streaming`);
           const reply = await callNvidia(systemPrompt, finalMessage, file);
@@ -897,17 +1061,23 @@ app.post('/api/chat/stream', async (req, res) => {
           throw new Error('Respuesta vacía');
         } catch (err) {
           LOG.warn(`[${req.id}] Kimi K3 falló: ${short(err.message, 100)}`);
+          if (isClientAbort(err) || sseDisconnected(sse, res)) {
+            finishSSE(sse, req, incognito, t0, tokens, 'nvidia-aborted');
+            return;
+          }
         }
       }
     }
 
     /* ─── Todos fallaron ─── */
-    if (!responded && !sse.isClosed()) {
+    if (!responded && !sseDisconnected(sse, res)) {
       LOG.error(`[${req.id}] Todos los motores fallaron`);
       sse.send({
         error: 'Los motores de IA están saturados. Intenta de nuevo en unos segundos.',
         done: true,
       });
+      sse.close();
+    } else if (!sse.isClosed()) {
       sse.close();
     }
   } catch (err) {
@@ -971,7 +1141,6 @@ app.post('/api/chat', async (req, res) => {
     const effectiveRole = isReasoning ? 'reasoning' : role;
     const finalMessage = buildFinalMessage(message, isReasoning);
 
-    /* ─── Imagen ─── */
     if (hasText && !hasFile && !isReasoning && isImageRequest(message)) {
       const imgPrompt = extractImagePrompt(message);
       if (imgPrompt.length > 3) {
@@ -988,12 +1157,10 @@ app.post('/api/chat', async (req, res) => {
       }
     }
 
-    /* ─── Memorias + prompt ─── */
     const memories = incognito ? [] : await loadMemories(req);
     const systemPrompt = buildSystemPrompt(effectiveRole, memories);
     const order = orderMotors(file);
 
-    /* ─── Intentos ─── */
     const attempts = [order[0], order[0], order[1], order[2], order[1], order[2]];
 
     for (let i = 0; i < attempts.length; i++) {
@@ -1114,6 +1281,11 @@ function banner() {
   console.log('      Texto    → Groq → Gemini → Kimi');
   console.log('      Archivos → Gemini → Kimi → Groq');
   console.log('');
+  console.log('  🤖  MODELOS');
+  console.log(`      Groq   → ${MODELS.GROQ}`);
+  console.log(`      Gemini → ${MODELS.GEMINI}`);
+  console.log(`      Kimi   → ${MODELS.KIMI}`);
+  console.log('');
   console.log(`  🔑  Groq:         ${groq ? '✓' : '✗'}`);
   console.log(`  🔑  Gemini keys:  ${gCount}/3 ${gCount > 0 ? '✓' : '✗'}`);
   console.log(`  🔑  Kimi:         ${nvidia ? '✓' : '✗'}`);
@@ -1125,15 +1297,12 @@ function banner() {
   console.log(`  📧  Email:        configurable`);
   console.log(`  🔐  Auth:         Google + GitHub`);
   console.log('');
-  console.log('  📡  MÓDULOS');
-  console.log('      /api/auth/*         · 15 endpoints');
-  console.log('      /api/chats          · conversaciones');
-  console.log('      /api/chat/stream    · streaming SSE');
-  console.log('      /api/memories/*     · 14 endpoints');
-  console.log('      /api/skills         · habilidades');
-  console.log('      /api/connectors/*   · 15 endpoints');
-  console.log('      /api/email/*        · 8 endpoints');
-  console.log('      /api/health         · estado del server');
+  console.log('  ⏱️   TIMEOUTS');
+  console.log(`      Keepalive SSE:  ${CFG.sseHeartbeatMs / 1000}s`);
+  console.log(`      Max duración:   ${CFG.sseMaxDurationMs / 1000}s`);
+  console.log(`      Primer token:   ${CFG.aiFirstTokenTimeoutMs / 1000}s`);
+  console.log('');
+  console.log('  ✅  SSE v6.5: solo res.on(\'close\') · sin req.on(\'close\')');
   console.log('');
   console.log('  💡 Ctrl+C para detener');
   console.log('');
@@ -1175,9 +1344,5 @@ process.on('uncaughtException', (err) => {
 process.on('unhandledRejection', (reason) => {
   LOG.error('Unhandled rejection:', String(reason));
 });
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   EXPORT (para Vercel)
-   ═══════════════════════════════════════════════════════════════════════════ */
 
 export default app;

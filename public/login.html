@@ -14,6 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="preconnect" href="https://accounts.google.com" />
+<link rel="dns-prefetch" href="https://accounts.google.com" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
 
 <style>
@@ -149,14 +150,8 @@ a { color: inherit; text-decoration: none; }
   margin-bottom: 36px;
 }
 
-.login-subtitle--left {
-  text-align: left;
-  margin-bottom: 32px;
-}
-
-.login-subtitle--tight {
-  margin-bottom: 20px;
-}
+.login-subtitle--left { text-align: left; margin-bottom: 32px; }
+.login-subtitle--tight { margin-bottom: 20px; }
 
 /* ═══════════════════════════════════════════════════════════════
    FORM
@@ -202,9 +197,7 @@ a { color: inherit; text-decoration: none; }
   letter-spacing: -0.005em;
 }
 
-.login-field input::placeholder {
-  color: var(--c-text-subtle);
-}
+.login-field input::placeholder { color: var(--c-text-subtle); }
 
 .login-field__eye {
   display: flex;
@@ -239,23 +232,9 @@ a { color: inherit; text-decoration: none; }
   width: 100%;
 }
 
-.login-primary:hover:not(:disabled) {
-  background: var(--c-primary-hover);
-  box-shadow: var(--shadow-btn);
-}
-
-.login-primary:active:not(:disabled) {
-  background: var(--c-primary-active);
-  transform: scale(.985);
-}
-
-.login-primary:disabled {
-  background: var(--c-border-strong);
-  color: #fff;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
+.login-primary:hover:not(:disabled) { background: var(--c-primary-hover); box-shadow: var(--shadow-btn); }
+.login-primary:active:not(:disabled) { background: var(--c-primary-active); transform: scale(.985); }
+.login-primary:disabled { background: var(--c-border-strong); color: #fff; cursor: not-allowed; box-shadow: none; }
 .login-primary svg { width: 18px; height: 18px; }
 
 .login-primary.is-loading { position: relative; color: transparent; }
@@ -296,15 +275,8 @@ a { color: inherit; text-decoration: none; }
   position: relative;
 }
 
-.login-social:hover:not(:disabled) {
-  transform: translateY(-2px);
-  border-color: var(--c-border-soft);
-  box-shadow: 0 6px 18px rgba(0,0,0,.08);
-}
-
-.login-social:active:not(:disabled) {
-  transform: translateY(0) scale(.96);
-}
+.login-social:hover:not(:disabled) { transform: translateY(-2px); border-color: var(--c-border-soft); box-shadow: 0 6px 18px rgba(0,0,0,.08); }
+.login-social:active:not(:disabled) { transform: translateY(0) scale(.96); }
 
 .login-social svg { width: 26px; height: 26px; display: block; }
 .login-social--github svg { fill: #0a0a0a; stroke: none; }
@@ -380,11 +352,7 @@ a { color: inherit; text-decoration: none; }
   text-decoration-thickness: 1px;
 }
 
-.login-link--center {
-  display: block;
-  text-align: center;
-  margin-top: 8px;
-}
+.login-link--center { display: block; text-align: center; margin-top: 8px; }
 
 /* ═══════════════════════════════════════════════════════════════
    AGE CHECK CARD
@@ -440,9 +408,7 @@ a { color: inherit; text-decoration: none; }
   border-color: var(--c-primary);
 }
 
-.age-check input:checked ~ .age-check__box svg {
-  opacity: 1;
-}
+.age-check input:checked ~ .age-check__box svg { opacity: 1; }
 
 .age-check__text {
   font-size: 15px;
@@ -502,10 +468,7 @@ a { color: inherit; text-decoration: none; }
 }
 .age-modal[hidden] { display: none; }
 
-@keyframes modalFade {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
+@keyframes modalFade { from { opacity: 0; } to { opacity: 1; } }
 
 .age-modal__card {
   width: 100%;
@@ -562,28 +525,31 @@ a { color: inherit; text-decoration: none; }
   text-align: center;
 }
 
-.age-modal__btn--cancel {
-  color: var(--c-text-muted);
-  font-weight: 500;
-}
+.age-modal__btn--cancel { color: var(--c-text-muted); font-weight: 500; }
 .age-modal__btn--cancel:hover { background: var(--c-border-soft); color: var(--c-text); }
 
-.age-modal__btn--block {
-  color: var(--c-danger);
-  font-weight: 700;
-}
+.age-modal__btn--block { color: var(--c-danger); font-weight: 700; }
 .age-modal__btn--block:hover { background: var(--c-danger-soft); }
 
 /* ═══════════════════════════════════════════════════════════════
-   GSI HIDDEN
+   GSI HIDDEN · FIX v2
+   ───────────────────────────────────────────────────────────────
+   Antes: width:1px, height:1px, opacity:0, pointer-events:none
+          → Google GIS NO renderiza el botón dentro de un contenedor
+            tan chico. Por eso clickHidden() devolvía false.
+   Ahora: dimensiones reales (340x60), offscreen, sin opacity ni
+          pointer-events, para que GIS sí dibuje el botón y .click()
+          funcione.
    ═══════════════════════════════════════════════════════════════ */
 .gsi-hidden {
-  position: fixed;
-  width: 1px; height: 1px;
-  opacity: 0;
-  pointer-events: none;
+  position: absolute;
+  top: -9999px;
+  left: -9999px;
+  width: 340px;
+  height: 60px;
   overflow: hidden;
-  top: -9999px; left: -9999px;
+  z-index: -1;
+  /* NO opacity, NO pointer-events, NO display:none */
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -653,13 +619,9 @@ a { color: inherit; text-decoration: none; }
 <body>
 <main class="auth-app">
 
-  <!-- ═══════════════════════════════════════════════════════════
-       VIEW 1 · ENTRY
-       ═══════════════════════════════════════════════════════════ -->
+  <!-- VIEW 1 · ENTRY -->
   <div class="view" data-view="entry">
-    <h1 class="login-title">
-      Welcome to<br />Numination.
-    </h1>
+    <h1 class="login-title">Welcome to<br />Numination.</h1>
 
     <form class="login-form" data-login-form autocomplete="on" novalidate>
       <label class="login-field">
@@ -706,9 +668,7 @@ a { color: inherit; text-decoration: none; }
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════════
-       VIEW 2 · SIGNUP
-       ═══════════════════════════════════════════════════════════ -->
+  <!-- VIEW 2 · SIGNUP -->
   <div class="view" data-view="signup" hidden>
     <button type="button" class="view__back" data-go-entry aria-label="Volver">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
@@ -717,12 +677,8 @@ a { color: inherit; text-decoration: none; }
       </svg>
     </button>
 
-    <h1 class="login-title login-title--left">
-      Create your<br />account
-    </h1>
-    <p class="login-subtitle login-subtitle--left">
-      Join Numination in a few seconds
-    </p>
+    <h1 class="login-title login-title--left">Create your<br />account</h1>
+    <p class="login-subtitle login-subtitle--left">Join Numination in a few seconds</p>
 
     <form class="login-form" data-signup-form autocomplete="on" novalidate>
       <label class="login-field">
@@ -773,13 +729,9 @@ a { color: inherit; text-decoration: none; }
     </p>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════════
-       VIEW 3 · PASSWORD
-       ═══════════════════════════════════════════════════════════ -->
+  <!-- VIEW 3 · PASSWORD -->
   <div class="view" data-view="password" hidden>
-    <h1 class="login-title">
-      Enter your password<br />to continue
-    </h1>
+    <h1 class="login-title">Enter your password<br />to continue</h1>
     <p class="login-subtitle login-subtitle--tight" data-password-email>—</p>
 
     <form class="login-form" data-password-form autocomplete="on" novalidate>
@@ -814,13 +766,9 @@ a { color: inherit; text-decoration: none; }
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════════
-       VIEW 4 · AGE
-       ═══════════════════════════════════════════════════════════ -->
+  <!-- VIEW 4 · AGE -->
   <div class="view" data-view="age" hidden>
-    <h1 class="login-title">
-      Confirm you're<br />14 or older.
-    </h1>
+    <h1 class="login-title">Confirm you're<br />14 or older.</h1>
     <p class="login-subtitle">
       Si eres menor de 14 años no puedes entrar y tu cuenta será baneada.
     </p>
@@ -936,6 +884,12 @@ a { color: inherit; text-decoration: none; }
     isValidEmail: function(v){
       if(!Utils.isNonEmptyString(v)) return false;
       return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim());
+    },
+    log: function(msg, data){
+      if(typeof console !== 'undefined' && console.log){
+        if(data !== undefined) console.log('[login]', msg, data);
+        else console.log('[login]', msg);
+      }
     }
   };
 
@@ -1019,8 +973,6 @@ a { color: inherit; text-decoration: none; }
      API CLIENT
      ═══════════════════════════════════════════════════════════ */
   var API = {
-
-    /* POST /api/auth/login */
     login: function(email, password, remember){
       return Utils.fetchWithTimeout('/api/auth/login', {
         method: 'POST',
@@ -1033,7 +985,6 @@ a { color: inherit; text-decoration: none; }
       });
     },
 
-    /* POST /api/auth/signup */
     signup: function(email, password, name){
       return Utils.fetchWithTimeout('/api/auth/signup', {
         method: 'POST',
@@ -1046,7 +997,6 @@ a { color: inherit; text-decoration: none; }
       });
     },
 
-    /* POST /api/auth/forgot-password */
     forgot: function(email){
       return Utils.fetchWithTimeout('/api/auth/forgot-password', {
         method: 'POST',
@@ -1059,7 +1009,6 @@ a { color: inherit; text-decoration: none; }
       });
     },
 
-    /* GET /api/auth/me */
     me: function(){
       return Utils.fetchWithTimeout('/api/auth/me', {
         headers: { Accept: 'application/json' }
@@ -1098,7 +1047,6 @@ a { color: inherit; text-decoration: none; }
   function routeAfterAuth(user){
     if(!user){ Utils.safeRedirect('/chat.html'); return; }
 
-    /* Si el correo NO está verificado → mandamos a verificar */
     if(user.emailVerified === false){
       try{
         if(user.email) sessionStorage.setItem('nm-pending-email', user.email);
@@ -1155,9 +1103,15 @@ a { color: inherit; text-decoration: none; }
   })();
 
   /* ═══════════════════════════════════════════════════════════
-     GOOGLE OAUTH
+     GOOGLE OAUTH · v2 optimizado
+     ─────────────────────────────────────────────────────────────
+     · init() explícito cuando GIS carga (onGoogleLibraryLoad)
+     · clickHidden() con fallback a prompt()
+     · Logging para debug
      ═══════════════════════════════════════════════════════════ */
   var Google = {
+    initialized: false,
+
     exchange: function(credential){
       return Utils.fetchWithTimeout('/api/auth/google', {
         method: 'POST',
@@ -1174,10 +1128,42 @@ a { color: inherit; text-decoration: none; }
         });
       });
     },
+
+    /** Inicializa el cliente GIS (llamado cuando la librería carga) */
+    init: function(){
+      if(this.initialized) return true;
+      var g = window.google && window.google.accounts && window.google.accounts.id;
+      if(!g) return false;
+
+      try{
+        window.google.accounts.id.initialize({
+          client_id: '815847930264-hqlpgm37slhbbtqotv4uv9erla4sdl6d.apps.googleusercontent.com',
+          callback: window.handleGoogleCredential,
+          auto_select: false,
+          cancel_on_tap_outside: true,
+          ux_mode: 'popup',
+          context: 'signin',
+          use_fedcm_for_prompt: false
+        });
+        this.initialized = true;
+        state.googleReady = true;
+        Utils.log('GIS inicializado correctamente');
+        return true;
+      } catch(e){
+        Utils.log('Error inicializando GIS:', e.message);
+        return false;
+      }
+    },
+
+    /** Espera a que el botón GIS aparezca en el DOM */
     waitForGSI: function(){
       return new Promise(function(resolve){
         var start = Date.now();
         function check(){
+          // Intento de init si no está listo
+          if(!Google.initialized){
+            Google.init();
+          }
           var el = document.querySelector('.gsi-hidden [role="button"], .gsi-hidden button, .gsi-hidden div[tabindex]');
           if(el) return resolve(true);
           if(Date.now() - start > Config.GSI_TIMEOUT_MS) return resolve(false);
@@ -1186,14 +1172,34 @@ a { color: inherit; text-decoration: none; }
         check();
       });
     },
+
+    /** Dispara el flujo de Google (botón oculto o prompt de respaldo) */
     clickHidden: function(){
       var el = document.querySelector('.gsi-hidden [role="button"], .gsi-hidden button, .gsi-hidden div[tabindex]');
-      if(!el) return false;
-      el.click();
-      return true;
+      if(el){
+        try {
+          el.click();
+          Utils.log('clickHidden: click ejecutado');
+          return true;
+        } catch(e){
+          Utils.log('clickHidden: error al clickear:', e.message);
+        }
+      }
+      // Fallback: One Tap prompt
+      if(this.initialized && window.google.accounts.id.prompt){
+        try {
+          window.google.accounts.id.prompt();
+          Utils.log('clickHidden: prompt() usado como fallback');
+          return true;
+        } catch(e){
+          Utils.log('clickHidden: prompt() falló:', e.message);
+        }
+      }
+      return false;
     }
   };
 
+  /* Callback global que invoca GIS */
   window.handleGoogleCredential = function(response){
     if(state.busy) return;
     UI.setBusy(true);
@@ -1215,6 +1221,13 @@ a { color: inherit; text-decoration: none; }
       UI.setBusy(false);
       Toasts.err(err.message || 'No pudimos iniciar sesión. Intenta de nuevo.');
     });
+  };
+
+  /* Handler oficial de GIS cuando termina de cargar */
+  window.onGoogleLibraryLoad = function(){
+    Utils.log('onGoogleLibraryLoad disparado');
+    Google.init();
+    UI.hideFallback();
   };
 
   /* ═══════════════════════════════════════════════════════════
@@ -1251,7 +1264,6 @@ a { color: inherit; text-decoration: none; }
 
   /* ═══════════════════════════════════════════════════════════
      VIEW 2 · SIGNUP
-     Solo valida y pasa a view 4. El signup real ocurre en view 4.
      ═══════════════════════════════════════════════════════════ */
   var signupForm = document.querySelector('[data-signup-form]');
   if(signupForm){
@@ -1329,7 +1341,6 @@ a { color: inherit; text-decoration: none; }
       API.login(state.email, pwd, true).then(function(res){
         var data = res.data || {};
 
-        /* Éxito */
         if(res.ok && data.ok){
           Toasts.ok('¡Bienvenido de nuevo!');
           return Utils.sleep(500).then(function(){
@@ -1337,7 +1348,6 @@ a { color: inherit; text-decoration: none; }
           });
         }
 
-        /* 401 · usa OAuth */
         if(res.status === 401 && data.code === 'use_oauth'){
           var prov = data.provider === 'github' ? 'GitHub' : 'Google';
           showInlineError(errEl, 'Esta cuenta usa ' + prov + '. Entra con el botón de abajo.');
@@ -1345,7 +1355,6 @@ a { color: inherit; text-decoration: none; }
           return;
         }
 
-        /* 423 · cuenta bloqueada */
         if(res.status === 423 && data.code === 'account_locked'){
           var min = data.retryAfterMinutes || 15;
           showInlineError(errEl, 'Cuenta bloqueada temporalmente. Intenta en ' + min + ' min.');
@@ -1353,28 +1362,21 @@ a { color: inherit; text-decoration: none; }
           return;
         }
 
-        /* 429 · rate limit */
         if(res.status === 429){
           showInlineError(errEl, data.error || 'Demasiados intentos. Espera un momento.');
           return;
         }
 
-        /* 401 · credenciales inválidas */
         if(res.status === 401){
-          showInlineError(
-            errEl,
-            'Correo o contraseña incorrectos. ¿No tienes cuenta? Regístrate abajo.'
-          );
+          showInlineError(errEl, 'Correo o contraseña incorrectos. ¿No tienes cuenta? Regístrate abajo.');
           return;
         }
 
-        /* 400 · datos inválidos */
         if(res.status === 400){
           showInlineError(errEl, data.error || 'Revisa los datos.');
           return;
         }
 
-        /* Otro */
         showInlineError(errEl, data.error || 'No pudimos iniciar sesión.');
       }).catch(function(err){
         showInlineError(errEl, err.message || 'Error de conexión.');
@@ -1388,7 +1390,6 @@ a { color: inherit; text-decoration: none; }
 
   /* ═══════════════════════════════════════════════════════════
      VIEW 4 · AGE
-     Confirma 14+ → llama POST /api/auth/signup real.
      ═══════════════════════════════════════════════════════════ */
   var ageInput = document.querySelector('[data-age-input]');
   var ageSubmit = document.querySelector('[data-age-submit]');
@@ -1421,7 +1422,6 @@ a { color: inherit; text-decoration: none; }
       API.signup(state.signupEmail, state.signupPassword).then(function(res){
         var data = res.data || {};
 
-        /* 201 · creado */
         if(res.status === 201 && data.ok){
           Toasts.ok('Cuenta creada. ¡Bienvenido!');
           try{
@@ -1435,14 +1435,12 @@ a { color: inherit; text-decoration: none; }
           });
         }
 
-        /* 409 · email tomado */
         if(res.status === 409){
           if(data.code === 'email_taken_oauth'){
             Toasts.err('Ese correo ya tiene cuenta con Google o GitHub.');
           } else {
             Toasts.warn('Ese correo ya está registrado. Inicia sesión.');
           }
-          /* Volver a view 3 con el email ya puesto */
           var emailLabel = document.querySelector('[data-password-email]');
           if(emailLabel) emailLabel.textContent = state.signupEmail;
           state.email = state.signupEmail;
@@ -1450,17 +1448,14 @@ a { color: inherit; text-decoration: none; }
           return;
         }
 
-        /* 400 · datos inválidos */
         if(res.status === 400){
           Toasts.err(data.error || 'Revisa los datos.');
-          /* Volver a signup para corregir */
           showView('signup');
           var errEl = document.querySelector('[data-signup-error]');
           showInlineError(errEl, data.error || 'Revisa los datos.');
           return;
         }
 
-        /* 429 · rate limit */
         if(res.status === 429){
           Toasts.warn(data.error || 'Demasiados intentos. Espera un momento.');
           return;
@@ -1493,7 +1488,6 @@ a { color: inherit; text-decoration: none; }
   document.querySelectorAll('[data-age-block]').forEach(function(btn){
     btn.addEventListener('click', function(){
       if(ageModal) ageModal.hidden = true;
-      /* Reset total */
       state.email = '';
       state.signupEmail = '';
       state.signupPassword = '';
@@ -1581,27 +1575,31 @@ a { color: inherit; text-decoration: none; }
   if(UI.googleBtn){
     UI.googleBtn.addEventListener('click', function(){
       if(state.busy) return;
-      if(!state.googleReady){
-        UI.setGoogleLoading(true);
-        Google.waitForGSI().then(function(ready){
-          state.googleReady = ready;
-          UI.setGoogleLoading(false);
-          if(!ready){
-            UI.showFallback();
-            Toasts.err('Google no cargó. Revisa tu conexión.');
-            return;
-          }
-          if(!Google.clickHidden()){
-            UI.showFallback();
-            Toasts.err('Google no está disponible.');
-          }
-        });
-      } else {
+
+      // Intento directo si ya está listo
+      if(state.googleReady && Google.initialized){
+        if(!Google.clickHidden()){
+          UI.showFallback();
+          Toasts.err('Google no está disponible. Reintenta en un momento.');
+        }
+        return;
+      }
+
+      // Aún no listo → esperar
+      UI.setGoogleLoading(true);
+      Google.waitForGSI().then(function(ready){
+        UI.setGoogleLoading(false);
+        state.googleReady = ready;
+        if(!ready){
+          UI.showFallback();
+          Toasts.err('Google no cargó. Revisa tu conexión.');
+          return;
+        }
         if(!Google.clickHidden()){
           UI.showFallback();
           Toasts.err('Google no está disponible.');
         }
-      }
+      });
     });
   }
 
@@ -1629,7 +1627,6 @@ a { color: inherit; text-decoration: none; }
   function boot(){
     var params = new URLSearchParams(location.search);
 
-    /* Errores de OAuth en URL */
     if(params.has('error')){
       var code = params.get('error');
       var messages = {
@@ -1642,26 +1639,26 @@ a { color: inherit; text-decoration: none; }
       history.replaceState(null, '', location.pathname);
     }
 
-    /* Prefill email */
     var prefill = params.get('email');
     if(prefill && UI.emailInput){
       UI.emailInput.value = prefill;
       state.email = prefill;
     }
 
-    /* View preferida */
     if(params.get('view') === 'signup'){
       showView('signup');
     }
 
-    /* Auto-redirect si ya hay sesión activa */
     if(!params.has('stay')){
       Session.check().then(function(user){
         if(user) routeAfterAuth(user);
       });
     }
 
-    /* Detectar GSI ready */
+    // Intentar init inmediato (por si GIS ya cargó antes de este script)
+    Google.init();
+
+    // Y detectar cuando esté listo
     Google.waitForGSI().then(function(ready){
       state.googleReady = ready;
       if(ready) UI.hideFallback();
@@ -1678,6 +1675,6 @@ a { color: inherit; text-decoration: none; }
 })();
 </script>
 
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://accounts.google.com/gsi/client" async defer onload="window.onGoogleLibraryLoad && window.onGoogleLibraryLoad()"></script>
 </body>
 </html>

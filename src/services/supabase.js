@@ -1,57 +1,57 @@
-/* ═══════════════════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    
-                            ███╗   ██╗██╗   ██╗███╗   ███╗██╗
-                            ████╗  ██║██║   ██║████╗ ████║██║
-                            ██╔██╗ ██║██║   ██║██╔████╔██║██║
-                            ██║╚██╗██║██║   ██║██║╚██╔╝██║██║
-                            ██║ ╚████║╚██████╔╝██║ ╚═╝ ██║███████╗
-                            ╚═╝  ╚═══╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝
+                            â–ˆâ–ˆâ–ˆâ•—   â–ˆâ–ˆâ•—â–ˆâ–ˆâ•—   â–ˆâ–ˆâ•—â–ˆâ–ˆâ–ˆâ•—   â–ˆâ–ˆâ–ˆâ•—â–ˆâ–ˆâ•—
+                            â–ˆâ–ˆâ–ˆâ–ˆâ•—  â–ˆâ–ˆâ•‘â–ˆâ–ˆâ•‘   â–ˆâ–ˆâ•‘â–ˆâ–ˆâ–ˆâ–ˆâ•— â–ˆâ–ˆâ–ˆâ–ˆâ•‘â–ˆâ–ˆâ•‘
+                            â–ˆâ–ˆâ•”â–ˆâ–ˆâ•— â–ˆâ–ˆâ•‘â–ˆâ–ˆâ•‘   â–ˆâ–ˆâ•‘â–ˆâ–ˆâ•”â–ˆâ–ˆâ–ˆâ–ˆâ•”â–ˆâ–ˆâ•‘â–ˆâ–ˆâ•‘
+                            â–ˆâ–ˆâ•‘â•šâ–ˆâ–ˆâ•—â–ˆâ–ˆâ•‘â–ˆâ–ˆâ•‘   â–ˆâ–ˆâ•‘â–ˆâ–ˆâ•‘â•šâ–ˆâ–ˆâ•”â•â–ˆâ–ˆâ•‘â–ˆâ–ˆâ•‘
+                            â–ˆâ–ˆâ•‘ â•šâ–ˆâ–ˆâ–ˆâ–ˆâ•‘â•šâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•”â•â–ˆâ–ˆâ•‘ â•šâ•â• â–ˆâ–ˆâ•‘â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•—
+                            â•šâ•â•  â•šâ•â•â•â• â•šâ•â•â•â•â•â• â•šâ•â•     â•šâ•â•â•šâ•â•â•â•â•â•â•
    
-                         S U P A B A S E   ·   v 4 . 0
+                         S U P A B A S E   Â·   v 4 . 0
 
-   ─────────────────────────────────────────────────────────────────────────
-   La única capa que habla con Postgres. Todo lo demás depende de esto.
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   La Ãºnica capa que habla con Postgres. Todo lo demÃ¡s depende de esto.
    
-   No hay queries aquí afuera. No hay conexiones sueltas. No hay atajos.
-   Si querés leer o escribir en la base de datos, es por acá. Siempre.
+   No hay queries aquÃ­ afuera. No hay conexiones sueltas. No hay atajos.
+   Si querÃ©s leer o escribir en la base de datos, es por acÃ¡. Siempre.
    
    Eso no es rigidez. Es paz mental. Un solo lugar donde debuggear cuando
    algo no cuadra. Un solo archivo donde buscar.
    
-   ─────────────────────────────────────────────────────────────────────────
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    
    ESTRUCTURA:
    
-     1 · Cliente y configuración
-     2 · Utilidades (uid, uuid, retry, transacción)
-     3 · Normalizadores (PascalCase → snake_case)
-     4 · Profiles (con auth v3.0)
-     5 · Password + reset tokens
-     6 · Chats
-     7 · Messages
-     8 · Memories (con ampliación v3.0)
-     9 · Stats + health
-    10 · Compatibilidad retro
-    11 · Boot
+     1 Â· Cliente y configuraciÃ³n
+     2 Â· Utilidades (uid, uuid, retry, transacciÃ³n)
+     3 Â· Normalizadores (PascalCase â†’ snake_case)
+     4 Â· Profiles (con auth v3.0)
+     5 Â· Password + reset tokens
+     6 Â· Chats
+     7 Â· Messages
+     8 Â· Memories (con ampliaciÃ³n v3.0)
+     9 Â· Stats + health
+    10 Â· Compatibilidad retro
+    11 Â· Boot
    
-   ─────────────────────────────────────────────────────────────────────────
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    
    REGLAS DE ESTE ARCHIVO:
    
-     · Cada función valida sus inputs antes de tocar Postgres.
-     · Ninguna función tira excepción al caller. Devuelven null / [] / false.
-     · Los errores se loguean con prefijo [sb], pero no explotan.
-     · Los nombres de columna expuestos son snake_case (el frontend no ve
+     Â· Cada funciÃ³n valida sus inputs antes de tocar Postgres.
+     Â· Ninguna funciÃ³n tira excepciÃ³n al caller. Devuelven null / [] / false.
+     Â· Los errores se loguean con prefijo [sb], pero no explotan.
+     Â· Los nombres de columna expuestos son snake_case (el frontend no ve
        el caos de nomenclatura de la DB).
-     · Las tablas PascalCase ("Chat", "Message", "Memory") van entre
-       comillas dobles. Las tablas minúsculas (profiles) van sin comillas.
-     · Columnas PascalCase ("displayName", "avatarUrl", "createdAt",
+     Â· Las tablas PascalCase ("Chat", "Message", "Memory") van entre
+       comillas dobles. Las tablas minÃºsculas (profiles) van sin comillas.
+     Â· Columnas PascalCase ("displayName", "avatarUrl", "createdAt",
        "updatedAt") van entre comillas. Columnas snake_case (password_hash,
        auth_provider) van sin comillas.
    
-   ─────────────────────────────────────────────────────────────────────────
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    
-   SCHEMA DE REFERENCIA (por si algún día migramos todo a snake_case):
+   SCHEMA DE REFERENCIA (por si algÃºn dÃ­a migramos todo a snake_case):
 
      profiles:
        id              uuid         PK
@@ -82,14 +82,14 @@
        "useCount", "lastUsedAt",
        "createdAt", "updatedAt"
    
-   ═══════════════════════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 import postgres from 'postgres';
 import crypto from 'node:crypto';
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   1 · CLIENTE Y CONFIGURACIÓN
-   ═══════════════════════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   1 Â· CLIENTE Y CONFIGURACIÃ“N
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 let TEST_KEYS = {};
 try {
@@ -100,14 +100,14 @@ try {
 const DATABASE_URL = process.env.DATABASE_URL ?? TEST_KEYS.DATABASE_URL;
 
 const CONFIG = Object.freeze({
-  max:              10,          // conexiones máximas en el pool
-  idle_timeout:     20,          // segundos antes de cerrar una conexión ociosa
+  max:              10,          // conexiones mÃ¡ximas en el pool
+  idle_timeout:     20,          // segundos antes de cerrar una conexiÃ³n ociosa
   connect_timeout:  10,          // segundos para conectar
   max_lifetime:     60 * 30,     // 30 min: recicla conexiones largas
   backoff_retries:  2,           // reintentos en errores transitorios
   backoff_base_ms:  120,         // espera base entre reintentos
-  default_limit:    100,         // límite por defecto en listas
-  max_limit:        500,         // límite máximo permitido
+  default_limit:    100,         // lÃ­mite por defecto en listas
+  max_limit:        500,         // lÃ­mite mÃ¡ximo permitido
 });
 
 let sql = null;
@@ -133,17 +133,17 @@ if (DATABASE_URL) {
   console.warn('[sb] DATABASE_URL no configurada');
 }
 
-/** ¿Tenemos cliente de Postgres disponible? */
+/** Â¿Tenemos cliente de Postgres disponible? */
 export function supabaseDisponible() {
   return Boolean(sql);
 }
 
-/** Exportamos el cliente crudo por si algún endpoint lo necesita */
+/** Exportamos el cliente crudo por si algÃºn endpoint lo necesita */
 export { sql };
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   2 · UTILIDADES
-   ═══════════════════════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   2 Â· UTILIDADES
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 /** UUID v4 con fallback para runtimes sin crypto.randomUUID */
 function uid() {
@@ -151,18 +151,18 @@ function uid() {
   catch { return crypto.randomBytes(16).toString('hex'); }
 }
 
-/** Normaliza un email a minúsculas y sin espacios */
+/** Normaliza un email a minÃºsculas y sin espacios */
 function normEmail(e) {
   return String(e || '').trim().toLowerCase();
 }
 
-/** Valida formato UUID v4 (acepta cualquier UUID válido) */
+/** Valida formato UUID v4 (acepta cualquier UUID vÃ¡lido) */
 function isUuid(v) {
   return typeof v === 'string' &&
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 }
 
-/** Log con prefijo [sb] y nombre de operación */
+/** Log con prefijo [sb] y nombre de operaciÃ³n */
 function log(op, err) {
   console.warn(`[sb] ${op}:`, err?.message || err);
 }
@@ -194,7 +194,7 @@ async function withRetry(fn, op) {
 }
 
 /**
- * Ejecuta varias operaciones dentro de una transacción.
+ * Ejecuta varias operaciones dentro de una transacciÃ³n.
  * `fn` recibe el cliente transaccional y debe devolver el resultado.
  * Si algo falla, se revierte todo. Devuelve null si hubo error.
  */
@@ -208,25 +208,25 @@ async function tx(fn, op) {
   }
 }
 
-/** Asegura que un número esté dentro de un rango */
+/** Asegura que un nÃºmero estÃ© dentro de un rango */
 function clamp(n, min, max, fallback) {
   const v = Number(n);
   if (!Number.isFinite(v)) return fallback;
   return Math.min(max, Math.max(min, Math.trunc(v)));
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   3 · NORMALIZADORES
-   ═══════════════════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   3 Â· NORMALIZADORES
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    Convertimos filas de Postgres a objetos planos con snake_case.
-   El frontend no sabe (ni tiene por qué saber) cómo se llaman las columnas.
-   ═══════════════════════════════════════════════════════════════════════════ */
+   El frontend no sabe (ni tiene por quÃ© saber) cÃ³mo se llaman las columnas.
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 function normalizeChat(row) {
   if (!row) return null;
   return {
     id: row.id,
-    title: row.title || 'Sin título',
+    title: row.title || 'Sin tÃ­tulo',
     mode: row.mode || 'chat',
     created_at: row.created_at || row.createdAt || null,
     updated_at: row.updated_at || row.updatedAt || null,
@@ -268,7 +268,7 @@ function normalizeMemory(row) {
   };
 }
 
-/** Versión simple para compatibilidad con código viejo (sin los campos v3.0) */
+/** VersiÃ³n simple para compatibilidad con cÃ³digo viejo (sin los campos v3.0) */
 function normalizeMemorySimple(row) {
   if (!row) return null;
   return {
@@ -288,7 +288,7 @@ function normalizeMemorySimple(row) {
 function normalizeProfile(row) {
   if (!row) return null;
 
-  // tier → plan legible
+  // tier â†’ plan legible
   const tierRaw = String(row.tier || 'FREE').toUpperCase();
   const plan =
     tierRaw === 'PRO'     ? 'pro-coder' :
@@ -333,13 +333,13 @@ function profilePublic(row) {
   return p;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   4 · PROFILES
-   ═══════════════════════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   4 Â· PROFILES
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
-/* ─────────────────────────────────────────────────────────────────────────
-   getProfile · un perfil por id (versión pública, sin hash)
-   ───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   getProfile Â· un perfil por id (versiÃ³n pÃºblica, sin hash)
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function getProfile(userId) {
   if (!sql || !isUuid(userId)) return null;
   return withRetry(async () => {
@@ -361,11 +361,11 @@ export async function getProfile(userId) {
   }, 'getProfile');
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   getProfileFull · un perfil por id (CON password_hash)
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   getProfileFull Â· un perfil por id (CON password_hash)
    
    Solo lo usa auth.js. NUNCA exponer al frontend.
-   ───────────────────────────────────────────────────────────────────────── */
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function getProfileFull(userId) {
   if (!sql || !isUuid(userId)) return null;
   return withRetry(async () => {
@@ -388,9 +388,9 @@ export async function getProfileFull(userId) {
   }, 'getProfileFull');
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   getProfileByEmail · por email (case-insensitive, público)
-   ───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   getProfileByEmail Â· por email (case-insensitive, pÃºblico)
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function getProfileByEmail(email) {
   const key = normEmail(email);
   if (!sql || !key) return null;
@@ -413,11 +413,11 @@ export async function getProfileByEmail(email) {
   }, 'getProfileByEmail');
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   getProfileByEmailFull · por email (CON password_hash)
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   getProfileByEmailFull Â· por email (CON password_hash)
    
-   Lo usa auth.js en /login para verificar contraseñas.
-   ───────────────────────────────────────────────────────────────────────── */
+   Lo usa auth.js en /login para verificar contraseÃ±as.
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function getProfileByEmailFull(email) {
   const key = normEmail(email);
   if (!sql || !key) return null;
@@ -441,8 +441,8 @@ export async function getProfileByEmailFull(email) {
   }, 'getProfileByEmailFull');
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   createProfile · crea un perfil nuevo
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   createProfile Â· crea un perfil nuevo
    
    Acepta:
      createProfile({ id, email, name, picture, provider, password_hash })
@@ -453,7 +453,7 @@ export async function getProfileByEmailFull(email) {
    Escribe SOLO en las columnas reales:
      "displayName" (desde name)
      "avatarUrl"   (desde picture)
-   ───────────────────────────────────────────────────────────────────────── */
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function createProfile(arg1, arg2, arg3, arg4) {
   if (!sql) return null;
 
@@ -520,12 +520,12 @@ export async function createProfile(arg1, arg2, arg3, arg4) {
   }, 'createProfile');
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   updateProfile · actualiza un perfil
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   updateProfile Â· actualiza un perfil
    
    Acepta tanto { name, picture } (auth.js v2.0+) como { displayName, avatarUrl }.
    Los campos ausentes no se tocan.
-   ───────────────────────────────────────────────────────────────────────── */
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function updateProfile(userId, patch = {}) {
   if (!sql || !isUuid(userId)) return null;
 
@@ -565,9 +565,9 @@ export async function updateProfile(userId, patch = {}) {
   }, 'updateProfile');
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   updateLastLogin · marca última conexión + updatedAt
-   ───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   updateLastLogin Â· marca Ãºltima conexiÃ³n + updatedAt
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function updateLastLogin(userId) {
   if (!sql || !isUuid(userId)) return false;
   const result = await withRetry(async () => {
@@ -582,11 +582,11 @@ export async function updateLastLogin(userId) {
   return Boolean(result);
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   deleteProfile · borra perfil + todo lo relacionado
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   deleteProfile Â· borra perfil + todo lo relacionado
    
-   Transaccional: si algo falla, no quedan huérfanos.
-   ───────────────────────────────────────────────────────────────────────── */
+   Transaccional: si algo falla, no quedan huÃ©rfanos.
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function deleteProfile(userId) {
   if (!sql || !isUuid(userId)) return false;
 
@@ -608,9 +608,9 @@ export async function deleteProfile(userId) {
   return Boolean(ok);
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   actualizarPlan · cambia el tier del usuario (FREE/PRO/PREMIUM/MADMAX)
-   ───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   actualizarPlan Â· cambia el tier del usuario (FREE/PRO/PREMIUM/MADMAX)
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function actualizarPlan(userId, tier) {
   if (!sql || !isUuid(userId)) return null;
   const t = String(tier || 'FREE').toUpperCase();
@@ -634,9 +634,9 @@ export async function actualizarPlan(userId, tier) {
   }, 'actualizarPlan');
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   countProfiles · cuenta total de usuarios (para dashboards / health)
-   ───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   countProfiles Â· cuenta total de usuarios (para dashboards / health)
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function countProfiles() {
   if (!sql) return 0;
   const r = await withRetry(async () => {
@@ -646,13 +646,13 @@ export async function countProfiles() {
   return r ?? 0;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   5 · PASSWORD + RESET TOKENS
-   ═══════════════════════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   5 Â· PASSWORD + RESET TOKENS
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
-/* ─────────────────────────────────────────────────────────────────────────
-   setPassword · guarda hash de contraseña
-   ───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   setPassword Â· guarda hash de contraseÃ±a
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function setPassword(userId, passwordHash) {
   if (!sql || !isUuid(userId) || !passwordHash) return null;
   return withRetry(async () => {
@@ -676,9 +676,9 @@ export async function setPassword(userId, passwordHash) {
   }, 'setPassword');
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   getPasswordHash · solo el hash (para verificar contraseña)
-   ───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   getPasswordHash Â· solo el hash (para verificar contraseÃ±a)
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function getPasswordHash(userId) {
   if (!sql || !isUuid(userId)) return null;
   const r = await withRetry(async () => {
@@ -691,9 +691,9 @@ export async function getPasswordHash(userId) {
   return r;
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   setResetToken · guarda token + expiración
-   ───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   setResetToken Â· guarda token + expiraciÃ³n
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function setResetToken(userId, token, expiresAt) {
   if (!sql || !isUuid(userId) || !token) return null;
   const exp = expiresAt instanceof Date ? expiresAt : new Date(expiresAt);
@@ -718,9 +718,9 @@ export async function setResetToken(userId, token, expiresAt) {
   }, 'setResetToken');
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   getProfileByResetToken · busca un perfil por su reset_token vigente
-   ───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   getProfileByResetToken Â· busca un perfil por su reset_token vigente
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function getProfileByResetToken(token) {
   if (!sql || !token || typeof token !== 'string') return null;
   return withRetry(async () => {
@@ -746,9 +746,9 @@ export async function getProfileByResetToken(token) {
   }, 'getProfileByResetToken');
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   clearResetToken · limpia el token de reset
-   ───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   clearResetToken Â· limpia el token de reset
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function clearResetToken(userId) {
   if (!sql || !isUuid(userId)) return null;
   return withRetry(async () => {
@@ -772,13 +772,13 @@ export async function clearResetToken(userId) {
   }, 'clearResetToken');
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   6 · CHATS
-   ═══════════════════════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   6 Â· CHATS
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
-/* ─────────────────────────────────────────────────────────────────────────
-   crearChat · crea una conversación nueva
-   ───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   crearChat Â· crea una conversaciÃ³n nueva
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function crearChat(userId, title) {
   if (!sql || !isUuid(userId)) return null;
   const cleanTitle = String(title || 'Nuevo chat').trim().slice(0, 80) || 'Nuevo chat';
@@ -795,9 +795,9 @@ export async function crearChat(userId, title) {
   }, 'crearChat');
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   listarChats · lista las conversaciones del usuario
-   ───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   listarChats Â· lista las conversaciones del usuario
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function listarChats(userId, { limit = CONFIG.default_limit, offset = 0 } = {}) {
   if (!sql || !isUuid(userId)) return [];
   const lim = clamp(limit, 1, CONFIG.max_limit, CONFIG.default_limit);
@@ -818,9 +818,9 @@ export async function listarChats(userId, { limit = CONFIG.default_limit, offset
   return (rows || []).map(normalizeChat);
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   obtenerChat · un chat con todos sus mensajes
-   ───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   obtenerChat Â· un chat con todos sus mensajes
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function obtenerChat(chatId, userId) {
   if (!sql || !chatId || !isUuid(userId)) return null;
   return withRetry(async () => {
@@ -829,7 +829,7 @@ export async function obtenerChat(chatId, userId) {
              "createdAt" as created_at,
              "updatedAt" as updated_at
       from "Chat"
-      where id = ${chatId}
+      where id::text = ${chatId}
         and "userId" = ${userId}::uuid
       limit 1
     `;
@@ -839,7 +839,7 @@ export async function obtenerChat(chatId, userId) {
       select id, "chatId" as chat_id, role, content, provider,
              "createdAt" as created_at
       from "Message"
-      where "chatId" = ${chatId}
+      where "chatId"::text = ${chatId}
       order by "createdAt" asc
     `;
 
@@ -850,29 +850,29 @@ export async function obtenerChat(chatId, userId) {
   }, 'obtenerChat');
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   eliminarChat · borra un chat y todos sus mensajes (transaccional)
-   ───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   eliminarChat Â· borra un chat y todos sus mensajes (transaccional)
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function eliminarChat(chatId, userId) {
   if (!sql || !chatId || !isUuid(userId)) return false;
   const ok = await tx(async (trx) => {
     const [chat] = await trx`
       select id from "Chat"
-      where id = ${chatId} and "userId" = ${userId}::uuid
+      where id::text = ${chatId} and "userId" = ${userId}::uuid
       limit 1
     `;
     if (!chat) return false;
 
-    await trx`delete from "Message" where "chatId" = ${chatId}`;
-    const r = await trx`delete from "Chat" where id = ${chatId}`;
+    await trx`delete from "Message" where "chatId"::text = ${chatId}`;
+    const r = await trx`delete from "Chat" where id::text = ${chatId}`;
     return r.count > 0;
   }, 'eliminarChat');
   return Boolean(ok);
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   renombrarChat · cambia el título de un chat
-   ───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   renombrarChat Â· cambia el tÃ­tulo de un chat
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function renombrarChat(chatId, userId, newTitle) {
   if (!sql || !chatId || !isUuid(userId)) return null;
   const clean = String(newTitle || '').trim().slice(0, 80);
@@ -881,7 +881,7 @@ export async function renombrarChat(chatId, userId, newTitle) {
     const [row] = await sql`
       update "Chat"
       set title = ${clean}, "updatedAt" = now()
-      where id = ${chatId} and "userId" = ${userId}::uuid
+      where id::text = ${chatId} and "userId" = ${userId}::uuid
       returning id, title, mode,
                 "createdAt" as created_at,
                 "updatedAt" as updated_at
@@ -890,9 +890,9 @@ export async function renombrarChat(chatId, userId, newTitle) {
   }, 'renombrarChat');
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   buscarChats · busca chats por título (ILIKE)
-   ───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   buscarChats Â· busca chats por tÃ­tulo (ILIKE)
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function buscarChats(userId, query, { limit = 30 } = {}) {
   if (!sql || !isUuid(userId)) return [];
   const q = String(query || '').trim();
@@ -915,13 +915,13 @@ export async function buscarChats(userId, query, { limit = 30 } = {}) {
   return (rows || []).map(normalizeChat);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   7 · MESSAGES
-   ═══════════════════════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   7 Â· MESSAGES
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
-/* ─────────────────────────────────────────────────────────────────────────
-   crearMensaje · guarda un mensaje en un chat
-   ───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   crearMensaje Â· guarda un mensaje en un chat
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function crearMensaje(chatId, { role, content, provider = null }) {
   if (!sql || !chatId) return null;
   if (role !== 'user' && role !== 'ai' && role !== 'assistant') return null;
@@ -941,16 +941,16 @@ export async function crearMensaje(chatId, { role, content, provider = null }) {
 
     // Toca el "updatedAt" del chat para que suba en la lista
     await sql`
-      update "Chat" set "updatedAt" = now() where id = ${chatId}
+      update "Chat" set "updatedAt" = now() where id::text = ${chatId}
     `;
 
     return normalizeMessage(row);
   }, 'crearMensaje');
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   listarMensajes · todos los mensajes de un chat (ordenados)
-   ───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   listarMensajes Â· todos los mensajes de un chat (ordenados)
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function listarMensajes(chatId, { limit = CONFIG.max_limit } = {}) {
   if (!sql || !chatId) return [];
   const lim = clamp(limit, 1, CONFIG.max_limit, CONFIG.max_limit);
@@ -959,7 +959,7 @@ export async function listarMensajes(chatId, { limit = CONFIG.max_limit } = {}) 
       select id, "chatId" as chat_id, role, content, provider,
              "createdAt" as created_at
       from "Message"
-      where "chatId" = ${chatId}
+      where "chatId"::text = ${chatId}
       order by "createdAt" asc
       limit ${lim}
     `;
@@ -967,26 +967,26 @@ export async function listarMensajes(chatId, { limit = CONFIG.max_limit } = {}) 
   return (rows || []).map(normalizeMessage);
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   vaciarChat · borra todos los mensajes de un chat (deja el chat)
-   ───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   vaciarChat Â· borra todos los mensajes de un chat (deja el chat)
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function vaciarChat(chatId) {
   if (!sql || !chatId) return false;
   const ok = await tx(async (trx) => {
-    const r = await trx`delete from "Message" where "chatId" = ${chatId}`;
-    await trx`update "Chat" set "updatedAt" = now() where id = ${chatId}`;
+    const r = await trx`delete from "Message" where "chatId"::text = ${chatId}`;
+    await trx`update "Chat" set "updatedAt" = now() where id::text = ${chatId}`;
     return r.count;
   }, 'vaciarChat');
   return (ok ?? 0) > 0;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   8 · MEMORIES
-   ═══════════════════════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   8 Â· MEMORIES
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
-/* ─────────────────────────────────────────────────────────────────────────
-   getMemory · una memoria por id (v3.0)
-   ───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   getMemory Â· una memoria por id (v3.0)
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function getMemory(memoryId, userId) {
   if (!sql || !memoryId || !isUuid(userId)) return null;
   return withRetry(async () => {
@@ -1006,11 +1006,11 @@ export async function getMemory(memoryId, userId) {
   }, 'getMemory');
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   listarMemoriesConFiltros · lista con filtros opcionales (v3.0)
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   listarMemoriesConFiltros Â· lista con filtros opcionales (v3.0)
    
    opts: { category, tags[], pinned, sort, limit, offset, minRelevance }
-   ───────────────────────────────────────────────────────────────────────── */
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function listarMemoriesConFiltros(userId, opts = {}) {
   if (!sql || !isUuid(userId)) return [];
 
@@ -1048,15 +1048,15 @@ export async function listarMemoriesConFiltros(userId, opts = {}) {
   return (rows || []).map(normalizeMemory);
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   buscarMemories · búsqueda con ranking ponderado (v3.0)
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   buscarMemories Â· bÃºsqueda con ranking ponderado (v3.0)
    
-   Puntúa:
-     · title ilike    → 100 puntos
-     · content ilike  → 50 puntos
-     · relevance * 2  → hasta 20 puntos
-     · useCount       → hasta 10 puntos
-   ───────────────────────────────────────────────────────────────────────── */
+   PuntÃºa:
+     Â· title ilike    â†’ 100 puntos
+     Â· content ilike  â†’ 50 puntos
+     Â· relevance * 2  â†’ hasta 20 puntos
+     Â· useCount       â†’ hasta 10 puntos
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function buscarMemories(userId, query, { limit = 50 } = {}) {
   if (!sql || !isUuid(userId)) return [];
   const q = String(query || '').trim();
@@ -1095,9 +1095,9 @@ export async function buscarMemories(userId, query, { limit = 50 } = {}) {
   return (rows || []).map(normalizeMemory);
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   actualizarMemory · actualiza texto, categoría, tags, pin, relevance (v3.0)
-   ───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   actualizarMemory Â· actualiza texto, categorÃ­a, tags, pin, relevance (v3.0)
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function actualizarMemory(memoryId, userId, patch = {}) {
   if (!sql || !memoryId || !isUuid(userId)) return null;
 
@@ -1113,11 +1113,11 @@ export async function actualizarMemory(memoryId, userId, patch = {}) {
   const newSource   = patch.source != null ? String(patch.source).trim() : null;
   const newTags     = Array.isArray(patch.tags) ? patch.tags : null;
 
-  // Auto-título si cambió el texto y no hay título explícito
+  // Auto-tÃ­tulo si cambiÃ³ el texto y no hay tÃ­tulo explÃ­cito
   const finalTitle = newTitle != null
     ? newTitle
     : (newText != null
-        ? (newText.length > 60 ? newText.slice(0, 57).trimEnd() + '…' : newText)
+        ? (newText.length > 60 ? newText.slice(0, 57).trimEnd() + 'â€¦' : newText)
         : null);
 
   return withRetry(async () => {
@@ -1145,9 +1145,9 @@ export async function actualizarMemory(memoryId, userId, patch = {}) {
   }, 'actualizarMemory');
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   togglePinMemory · invierte el estado de pin
-   ───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   togglePinMemory Â· invierte el estado de pin
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function togglePinMemory(memoryId, userId) {
   if (!sql || !memoryId || !isUuid(userId)) return null;
   return withRetry(async () => {
@@ -1163,9 +1163,9 @@ export async function togglePinMemory(memoryId, userId) {
   }, 'togglePinMemory');
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   registrarUsoMemory · incrementa useCount + marca lastUsedAt (v3.0)
-   ───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   registrarUsoMemory Â· incrementa useCount + marca lastUsedAt (v3.0)
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function registrarUsoMemory(memoryId, userId) {
   if (!sql || !memoryId || !isUuid(userId)) return null;
   return withRetry(async () => {
@@ -1186,9 +1186,9 @@ export async function registrarUsoMemory(memoryId, userId) {
   }, 'registrarUsoMemory');
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   eliminarMemory · borra una memoria puntual
-   ───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   eliminarMemory Â· borra una memoria puntual
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function eliminarMemory(memoryId, userId) {
   if (!sql || !memoryId || !isUuid(userId)) return false;
   const ok = await withRetry(async () => {
@@ -1202,9 +1202,9 @@ export async function eliminarMemory(memoryId, userId) {
   return Boolean(ok);
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   eliminarTodasMemories · borra TODAS las memorias del usuario
-   ───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   eliminarTodasMemories Â· borra TODAS las memorias del usuario
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function eliminarTodasMemories(userId) {
   if (!sql || !isUuid(userId)) return 0;
   const n = await withRetry(async () => {
@@ -1218,9 +1218,9 @@ export async function eliminarTodasMemories(userId) {
   return n || 0;
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   eliminarMemoriesBulk · borra varias por id (bulk)
-   ───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   eliminarMemoriesBulk Â· borra varias por id (bulk)
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function eliminarMemoriesBulk(userId, ids) {
   if (!sql || !isUuid(userId) || !Array.isArray(ids) || !ids.length) return 0;
   const cleanIds = ids.filter(isUuid);
@@ -1238,9 +1238,9 @@ export async function eliminarMemoriesBulk(userId, ids) {
   return n || 0;
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   actualizarMemoriesBulk · actualiza varias (pin, tags, categoría)
-   ───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   actualizarMemoriesBulk Â· actualiza varias (pin, tags, categorÃ­a)
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function actualizarMemoriesBulk(userId, ids, patch = {}) {
   if (!sql || !isUuid(userId) || !Array.isArray(ids) || !ids.length) return 0;
   const cleanIds = ids.filter(isUuid);
@@ -1281,9 +1281,9 @@ export async function actualizarMemoriesBulk(userId, ids, patch = {}) {
   return n || 0;
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   listarTodasMemories · todas sin paginar (para export / stats)
-   ───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   listarTodasMemories Â· todas sin paginar (para export / stats)
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function listarTodasMemories(userId) {
   if (!sql || !isUuid(userId)) return [];
   const rows = await withRetry(async () => {
@@ -1302,16 +1302,16 @@ export async function listarTodasMemories(userId) {
   return (rows || []).map(normalizeMemory);
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   statsMemories · totales, por categoría, top tags, tendencia semanal
-   ───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   statsMemories Â· totales, por categorÃ­a, top tags, tendencia semanal
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function statsMemories(userId) {
   if (!sql || !isUuid(userId)) {
     return { total: 0, pinned: 0, byCategory: {}, topTags: [], weekDelta: 0 };
   }
 
   return withRetry(async () => {
-    // Totales + por categoría
+    // Totales + por categorÃ­a
     const catRows = await sql`
       select
         coalesce(category, 'general') as category,
@@ -1322,7 +1322,7 @@ export async function statsMemories(userId) {
       group by category
     `;
 
-    // Top tags (los 10 más usados)
+    // Top tags (los 10 mÃ¡s usados)
     const tagRows = await sql`
       select tag, count(*)::int as total
       from "Memory", unnest(tags) as tag
@@ -1332,7 +1332,7 @@ export async function statsMemories(userId) {
       limit 10
     `;
 
-    // Comparativa última semana vs anterior
+    // Comparativa Ãºltima semana vs anterior
     const weekRows = await sql`
       select
         count(*) filter (where "createdAt" >= now() - interval '7 days')::int as this_week,
@@ -1364,9 +1364,9 @@ export async function statsMemories(userId) {
   }, 'statsMemories');
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   listarTagsUnicos · todos los tags del usuario con contador
-   ───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   listarTagsUnicos Â· todos los tags del usuario con contador
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function listarTagsUnicos(userId) {
   if (!sql || !isUuid(userId)) return [];
   const rows = await withRetry(async () => {
@@ -1381,9 +1381,9 @@ export async function listarTagsUnicos(userId) {
   return (rows || []).map(r => ({ tag: r.tag, total: r.total }));
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   listarMemoriasRelacionadas · memorias que comparten tags (v3.0)
-   ───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   listarMemoriasRelacionadas Â· memorias que comparten tags (v3.0)
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function listarMemoriasRelacionadas(userId, memoryId, { limit = 5 } = {}) {
   if (!sql || !isUuid(userId) || !memoryId) return [];
   const lim = clamp(limit, 1, 20, 5);
@@ -1408,9 +1408,9 @@ export async function listarMemoriasRelacionadas(userId, memoryId, { limit = 5 }
   return (rows || []).map(normalizeMemory);
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   contarMemoriaSimilar · cuenta cuántas memorias tienen el mismo texto
-   ───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   contarMemoriaSimilar Â· cuenta cuÃ¡ntas memorias tienen el mismo texto
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function contarMemoriaSimilar(userId, text) {
   if (!sql || !isUuid(userId)) return 0;
   const clean = String(text || '').trim().toLowerCase();
@@ -1428,9 +1428,9 @@ export async function contarMemoriaSimilar(userId, text) {
   return r || 0;
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   listarMemories · versión simple (compatibilidad con memories.js v1.0)
-   ───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   listarMemories Â· versiÃ³n simple (compatibilidad con memories.js v1.0)
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function listarMemories(userId, { limit = CONFIG.default_limit } = {}) {
   if (!sql || !isUuid(userId)) return [];
   const lim = clamp(limit, 1, CONFIG.max_limit, CONFIG.default_limit);
@@ -1448,15 +1448,15 @@ export async function listarMemories(userId, { limit = CONFIG.default_limit } = 
   return (rows || []).map(normalizeMemorySimple);
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   crearMemory · crea una memoria simple (compatible con v1.0)
-   ───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   crearMemory Â· crea una memoria simple (compatible con v1.0)
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function crearMemory(userId, text) {
   if (!sql || !isUuid(userId)) return null;
   const clean = String(text || '').trim();
   if (!clean) return null;
 
-  const title = clean.length > 60 ? clean.slice(0, 57).trimEnd() + '…' : clean;
+  const title = clean.length > 60 ? clean.slice(0, 57).trimEnd() + 'â€¦' : clean;
 
   return withRetry(async () => {
     const id = uid();
@@ -1470,9 +1470,9 @@ export async function crearMemory(userId, text) {
   }, 'crearMemory');
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   countMemories · cuenta de memorias del usuario
-   ───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   countMemories Â· cuenta de memorias del usuario
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function countMemories(userId) {
   if (!sql || !isUuid(userId)) return 0;
   const r = await withRetry(async () => {
@@ -1486,13 +1486,13 @@ export async function countMemories(userId) {
   return r ?? 0;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   9 · STATS + HEALTH
-   ═══════════════════════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   9 Â· STATS + HEALTH
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
-/* ─────────────────────────────────────────────────────────────────────────
-   getUserStats · chats / mensajes / memorias del usuario
-   ───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   getUserStats Â· chats / mensajes / memorias del usuario
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function getUserStats(userId) {
   if (!sql || !isUuid(userId)) {
     return { chats: 0, messages: 0, memories: 0 };
@@ -1522,9 +1522,9 @@ export async function getUserStats(userId) {
   return r ?? { chats: 0, messages: 0, memories: 0 };
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   pingDatabase · health check con latencia
-   ───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   pingDatabase Â· health check con latencia
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function pingDatabase() {
   if (!sql) {
     return { ok: false, error: sqlError?.message || 'Cliente no inicializado' };
@@ -1539,9 +1539,9 @@ export async function pingDatabase() {
   }
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   listarTablas · todas las tablas de public (útil para debug)
-   ───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   listarTablas Â· todas las tablas de public (Ãºtil para debug)
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export async function listarTablas() {
   if (!sql) return [];
   const rows = await withRetry(async () => {
@@ -1555,32 +1555,32 @@ export async function listarTablas() {
   return (rows || []).map(r => r.table_name);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   10 · COMPATIBILIDAD RETRO
-   ═══════════════════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   10 Â· COMPATIBILIDAD RETRO
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    Alias viejos que algunos archivos importan. No los borres hasta que
    confirmes que nadie los usa.
-   ═══════════════════════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 export const findOrCreateUser = createProfile;
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   11 · BOOT
-   ═══════════════════════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   11 Â· BOOT
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 if (sql) {
-  console.log('[sb] cliente Postgres listo · pool 10 · v4.0');
+  console.log('[sb] cliente Postgres listo Â· pool 10 Â· v4.0');
 } else {
-  console.warn('[sb] sin cliente Postgres · DATABASE_URL:', DATABASE_URL ? 'sí' : 'no');
+  console.warn('[sb] sin cliente Postgres Â· DATABASE_URL:', DATABASE_URL ? 'sÃ­' : 'no');
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    FIN.
    
-   Si leíste hasta acá, gracias. Este archivo es el que va a sostener todo
-   Numination. Cada chat, cada memoria, cada sesión de Google pasa por acá.
+   Si leÃ­ste hasta acÃ¡, gracias. Este archivo es el que va a sostener todo
+   Numination. Cada chat, cada memoria, cada sesiÃ³n de Google pasa por acÃ¡.
    
    Que no se rompa.
    
-   — Álvaro & Robinson, 14 años, Medellín
-   ═══════════════════════════════════════════════════════════════════════════ */
+   â€” Ãlvaro & Robinson, 14 aÃ±os, MedellÃ­n
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */

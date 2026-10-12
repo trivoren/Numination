@@ -6,7 +6,8 @@
   ],
   "functions": {
     "api/index.js": {
-      "includeFiles": "src/**"
+      "includeFiles": "src/**",
+      "maxDuration": 60
     }
   }
 }

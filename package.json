@@ -8,12 +8,17 @@
   "scripts": {
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/*.test.js",
+    "migrate": "node src/services/migrations.js up",
+    "migrate:down": "node src/services/migrations.js down",
+    "migrate:status": "node src/services/migrations.js status",
+    "migrate:fresh": "node src/services/migrations.js fresh"
   },
   "dependencies": {
     "@google/genai": "^2.24.0",
     "@supabase/supabase-js": "^2.117.2",
     "cookie-parser": "^1.4.7",
+    "dotenv": "^16.4.5",
     "express": "^5.2.1",
     "google-auth-library": "^11.1.0",
     "groq-sdk": "^1.6.0",

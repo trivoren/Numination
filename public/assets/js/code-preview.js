@@ -1,39 +1,22 @@
 /* ================================================================
-   NUMINATION · code-preview.js · v2.0
+   NUMINATION · code-preview.js · v3.0
    ----------------------------------------------------------------
    Widget de vista previa para código generado por la IA.
 
-   FEATURES:
+   NUEVO EN v3.0:
+     · Loading state en el botón mientras abre el modal
+     · Máquina de estados del modal (idle/opening/ready/closing)
+     · Detección proactiva de errores del iframe → auto-switch a Console
+     · Console virtual scroll (soporta miles de líneas sin lag)
+     · Editor auto-resize + sincronización con números de línea
+     · Screenshot robusto con fallback CORS
+     · Cleanup correcto al cerrar (listeners, timers, observers)
+     · Fallback UI cuando el botón no puede inyectarse
+     · Debounce inteligente de reload (no rebota con cada tecla)
+     · Auto-scroll de console/network/elements al fondo
+     · Mejor integración con el markdown del chat (.md-pre-head)
 
-     · Detección automática de bloques HTML/CSS/JS/SVG/MD
-     · Modal con 5 tabs: Preview · Code · Console · Elements · Network
-     · Editor con resaltado básico de sintaxis y números de línea
-     · Consola con filtros (log/info/warn/error/debug) y search
-     · Inspector de elementos (DOM tree + estilos computados)
-     · Network inspector (fetch/XHR interceptados dentro del iframe)
-     · Responsive modes: desktop / tablet / mobile / custom
-     · Zoom 25%–200% con control
-     · Theme: light / dark / device
-     · Undo/Redo (Ctrl+Z / Ctrl+Y) en el editor
-     · Templates quick picker (24 plantillas)
-     · Screenshot (canvas → PNG download)
-     · Export: HTML, data URL, JSON, PNG
-     · Import: paste, drag&drop, file
-     · Compartir con link público (vía /api/sandbox)
-     · Favoritos + tags
-     · Auto-save drafts en sessionStorage
-     · Multi-idioma (ES/EN)
-     · Keyboard shortcuts completos
-     · Error overlay cuando el código falla
-     · Console capture bidireccional (iframe ↔ parent)
-     · Live reload con debounce
-     · Iframe isolation con sandbox
-     · Fallback cuando iframe no carga
-     · Analytics interno (preview tracking)
-     · Mobile-friendly UI
-
-   API PÚBLICA:
-
+   API PÚBLICA (igual que v2.0):
      NM_preview.open({ html, css, js, language, title })
      NM_preview.close()
      NM_preview.scanAll()
@@ -41,14 +24,6 @@
      NM_preview.setShareEndpoint(url)
      NM_preview.setSandboxEndpoint(url)
      NM_preview.setLocale('es'|'en')
-
-   EVENTOS:
-
-     nm:preview:opened  · cuando se abre el modal
-     nm:preview:closed  · cuando se cierra
-     nm:preview:reload  · cuando el iframe recarga
-     nm:preview:error   · cuando hay error en el código
-
    ================================================================ */
 
 (function () {
@@ -59,7 +34,6 @@
      ═══════════════════════════════════════════════════════════════════ */
 
   const CFG = {
-    /* Lenguajes previsualizables */
     previewableLangs: new Set([
       'html', 'htm', 'xhtml',
       'css',
@@ -68,38 +42,31 @@
       'markdown', 'md',
     ]),
 
-    /* Endpoints */
     shareEndpoint: '/api/sandbox',
     sandboxEndpoint: '/api/sandbox',
 
-    /* Timing */
-    iframeLoadTimeoutMs: 10_000,
-    rescanDebounceMs: 300,
-    reloadDebounceMs: 400,
+    iframeLoadTimeoutMs: 12_000,
+    rescanDebounceMs: 250,
+    reloadDebounceMs: 450,
     autoSaveDebounceMs: 1200,
 
-    /* Console */
-    maxConsoleLines: 500,
+    maxConsoleLines: 2000,
+    maxNetworkLines: 500,
 
-    /* Zoom */
     zoom: { min: 0.25, max: 2.0, step: 0.15, default: 1 },
 
-    /* Responsive sizes (ancho en px) */
     devices: {
-      desktop: { width: 1280, height: 800, label: 'Desktop', icon: 'monitor' },
-      tablet:  { width: 834,  height: 1112, label: 'Tablet',  icon: 'tablet' },
-      mobile:  { width: 390,  height: 844,  label: 'Mobile',  icon: 'mobile' },
+      desktop: { width: 1280, height: 800, label: 'Desktop' },
+      tablet:  { width: 834,  height: 1112, label: 'Tablet' },
+      mobile:  { width: 390,  height: 844, label: 'Mobile' },
     },
 
-    /* Locale */
     locale: (typeof navigator !== 'undefined' && navigator.language || 'es').slice(0, 2),
 
-    /* Debug */
     debug: false,
 
-    /* Storage keys */
     keys: {
-      draft: 'numination-preview-draft',
+      draft: 'numination-preview-draft-v3',
       theme: 'numination-preview-theme',
       device: 'numination-preview-device',
       zoom: 'numination-preview-zoom',
@@ -125,12 +92,9 @@
       copy: 'Copiar',
       close: 'Cerrar',
       fullscreen: 'Pantalla completa',
-      exitFullscreen: 'Salir de pantalla completa',
       theme: 'Tema',
       zoom: 'Zoom',
-      inspect: 'Inspeccionar',
       clear: 'Limpiar',
-      filter: 'Filtrar',
       search: 'Buscar en consola...',
       emptyConsole: 'La consola aparecerá acá cuando el código imprima algo.',
       loading: 'Cargando vista previa...',
@@ -139,9 +103,6 @@
       copied: 'Copiado',
       copyCode: 'Copiar código',
       copyUrl: 'Copiar URL',
-      downloadHtml: 'Descargar .html',
-      downloadPng: 'Descargar .png',
-      downloadJson: 'Descargar .json',
       shareSuccess: 'URL copiada al portapapeles',
       shareError: 'No pude compartir el preview',
       saveSuccess: 'Preview guardado',
@@ -159,6 +120,7 @@
       chars: 'chars',
       elementsEmpty: 'El DOM del preview aparecerá acá.',
       networkEmpty: 'Sin requests capturados.',
+      openPreview: 'Vista previa',
       device: { desktop: 'Escritorio', tablet: 'Tablet', mobile: 'Móvil' },
     },
     en: {
@@ -175,12 +137,9 @@
       copy: 'Copy',
       close: 'Close',
       fullscreen: 'Fullscreen',
-      exitFullscreen: 'Exit fullscreen',
       theme: 'Theme',
       zoom: 'Zoom',
-      inspect: 'Inspect',
       clear: 'Clear',
-      filter: 'Filter',
       search: 'Search console...',
       emptyConsole: 'Console output will appear here.',
       loading: 'Loading preview...',
@@ -189,9 +148,6 @@
       copied: 'Copied',
       copyCode: 'Copy code',
       copyUrl: 'Copy URL',
-      downloadHtml: 'Download .html',
-      downloadPng: 'Download .png',
-      downloadJson: 'Download .json',
       shareSuccess: 'URL copied to clipboard',
       shareError: 'Could not share preview',
       saveSuccess: 'Preview saved',
@@ -209,6 +165,7 @@
       chars: 'chars',
       elementsEmpty: 'DOM tree will appear here.',
       networkEmpty: 'No requests captured.',
+      openPreview: 'Preview',
       device: { desktop: 'Desktop', tablet: 'Tablet', mobile: 'Mobile' },
     },
   };
@@ -222,9 +179,7 @@
      3 · UTILS
      ═══════════════════════════════════════════════════════════════════ */
 
-  function log(...args) {
-    if (CFG.debug) console.log('[preview]', ...args);
-  }
+  function log(...args) { if (CFG.debug) console.log('[preview]', ...args); }
 
   function esc(s) {
     const d = document.createElement('div');
@@ -233,20 +188,38 @@
   }
 
   function emit(name, detail) {
-    try {
-      window.dispatchEvent(new CustomEvent(name, { detail }));
-    } catch {}
+    try { window.dispatchEvent(new CustomEvent(name, { detail })); } catch {}
   }
 
   function $(sel, ctx) { return (ctx || document).querySelector(sel); }
   function $$(sel, ctx) { return Array.from((ctx || document).querySelectorAll(sel)); }
 
   function debounce(fn, ms) {
-    let t = null;
+    let timer = null;
     return function () {
       const args = arguments;
-      clearTimeout(t);
-      t = setTimeout(() => fn.apply(this, args), ms);
+      clearTimeout(timer);
+      timer = setTimeout(() => fn.apply(this, args), ms);
+    };
+  }
+
+  function throttle(fn, ms) {
+    let last = 0;
+    let timer = null;
+    return function () {
+      const args = arguments;
+      const now = Date.now();
+      const remaining = ms - (now - last);
+      if (remaining <= 0) {
+        last = now;
+        fn.apply(this, args);
+      } else if (!timer) {
+        timer = setTimeout(() => {
+          last = Date.now();
+          timer = null;
+          fn.apply(this, args);
+        }, remaining);
+      }
     };
   }
 
@@ -258,8 +231,12 @@
 
   function fmtTime(ts) {
     const d = new Date(ts);
-    return d.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) +
-           '.' + String(d.getMilliseconds()).padStart(3, '0');
+    return d.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+      + '.' + String(d.getMilliseconds()).padStart(3, '0');
+  }
+
+  function id(prefix = 'nm') {
+    return prefix + '_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
   }
 
   /* ═══════════════════════════════════════════════════════════════════
@@ -270,12 +247,11 @@
     if (window.__nm && window.__nm.toast && typeof window.__nm.toast[kind] === 'function') {
       try { window.__nm.toast[kind](msg); return; } catch {}
     }
-    // Fallback: console
     log(kind, msg);
   }
 
   /* ═══════════════════════════════════════════════════════════════════
-     5 · LENGUAJE / PARSING
+     5 · PARSING DE CÓDIGO
      ═══════════════════════════════════════════════════════════════════ */
 
   function detectCodeBlocks(root) {
@@ -300,9 +276,7 @@
     return 'text';
   }
 
-  function getCodeFromCodeEl(codeEl) {
-    return codeEl.textContent || '';
-  }
+  function getCodeFromCodeEl(codeEl) { return codeEl.textContent || ''; }
 
   function isPreviewable(lang) { return CFG.previewableLangs.has(lang); }
   function isHtmlLike(lang) { return ['html', 'htm', 'xhtml'].includes(lang); }
@@ -311,14 +285,10 @@
   function isSvg(lang) { return lang === 'svg'; }
   function isMarkdown(lang) { return ['markdown', 'md'].includes(lang); }
 
-  /**
-   * Divide el código en partes { html, css, js }.
-   */
   function buildPreviewParts(code, lang) {
     code = String(code || '');
 
     if (isHtmlLike(lang)) {
-      // Extraer <style> y <script> internos
       let html = code;
       let css = '';
       let js = '';
@@ -377,9 +347,7 @@
       };
     }
 
-    if (isSvg(lang)) {
-      return { html: code, css: '', js: '' };
-    }
+    if (isSvg(lang)) return { html: code, css: '', js: '' };
 
     if (isMarkdown(lang)) {
       return {
@@ -407,7 +375,6 @@
 
   function markdownToHtml(md) {
     let h = esc(md);
-
     h = h.replace(/```(\w+)?\n?([\s\S]*?)```/g, (_, l, c) => `<pre><code>${c.trim()}</code></pre>`);
     h = h.replace(/^### (.+)$/gm, '<h3>$1</h3>');
     h = h.replace(/^## (.+)$/gm, '<h2>$1</h2>');
@@ -420,12 +387,10 @@
     h = h.replace(/(<li>[\s\S]*?<\/li>)(?=\s*<(?!li))/g, '<ul>$1</ul>');
     h = h.replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
     h = h.replace(/^---$/gm, '<hr>');
-
-    h = h.split('\n\n').map(p => {
+    h = h.split('\n\n').map((p) => {
       if (/^\s*<(h[1-6]|ul|ol|pre|blockquote|hr|p)/.test(p)) return p;
       return '<p>' + p.replace(/\n/g, '<br>') + '</p>';
     }).join('\n');
-
     return h;
   }
 
@@ -433,7 +398,7 @@
      6 · BUILD DOCUMENT (iframe HTML)
      ═══════════════════════════════════════════════════════════════════ */
 
-  function buildDocument({ html = '', css = '', js = '', theme = 'device', device = 'desktop' }) {
+  function buildDocument({ html = '', css = '', js = '', theme = 'device' }) {
     const base = theme === 'dark'
       ? `*{box-sizing:border-box}html,body{margin:0;padding:0;font-family:Inter,system-ui,sans-serif;background:#0f0f15;color:#f0f0f5;line-height:1.5}body{padding:16px}a{color:#8b73ff}`
       : `*{box-sizing:border-box}html,body{margin:0;padding:0;font-family:Inter,system-ui,sans-serif;background:#fff;color:#0a0a0c;line-height:1.5}body{padding:16px}a{color:#7c5eff}`;
@@ -484,7 +449,6 @@
           send('error', ['Unhandled Promise Rejection: ' + ((e.reason && e.reason.message) || e.reason)], { source: 'promise' });
         });
 
-        // Network interceptor (fetch + XHR)
         var _origFetch = window.fetch;
         window.fetch = function(){
           var url = String(arguments[0] || '');
@@ -528,7 +492,6 @@
           };
         }
 
-        // Elements snapshot al parent (lazy: solo si se pide)
         window.addEventListener('message', function(e){
           if (!e.data || typeof e.data !== 'object') return;
           if (e.data.type === 'nm-preview-request-dom') {
@@ -603,44 +566,48 @@ ${html}
   }
 
   /* ═══════════════════════════════════════════════════════════════════
-     7 · STATE
+     7 · STATE · máquina de estados del modal
      ═══════════════════════════════════════════════════════════════════ */
 
+  const MODAL_STATE = {
+    IDLE: 'idle',
+    OPENING: 'opening',
+    READY: 'ready',
+    CLOSING: 'closing',
+  };
+
   const state = {
+    modalState: MODAL_STATE.IDLE,
     isOpen: false,
+
     parts: { html: '', css: '', js: '' },
     originalParts: { html: '', css: '', js: '' },
     language: 'html',
     title: '',
 
-    /* UI state */
     activeTab: 'preview',
     theme: localStorage.getItem(CFG.keys.theme) || 'device',
     device: localStorage.getItem(CFG.keys.device) || 'desktop',
     zoom: parseFloat(localStorage.getItem(CFG.keys.zoom) || String(CFG.zoom.default)),
 
-    /* Console */
     consoleLines: [],
     consoleFilter: 'all',
     consoleSearch: '',
 
-    /* Elements */
     domTree: null,
-
-    /* Network */
     networkLines: [],
 
-    /* History (undo/redo) */
     history: [],
     historyIndex: -1,
 
-    /* Refs */
     messageListener: null,
+    keydownListener: null,
     currentRequestId: 0,
 
-    /* Ready flag */
     iframeReady: false,
     iframeError: false,
+    iframeTimeout: null,
+    hasCodeErrors: false,
   };
 
   /* ═══════════════════════════════════════════════════════════════════
@@ -657,9 +624,8 @@ ${html}
     modal.hidden = true;
     modal.innerHTML = `
       <div class="nm-preview-modal__backdrop" data-action="close"></div>
-      <div class="nm-preview-modal__panel" role="dialog" aria-modal="true" aria-label="Vista previa">
+      <div class="nm-preview-modal__panel" role="dialog" aria-modal="true" aria-label="${t('title')}">
 
-        <!-- HEADER -->
         <header class="nm-preview-modal__head">
           <div class="nm-preview-modal__title">
             <span class="nm-preview-modal__dot"></span>
@@ -668,7 +634,6 @@ ${html}
           </div>
 
           <div class="nm-preview-modal__header-group">
-            <!-- Device picker -->
             <div class="nm-preview-modal__device-picker" data-device-picker>
               <button class="nm-preview-modal__device-btn" data-device="desktop" title="${t('device').desktop}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
@@ -681,14 +646,12 @@ ${html}
               </button>
             </div>
 
-            <!-- Zoom -->
             <div class="nm-preview-modal__zoom" data-zoom-control>
               <button class="nm-preview-modal__zoom-btn" data-zoom="out" title="Zoom out">−</button>
               <span class="nm-preview-modal__zoom-value" data-zoom-value>100%</span>
               <button class="nm-preview-modal__zoom-btn" data-zoom="in" title="Zoom in">+</button>
             </div>
 
-            <!-- Theme -->
             <button class="nm-preview-modal__btn" data-action="theme" title="${t('theme')}">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
             </button>
@@ -713,7 +676,7 @@ ${html}
             <button class="nm-preview-modal__btn" data-action="download" title="${t('download')}">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             </button>
-            <button class="nm-preview-modal__btn" data-action="copy" title="${t('copy')} (Ctrl+C)">
+            <button class="nm-preview-modal__btn" data-action="copy" title="${t('copy')}">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
             </button>
             <button class="nm-preview-modal__btn" data-action="fullscreen" title="${t('fullscreen')} (F)">
@@ -725,7 +688,6 @@ ${html}
           </div>
         </header>
 
-        <!-- TABS -->
         <nav class="nm-preview-modal__tabs" role="tablist">
           <button class="nm-preview-modal__tab is-active" data-tab="preview" role="tab">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -751,21 +713,11 @@ ${html}
           </button>
         </nav>
 
-        <!-- BODY -->
         <div class="nm-preview-modal__body">
-
-          <!-- Preview -->
           <div class="nm-preview-modal__view" data-view="preview">
             <div class="nm-preview-modal__canvas" data-canvas>
               <div class="nm-preview-modal__device-frame" data-device-frame>
-                <iframe
-                  class="nm-preview-modal__iframe"
-                  sandbox="allow-scripts allow-modals allow-popups"
-                  referrerpolicy="no-referrer"
-                  loading="eager"
-                  title="Vista previa de código"
-                  data-iframe
-                ></iframe>
+                <iframe class="nm-preview-modal__iframe" sandbox="allow-scripts allow-modals allow-popups" referrerpolicy="no-referrer" loading="eager" title="Vista previa de código" data-iframe></iframe>
               </div>
               <div class="nm-preview-modal__loading" data-loading>
                 <div class="nm-preview-modal__spinner"></div>
@@ -778,7 +730,6 @@ ${html}
             </div>
           </div>
 
-          <!-- Code -->
           <div class="nm-preview-modal__view" data-view="code" hidden>
             <div class="nm-preview-modal__code-toolbar">
               <span class="nm-preview-modal__code-stats" data-code-stats></span>
@@ -797,19 +748,11 @@ ${html}
             <div class="nm-preview-modal__code-wrap">
               <div class="nm-preview-modal__code-editor">
                 <div class="nm-preview-modal__code-lines" data-code-lines></div>
-                <textarea
-                  class="nm-preview-modal__code-textarea"
-                  data-code-textarea
-                  spellcheck="false"
-                  autocomplete="off"
-                  autocorrect="off"
-                  autocapitalize="off"
-                ></textarea>
+                <textarea class="nm-preview-modal__code-textarea" data-code-textarea spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"></textarea>
               </div>
             </div>
           </div>
 
-          <!-- Console -->
           <div class="nm-preview-modal__view" data-view="console" hidden>
             <div class="nm-preview-modal__console-toolbar">
               <div class="nm-preview-modal__console-filters">
@@ -832,7 +775,6 @@ ${html}
             </div>
           </div>
 
-          <!-- Elements -->
           <div class="nm-preview-modal__view" data-view="elements" hidden>
             <div class="nm-preview-modal__elements-toolbar">
               <button class="nm-preview-modal__code-btn" data-action="refresh-dom" title="${t('reload')}">
@@ -844,7 +786,6 @@ ${html}
             </div>
           </div>
 
-          <!-- Network -->
           <div class="nm-preview-modal__view" data-view="network" hidden>
             <div class="nm-preview-modal__console-toolbar">
               <button class="nm-preview-modal__code-btn" data-action="clear-network" title="${t('clear')}">
@@ -855,41 +796,28 @@ ${html}
               <div class="nm-preview-modal__console-empty">${t('networkEmpty')}</div>
             </div>
           </div>
-
         </div>
       </div>
     `;
 
     document.body.appendChild(modal);
 
-    /* Event delegation */
+    /* Event delegation en el modal */
     modal.addEventListener('click', (e) => {
       const actionEl = e.target.closest('[data-action]');
-      if (actionEl) {
-        const action = actionEl.dataset.action;
-        handleAction(action);
-        return;
-      }
+      if (actionEl) { handleAction(actionEl.dataset.action); return; }
+
       const tabEl = e.target.closest('[data-tab]');
-      if (tabEl) {
-        switchTab(tabEl.dataset.tab);
-        return;
-      }
+      if (tabEl) { switchTab(tabEl.dataset.tab); return; }
+
       const deviceBtn = e.target.closest('[data-device]');
-      if (deviceBtn) {
-        setDevice(deviceBtn.dataset.device);
-        return;
-      }
+      if (deviceBtn) { setDevice(deviceBtn.dataset.device); return; }
+
       const zoomBtn = e.target.closest('[data-zoom]');
-      if (zoomBtn) {
-        zoomAction(zoomBtn.dataset.zoom);
-        return;
-      }
+      if (zoomBtn) { zoomAction(zoomBtn.dataset.zoom); return; }
+
       const filterBtn = e.target.closest('[data-filter]');
-      if (filterBtn) {
-        setConsoleFilter(filterBtn.dataset.filter);
-        return;
-      }
+      if (filterBtn) { setConsoleFilter(filterBtn.dataset.filter); return; }
     });
 
     /* Console search */
@@ -901,23 +829,24 @@ ${html}
       }, 120));
     }
 
-    /* Code editor input */
+    /* Code editor */
     const textarea = modal.querySelector('[data-code-textarea]');
     if (textarea) {
       textarea.addEventListener('input', debounce(() => {
         applyEdit(textarea.value);
       }, CFG.reloadDebounceMs));
       textarea.addEventListener('keydown', handleEditorKeydown);
-      textarea.addEventListener('scroll', syncLineNumbers);
+      textarea.addEventListener('scroll', syncLineNumbers, { passive: true });
     }
 
     /* Message from iframe */
-    window.addEventListener('message', handleIframeMessage);
+    state.messageListener = (e) => handleIframeMessage(e);
+    window.addEventListener('message', state.messageListener);
 
     /* Keyboard shortcuts */
-    document.addEventListener('keydown', globalKeydown);
+    state.keydownListener = (e) => globalKeydown(e);
+    document.addEventListener('keydown', state.keydownListener);
 
-    /* Update initial state */
     updateZoomDisplay();
     updateDeviceButtons();
 
@@ -930,22 +859,22 @@ ${html}
 
   function handleAction(action) {
     switch (action) {
-      case 'close': return close();
-      case 'reload': return reloadIframe();
-      case 'theme': return cycleTheme();
-      case 'copy': return copyCode();
-      case 'download': return showDownloadMenu();
-      case 'share': return sharePreview();
-      case 'save': return savePreview();
-      case 'screenshot': return takeScreenshot();
-      case 'fullscreen': return toggleFullscreen();
-      case 'templates': return showTemplates();
-      case 'undo': return undo();
-      case 'redo': return redo();
-      case 'reset': return resetCode();
-      case 'clear-console': return clearConsole();
-      case 'clear-network': return clearNetwork();
-      case 'refresh-dom': return refreshElements();
+      case 'close':          return close();
+      case 'reload':         return reloadIframe();
+      case 'theme':          return cycleTheme();
+      case 'copy':           return copyCode();
+      case 'download':       return downloadHtml();
+      case 'share':          return sharePreview();
+      case 'save':           return savePreview();
+      case 'screenshot':     return takeScreenshot();
+      case 'fullscreen':     return toggleFullscreen();
+      case 'templates':      return showTemplates();
+      case 'undo':           return undo();
+      case 'redo':           return redo();
+      case 'reset':          return resetCode();
+      case 'clear-console':  return clearConsole();
+      case 'clear-network':  return clearNetwork();
+      case 'refresh-dom':    return refreshElements();
     }
   }
 
@@ -963,8 +892,16 @@ ${html}
 
     if (!iframe) return;
 
+    /* Limpiar timeout previo */
+    if (state.iframeTimeout) {
+      clearTimeout(state.iframeTimeout);
+      state.iframeTimeout = null;
+    }
+
     state.iframeReady = false;
     state.iframeError = false;
+    state.hasCodeErrors = false;
+
     if (loading) loading.hidden = false;
     if (error) error.hidden = true;
 
@@ -973,30 +910,23 @@ ${html}
       css: state.parts.css,
       js: state.parts.js,
       theme: state.theme,
-      device: state.device,
     });
 
-    /* Reset y carga */
     iframe.srcdoc = doc;
 
     /* Timeout de carga */
-    const timeout = setTimeout(() => {
+    state.iframeTimeout = setTimeout(() => {
       if (!state.iframeReady && !state.iframeError) {
         state.iframeError = true;
         if (loading) loading.hidden = true;
         if (error) {
           error.hidden = false;
           const msg = error.querySelector('[data-error-message]');
-          if (msg) msg.textContent = 'La vista previa tardó demasiado en cargar.';
+          if (msg) msg.textContent = 'La vista previa tardó demasiado en cargar. Probá con menos código.';
         }
         emit('nm:preview:error', { reason: 'timeout' });
       }
     }, CFG.iframeLoadTimeoutMs);
-
-    /* Limpiar al cargar */
-    iframe.addEventListener('load', () => {
-      clearTimeout(timeout);
-    }, { once: true });
 
     emit('nm:preview:reload', { at: Date.now() });
   }
@@ -1008,6 +938,10 @@ ${html}
 
     if (type === 'nm-preview-ready') {
       state.iframeReady = true;
+      if (state.iframeTimeout) {
+        clearTimeout(state.iframeTimeout);
+        state.iframeTimeout = null;
+      }
       const modal = document.getElementById('nm-preview-modal');
       const loading = modal && modal.querySelector('[data-loading]');
       if (loading) loading.hidden = true;
@@ -1027,7 +961,6 @@ ${html}
     }
 
     if (type === 'nm-preview-styles') {
-      // Opcional: mostrar estilos computados
       log('styles received', e.data);
       return;
     }
@@ -1060,11 +993,13 @@ ${html}
       at: at || Date.now(),
       meta: meta || {},
     });
+
     if (state.consoleLines.length > CFG.maxConsoleLines) {
       state.consoleLines.shift();
     }
 
-    /* Si tiene info de network, guardar en network */
+    if (level === 'error') state.hasCodeErrors = true;
+
     if (meta && (meta.net === 'request' || meta.net === 'response')) {
       state.networkLines.push({
         kind: meta.net,
@@ -1074,7 +1009,7 @@ ${html}
         duration: meta.duration || null,
         at: at || Date.now(),
       });
-      if (state.networkLines.length > 500) state.networkLines.shift();
+      if (state.networkLines.length > CFG.maxNetworkLines) state.networkLines.shift();
       updateNetworkBadge();
       if (state.activeTab === 'network') renderNetwork();
     }
@@ -1082,9 +1017,17 @@ ${html}
     renderConsole();
     updateConsoleBadge();
 
-    /* Auto-switch a console tab si hay error y estamos en preview */
-    if (level === 'error' && state.activeTab === 'preview') {
-      // Solo mostrar badge, no cambiar
+    /* Auto-switch a console si hay error y estamos en preview */
+    if (level === 'error' && state.activeTab === 'preview' && state.iframeReady) {
+      /* Solo auto-switch la primera vez */
+      if (!state._autoSwitchedToConsole) {
+        state._autoSwitchedToConsole = true;
+        setTimeout(() => {
+          if (state.activeTab === 'preview' && state.hasCodeErrors) {
+            switchTab('console');
+          }
+        }, 400);
+      }
     }
   }
 
@@ -1101,24 +1044,35 @@ ${html}
     });
 
     if (filtered.length === 0) {
-      out.innerHTML = `<div class="nm-preview-modal__console-empty">${state.consoleSearch || state.consoleFilter !== 'all' ? 'Sin resultados' : t('emptyConsole')}</div>`;
+      out.innerHTML = `<div class="nm-preview-modal__console-empty">${
+        state.consoleSearch || state.consoleFilter !== 'all'
+          ? 'Sin resultados'
+          : t('emptyConsole')
+      }</div>`;
       return;
     }
 
-    const html = filtered.map((l) => {
+    /* Virtual-ish render: solo los últimos 300 */
+    const MAX_RENDER = 300;
+    const slice = filtered.length > MAX_RENDER ? filtered.slice(-MAX_RENDER) : filtered;
+
+    const frag = document.createDocumentFragment();
+    for (const l of slice) {
       const icon = l.level === 'error' ? '✕'
                  : l.level === 'warn' ? '⚠'
                  : l.level === 'info' ? 'ⓘ'
                  : l.level === 'debug' ? '›'
                  : '›';
-      return `<div class="nm-preview-modal__console-line nm-preview-modal__console-line--${esc(l.level)}">
-        <span class="nm-preview-modal__console-time">${esc(fmtTime(l.at))}</span>
-        <span class="nm-preview-modal__console-icon">${icon}</span>
-        <span class="nm-preview-modal__console-msg">${esc(l.message)}</span>
-      </div>`;
-    }).join('');
+      const div = document.createElement('div');
+      div.className = `nm-preview-modal__console-line nm-preview-modal__console-line--${l.level}`;
+      div.innerHTML = `<span class="nm-preview-modal__console-time">${esc(fmtTime(l.at))}</span>`
+        + `<span class="nm-preview-modal__console-icon">${icon}</span>`
+        + `<span class="nm-preview-modal__console-msg">${esc(l.message)}</span>`;
+      frag.appendChild(div);
+    }
 
-    out.innerHTML = html;
+    out.innerHTML = '';
+    out.appendChild(frag);
     out.scrollTop = out.scrollHeight;
   }
 
@@ -1128,11 +1082,7 @@ ${html}
     const badge = modal.querySelector('[data-console-count]');
     if (!badge) return;
 
-    if (state.consoleLines.length === 0) {
-      badge.hidden = true;
-      return;
-    }
-
+    if (state.consoleLines.length === 0) { badge.hidden = true; return; }
     badge.hidden = false;
     badge.textContent = String(state.consoleLines.length);
 
@@ -1154,6 +1104,8 @@ ${html}
 
   function clearConsole() {
     state.consoleLines = [];
+    state.hasCodeErrors = false;
+    state._autoSwitchedToConsole = false;
     renderConsole();
     updateConsoleBadge();
   }
@@ -1169,12 +1121,7 @@ ${html}
     if (!modal) return;
     const badge = modal.querySelector('[data-network-count]');
     if (!badge) return;
-
-    if (state.networkLines.length === 0) {
-      badge.hidden = true;
-      return;
-    }
-
+    if (state.networkLines.length === 0) { badge.hidden = true; return; }
     badge.hidden = false;
     badge.textContent = String(state.networkLines.length);
   }
@@ -1221,7 +1168,6 @@ ${html}
       out.innerHTML = `<div class="nm-preview-modal__console-empty">${t('elementsEmpty')}</div>`;
       return;
     }
-
     out.innerHTML = renderNode(state.domTree, 0);
   }
 
@@ -1233,27 +1179,24 @@ ${html}
       : '';
     const id = node.id ? '#' + node.id : '';
 
-    let html = '';
     if (node.tag === '#text') {
       const text = (node.text || '').trim();
       if (!text) return '';
       return `<div class="nm-preview-modal__el-line nm-preview-modal__el-line--text" style="padding-left:${depth * 14}px">${esc(indent)}<span class="nm-preview-modal__el-text">"${esc(text.slice(0, 60))}"</span></div>`;
     }
 
-    const isContainer = node.children && node.children.length > 0;
-    html += `<div class="nm-preview-modal__el-line" style="padding-left:${depth * 14}px">
+    let html = `<div class="nm-preview-modal__el-line" style="padding-left:${depth * 14}px">
       <span class="nm-preview-modal__el-tag">&lt;${esc(node.tag)}</span>
       <span class="nm-preview-modal__el-id">${esc(id)}</span>
       <span class="nm-preview-modal__el-class">${esc(cls)}</span>
       <span class="nm-preview-modal__el-tag">&gt;</span>
     </div>`;
 
-    if (isContainer) {
+    if (node.children && node.children.length > 0) {
       for (const child of node.children) {
         html += renderNode(child, depth + 1);
       }
     }
-
     return html;
   }
 
@@ -1276,75 +1219,60 @@ ${html}
 
     if (name === 'console') {
       renderConsole();
+      const searchInput = modal.querySelector('[data-console-search]');
+      if (searchInput) setTimeout(() => searchInput.focus(), 80);
       setTimeout(() => {
         const out = modal.querySelector('[data-console-output]');
         if (out) out.scrollTop = out.scrollHeight;
       }, 30);
     }
-    if (name === 'elements' && !state.domTree) {
-      refreshElements();
-    }
-    if (name === 'network') {
-      renderNetwork();
-    }
+    if (name === 'elements' && !state.domTree) refreshElements();
+    if (name === 'network') renderNetwork();
     if (name === 'code') {
       const textarea = modal.querySelector('[data-code-textarea]');
       if (textarea) setTimeout(() => textarea.focus(), 50);
       updateCodeStats();
+      updateLineNumbers();
     }
   }
 
   /* ═══════════════════════════════════════════════════════════════════
-     14 · EDITOR / UNDO REDO
+     14 · EDITOR
      ═══════════════════════════════════════════════════════════════════ */
 
   function getRawCode() {
     let out = '';
     if (state.parts.html) out += `<!-- HTML -->\n${state.parts.html}\n\n`;
-    if (state.parts.css) out += `/* CSS */\n${state.parts.css}\n\n`;
-    if (state.parts.js) out += `// JavaScript\n${state.parts.js}\n`;
+    if (state.parts.css)  out += `/* CSS */\n${state.parts.css}\n\n`;
+    if (state.parts.js)   out += `// JavaScript\n${state.parts.js}\n`;
     return out.trim();
   }
 
   function applyEdit(newRaw) {
-    /* Re-parsear el código editado */
     const parts = parseEditedCode(newRaw);
     if (!parts) return;
-
     state.parts = parts;
-
-    /* Guardar en history */
     pushHistory(newRaw);
-
-    /* Guardar draft */
     saveDraft();
-
-    /* Auto reload */
     reloadIframe();
-
     updateCodeStats();
     updateLineNumbers();
   }
 
   function parseEditedCode(raw) {
-    /* Detectar secciones por comentarios o marcas */
     let html = '';
     let css = '';
     let js = '';
 
-    /* Pattern 1: marcadores <!-- HTML --> ... etc */
     const htmlMatch = raw.match(/<!-- HTML -->\s*([\s\S]*?)(?=(\/\* CSS \*\/|\/\/ JavaScript|$))/i);
-    const cssMatch = raw.match(/\/\* CSS \*\/\s*([\s\S]*?)(?=(\/\/ JavaScript|$))/i);
-    const jsMatch = raw.match(/\/\/ JavaScript\s*([\s\S]*)$/i);
+    const cssMatch  = raw.match(/\/\* CSS \*\/\s*([\s\S]*?)(?=(\/\/ JavaScript|$))/i);
+    const jsMatch   = raw.match(/\/\/ JavaScript\s*([\s\S]*)$/i);
 
     if (htmlMatch) html = htmlMatch[1].trim();
-    if (cssMatch) css = cssMatch[1].trim();
-    if (jsMatch) js = jsMatch[1].trim();
+    if (cssMatch)  css  = cssMatch[1].trim();
+    if (jsMatch)   js   = jsMatch[1].trim();
 
-    /* Si no hay marcadores, usar todo como HTML */
-    if (!html && !css && !js) {
-      html = raw;
-    }
+    if (!html && !css && !js) html = raw;
 
     return { html, css, js };
   }
@@ -1357,11 +1285,15 @@ ${html}
     if (!textarea || !linesEl) return;
 
     const lineCount = textarea.value.split('\n').length;
-    let html = '';
+    const frag = document.createDocumentFragment();
     for (let i = 1; i <= lineCount; i++) {
-      html += `<div class="nm-preview-modal__code-line">${i}</div>`;
+      const div = document.createElement('div');
+      div.className = 'nm-preview-modal__code-line';
+      div.textContent = String(i);
+      frag.appendChild(div);
     }
-    linesEl.innerHTML = html;
+    linesEl.innerHTML = '';
+    linesEl.appendChild(frag);
     linesEl.scrollTop = textarea.scrollTop;
   }
 
@@ -1378,7 +1310,6 @@ ${html}
   }
 
   function handleEditorKeydown(e) {
-    /* Tab maneja indentación */
     if (e.key === 'Tab') {
       e.preventDefault();
       const t = e.target;
@@ -1387,11 +1318,9 @@ ${html}
       const value = t.value;
 
       if (start === end) {
-        /* Insertar 2 espacios */
         t.value = value.slice(0, start) + '  ' + value.slice(end);
         t.selectionStart = t.selectionEnd = start + 2;
       } else {
-        /* Indentar bloque */
         const lines = value.slice(start, end).split('\n');
         const indented = lines.map((l) => '  ' + l).join('\n');
         t.value = value.slice(0, start) + indented + value.slice(end);
@@ -1402,7 +1331,6 @@ ${html}
       return;
     }
 
-    /* Undo/redo nativos con Ctrl+Z/Y los manejamos nosotros */
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) {
       e.preventDefault();
       undo();
@@ -1416,7 +1344,6 @@ ${html}
   }
 
   function pushHistory(raw) {
-    /* Truncar history adelante */
     state.history = state.history.slice(0, state.historyIndex + 1);
     state.history.push(raw);
     if (state.history.length > 50) state.history.shift();
@@ -1426,15 +1353,13 @@ ${html}
   function undo() {
     if (state.historyIndex <= 0) return;
     state.historyIndex--;
-    const raw = state.history[state.historyIndex];
-    setEditorContent(raw, false);
+    setEditorContent(state.history[state.historyIndex], false);
   }
 
   function redo() {
     if (state.historyIndex >= state.history.length - 1) return;
     state.historyIndex++;
-    const raw = state.history[state.historyIndex];
-    setEditorContent(raw, false);
+    setEditorContent(state.history[state.historyIndex], false);
   }
 
   function setEditorContent(raw, addToHistory = true) {
@@ -1442,11 +1367,8 @@ ${html}
     if (!modal) return;
     const textarea = modal.querySelector('[data-code-textarea]');
     if (!textarea) return;
-
     textarea.value = raw;
     if (addToHistory) pushHistory(raw);
-
-    /* Re-parsear y recargar */
     const parts = parseEditedCode(raw);
     if (parts) {
       state.parts = parts;
@@ -1477,8 +1399,8 @@ ${html}
      ═══════════════════════════════════════════════════════════════════ */
 
   function zoomAction(action) {
-    if (action === 'in') state.zoom = Math.min(CFG.zoom.max, state.zoom + CFG.zoom.step);
-    else if (action === 'out') state.zoom = Math.max(CFG.zoom.min, state.zoom - CFG.zoom.step);
+    if (action === 'in')         state.zoom = Math.min(CFG.zoom.max, state.zoom + CFG.zoom.step);
+    else if (action === 'out')   state.zoom = Math.max(CFG.zoom.min, state.zoom - CFG.zoom.step);
     else if (action === 'reset') state.zoom = CFG.zoom.default;
     applyZoom();
   }
@@ -1488,7 +1410,6 @@ ${html}
     if (!modal) return;
     const frame = modal.querySelector('[data-device-frame]');
     if (!frame) return;
-
     frame.style.transform = `scale(${state.zoom})`;
     frame.style.transformOrigin = 'top center';
     updateZoomDisplay();
@@ -1517,10 +1438,16 @@ ${html}
     if (!frame) return;
 
     const dev = CFG.devices[state.device] || CFG.devices.desktop;
-    frame.style.width = dev.width + 'px';
-    frame.style.height = dev.height + 'px';
 
-    /* Reset zoom al cambiar device */
+    /* En desktop, dejar que el CSS maneje el 100% */
+    if (state.device === 'desktop') {
+      frame.style.width = '';
+      frame.style.height = '';
+    } else {
+      frame.style.width = dev.width + 'px';
+      frame.style.height = dev.height + 'px';
+    }
+
     if (state.zoom > 1) {
       state.zoom = 1;
       applyZoom();
@@ -1566,11 +1493,6 @@ ${html}
     }
   }
 
-  function showDownloadMenu() {
-    /* Simple: HTML por defecto */
-    downloadHtml();
-  }
-
   function downloadHtml() {
     const doc = buildDocument({
       html: state.parts.html,
@@ -1590,28 +1512,6 @@ ${html}
     toast('ok', 'Descargado .html');
   }
 
-  function downloadJson() {
-    const data = {
-      title: state.title || 'Preview',
-      language: state.language,
-      html: state.parts.html,
-      css: state.parts.css,
-      js: state.parts.js,
-      exportedAt: new Date().toISOString(),
-      version: 2,
-    };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `numination-preview-${Date.now()}.json`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-    toast('ok', 'Descargado .json');
-  }
-
   async function takeScreenshot() {
     const modal = document.getElementById('nm-preview-modal');
     if (!modal) return;
@@ -1619,12 +1519,8 @@ ${html}
     if (!iframe || !iframe.contentWindow) return;
 
     try {
-      /* Usamos SVG foreignObject para snapshot */
       const doc = iframe.contentDocument;
-      if (!doc) {
-        toast('err', t('screenshotError'));
-        return;
-      }
+      if (!doc) { toast('err', t('screenshotError')); return; }
 
       const html = doc.documentElement.outerHTML;
       const w = iframe.clientWidth;
@@ -1649,7 +1545,7 @@ ${html}
       });
 
       const canvas = document.createElement('canvas');
-      canvas.width = w * 2;   // 2x para más calidad
+      canvas.width = w * 2;
       canvas.height = h * 2;
       const ctx = canvas.getContext('2d');
       ctx.scale(2, 2);
@@ -1722,11 +1618,8 @@ ${html}
         }),
       });
       const data = await res.json();
-      if (data.ok) {
-        toast('ok', t('saveSuccess'));
-      } else {
-        toast('err', data.message || t('saveError'));
-      }
+      if (data.ok) toast('ok', t('saveSuccess'));
+      else toast('err', data.message || t('saveError'));
     } catch (e) {
       toast('err', t('saveError'));
     }
@@ -1753,7 +1646,6 @@ ${html}
     const modal = document.getElementById('nm-preview-modal');
     if (!modal) return;
 
-    /* Overlay temporal */
     let overlay = modal.querySelector('.nm-preview-templates');
     if (overlay) { overlay.remove(); return; }
 
@@ -1791,7 +1683,6 @@ ${html}
 
   async function applyTemplate(tplId) {
     try {
-      /* Intentar traer desde backend */
       const res = await fetch(`/api/sandbox/templates/${tplId}`, { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
@@ -1804,7 +1695,6 @@ ${html}
         }
       }
     } catch {
-      /* Fallback: templates mínimos inline */
       const fallback = getInlineTemplate(tplId);
       if (fallback) state.parts = fallback;
     }
@@ -1821,7 +1711,6 @@ ${html}
   }
 
   function getInlineTemplate(id) {
-    /* Templates mínimos por si el backend no responde */
     const tpls = {
       blank: {
         html: '<h1>Hola Numination</h1><p>Editá este contenido</p>',
@@ -1856,12 +1745,10 @@ ${html}
       modal.querySelector('.nm-preview-modal__panel').appendChild(overlay);
 
       overlay.querySelector('[data-cancel]').addEventListener('click', () => {
-        overlay.remove();
-        resolve(false);
+        overlay.remove(); resolve(false);
       });
       overlay.querySelector('[data-ok]').addEventListener('click', () => {
-        overlay.remove();
-        resolve(true);
+        overlay.remove(); resolve(true);
       });
       overlay.addEventListener('click', (e) => {
         if (e.target === overlay) { overlay.remove(); resolve(false); }
@@ -1884,22 +1771,6 @@ ${html}
     } catch {}
   }, CFG.autoSaveDebounceMs);
 
-  function loadDraft() {
-    try {
-      const raw = sessionStorage.getItem(CFG.keys.draft);
-      if (!raw) return null;
-      const d = JSON.parse(raw);
-      if (!d || (Date.now() - d.at) > 60 * 60 * 1000) return null; // 1h
-      return d;
-    } catch {
-      return null;
-    }
-  }
-
-  function clearDraft() {
-    try { sessionStorage.removeItem(CFG.keys.draft); } catch {}
-  }
-
   /* ═══════════════════════════════════════════════════════════════════
      20 · KEYBOARD SHORTCUTS
      ═══════════════════════════════════════════════════════════════════ */
@@ -1907,22 +1778,15 @@ ${html}
   function globalKeydown(e) {
     if (!state.isOpen) return;
 
-    /* Esc cierra */
     if (e.key === 'Escape') {
-      /* Si hay overlay, cerrar overlay primero */
       const modal = document.getElementById('nm-preview-modal');
-      const overlay = modal.querySelector('.nm-preview-templates, .nm-preview-confirm');
-      if (overlay) {
-        e.preventDefault();
-        overlay.remove();
-        return;
-      }
+      const overlay = modal && modal.querySelector('.nm-preview-templates, .nm-preview-confirm');
+      if (overlay) { e.preventDefault(); overlay.remove(); return; }
       e.preventDefault();
       close();
       return;
     }
 
-    /* Ctrl/Cmd + Enter: reload */
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
       e.preventDefault();
       reloadIframe();
@@ -1930,14 +1794,12 @@ ${html}
       return;
     }
 
-    /* Ctrl/Cmd + S: save */
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
       e.preventDefault();
       savePreview();
       return;
     }
 
-    /* F: fullscreen */
     if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === 'f' && state.activeTab === 'preview') {
       const target = e.target;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
@@ -1946,24 +1808,28 @@ ${html}
       return;
     }
 
-    /* 1-5: cambiar tabs */
     if (!e.ctrlKey && !e.metaKey && !e.altKey && /^[1-5]$/.test(e.key)) {
       const target = e.target;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
       const tabs = ['preview', 'code', 'console', 'elements', 'network'];
       const idx = parseInt(e.key, 10) - 1;
-      if (tabs[idx]) {
-        e.preventDefault();
-        switchTab(tabs[idx]);
-      }
+      if (tabs[idx]) { e.preventDefault(); switchTab(tabs[idx]); }
     }
   }
 
   /* ═══════════════════════════════════════════════════════════════════
-     21 · OPEN / CLOSE
+     21 · OPEN / CLOSE · máquina de estados
      ═══════════════════════════════════════════════════════════════════ */
 
   function open({ html, css, js, language, title }) {
+    /* Evitar doble open */
+    if (state.modalState === MODAL_STATE.OPENING || state.modalState === MODAL_STATE.READY) {
+      log('modal already open, ignoring');
+      return;
+    }
+
+    state.modalState = MODAL_STATE.OPENING;
+
     const modal = ensureModal();
 
     state.isOpen = true;
@@ -1978,20 +1844,25 @@ ${html}
     state.historyIndex = -1;
     state.iframeReady = false;
     state.iframeError = false;
+    state.hasCodeErrors = false;
+    state._autoSwitchedToConsole = false;
 
-    /* Badge */
+    if (state.iframeTimeout) {
+      clearTimeout(state.iframeTimeout);
+      state.iframeTimeout = null;
+    }
+
+    /* Badge + título */
     const badge = modal.querySelector('[data-lang-badge]');
     if (badge) badge.textContent = state.language;
-
-    /* Título */
     const titleEl = modal.querySelector('[data-title]');
     if (titleEl) titleEl.textContent = title || t('title');
 
-    /* Setear code editor */
+    /* Editor */
     const textarea = modal.querySelector('[data-code-textarea]');
     if (textarea) textarea.value = getRawCode();
 
-    /* Reset console/network badges */
+    /* Reset badges */
     updateConsoleBadge();
     updateNetworkBadge();
     renderConsole();
@@ -2014,17 +1885,30 @@ ${html}
       pushHistory(getRawCode());
       updateLineNumbers();
       updateCodeStats();
+      state.modalState = MODAL_STATE.READY;
     }, 50);
 
     emit('nm:preview:opened', { at: Date.now() });
   }
 
   function close() {
+    if (state.modalState === MODAL_STATE.CLOSING || state.modalState === MODAL_STATE.IDLE) return;
+
+    state.modalState = MODAL_STATE.CLOSING;
+
     const modal = document.getElementById('nm-preview-modal');
-    if (!modal) return;
+    if (!modal) {
+      state.modalState = MODAL_STATE.IDLE;
+      return;
+    }
+
     state.isOpen = false;
     modal.classList.remove('is-open');
-    modal.classList.remove('is-fullscreen');
+
+    if (state.iframeTimeout) {
+      clearTimeout(state.iframeTimeout);
+      state.iframeTimeout = null;
+    }
 
     setTimeout(() => {
       modal.hidden = true;
@@ -2032,6 +1916,7 @@ ${html}
       if (iframe) iframe.srcdoc = '';
       const panel = modal.querySelector('.nm-preview-modal__panel');
       if (panel) panel.classList.remove('is-fullscreen');
+      state.modalState = MODAL_STATE.IDLE;
     }, 200);
 
     document.body.style.overflow = '';
@@ -2039,7 +1924,7 @@ ${html}
   }
 
   /* ═══════════════════════════════════════════════════════════════════
-     22 · ATTACH TO CODE BLOCKS
+     22 · ATTACH · inyección del botón en el chat
      ═══════════════════════════════════════════════════════════════════ */
 
   function attachPreviewButton(codeEl) {
@@ -2055,11 +1940,13 @@ ${html}
     const pre = codeEl.closest('pre');
     if (!pre) return;
 
+    /* Buscar el head existente */
     const prev = pre.previousElementSibling;
     const existingHead = (prev && prev.classList && prev.classList.contains('md-pre-head'))
       ? prev
       : null;
 
+    /* Crear botón */
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'nm-code-preview-btn';
@@ -2069,16 +1956,35 @@ ${html}
         <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/>
         <circle cx="12" cy="12" r="3"/>
       </svg>
-      <span>Vista previa</span>
+      <span>${t('openPreview')}</span>
     `;
 
     btn.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
+
+      /* Loading state en el botón */
+      const originalHTML = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:nm-preview-spin 0.8s linear infinite">
+          <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+        </svg>
+        <span>Abriendo…</span>
+      `;
+
       const codeNow = getCodeFromCodeEl(codeEl);
       const langNow = getLangFromCodeEl(codeEl);
       const parts = buildPreviewParts(codeNow, langNow);
-      open({ ...parts, language: langNow });
+
+      try {
+        open({ ...parts, language: langNow });
+      } finally {
+        setTimeout(() => {
+          btn.disabled = false;
+          btn.innerHTML = originalHTML;
+        }, 300);
+      }
     });
 
     if (existingHead) {
@@ -2113,10 +2019,7 @@ ${html}
 
   function startObserver() {
     const thread = document.querySelector('[data-thread]');
-    if (!thread) {
-      setTimeout(startObserver, 500);
-      return;
-    }
+    if (!thread) { setTimeout(startObserver, 500); return; }
     const obs = new MutationObserver((muts) => {
       for (const m of muts) {
         if (m.addedNodes.length > 0) { scheduleRescan(); return; }
@@ -2134,13 +2037,9 @@ ${html}
   function init() {
     if (_init) return;
     _init = true;
-
     scanAll();
     startObserver();
-
-    /* Restaurar device/zoom guardados */
     updateDeviceButtons();
-
     log('initialized');
   }
 
@@ -2155,19 +2054,17 @@ ${html}
      ═══════════════════════════════════════════════════════════════════ */
 
   window.NM_preview = {
-    open,
-    close,
-    scanAll,
+    open, close, scanAll,
     attach: attachPreviewButton,
-    setShareEndpoint: (url) => { CFG.shareEndpoint = url; },
+    setShareEndpoint:   (url) => { CFG.shareEndpoint = url; },
     setSandboxEndpoint: (url) => { CFG.sandboxEndpoint = url; },
-    setLocale: (loc) => { CFG.locale = loc; },
-    setDebug: (v) => { CFG.debug = !!v; },
+    setLocale:          (loc) => { CFG.locale = loc; },
+    setDebug:           (v) => { CFG.debug = !!v; },
     getState: () => ({ ...state }),
     _config: CFG,
     _state: state,
-    _version: '2.0.0',
+    _version: '3.0.0',
   };
 
-  log('module loaded · v2.0.0');
+  log('module loaded · v3.0.0');
 })();

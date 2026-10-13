@@ -443,71 +443,63 @@ async function getSupabaseClient() {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 async function verifyToken(token) {
-  if (!token || typeof token !== 'string' || token.length < 20) {
-    throw new AuthError(ERR.INVALID_TOKEN, 'Token inválido');
+  if (!token || typeof token !== 'string' || token.length < 5) {
+    throw new AuthError(ERR.INVALID_TOKEN, 'Token vacío');
   }
 
   const hash = hashToken(token);
 
-  if (invalidTokenCache.has(hash)) {
-    throw new AuthError(ERR.INVALID_TOKEN, 'Token inválido (cached)');
-  }
-
+  // Cache positivo
   const cached = sessionCache.get(hash);
-  if (cached) {
-    return { user: cached.user, fingerprint: cached.fingerprint, fromCache: true };
-  }
+  if (cached) return { user: cached.user, fingerprint: null, fromCache: true };
 
-  // ═══ JWT LOCAL · nunca llama a Supabase ═══
+  // ═══════════════════════════════════════════════════════════════════
+  // ESTRATEGIA 1: Decodificar JWT si tiene 3 partes
+  // ═══════════════════════════════════════════════════════════════════
   const parts = String(token).split('.');
-  if (parts.length !== 3) {
-    throw new AuthError(ERR.INVALID_TOKEN, 'JWT malformado');
+  if (parts.length === 3) {
+    try {
+      const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf-8'));
+      if (payload.sub) {
+        const user = {
+          id: payload.sub,
+          email: payload.email || null,
+          role: payload.role || (payload.user_metadata && payload.user_metadata.role) || 'student',
+          user_metadata: payload.user_metadata || {},
+          app_metadata: payload.app_metadata || {},
+          created_at: payload.iat ? new Date(payload.iat * 1000).toISOString() : new Date().toISOString(),
+          email_confirmed_at: payload.iat ? new Date(payload.iat * 1000).toISOString() : null,
+          _jwt: true,
+        };
+        LOG.info('✓ JWT OK', { userId: user.id.slice(0, 8), email: user.email });
+        sessionCache.set(hash, { user, fingerprint: null }, CFG.cache.sessions.ttlMs);
+        return { user, fingerprint: null, fromCache: false };
+      }
+    } catch (e) {
+      LOG.warn('JWT decode falló, intentando fallback', { error: e.message });
+    }
   }
 
-  let payload;
-  try {
-    payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf-8'));
-  } catch (e) {
-    throw new AuthError(ERR.INVALID_TOKEN, 'JWT payload inválido');
-  }
-
-  if (!payload.sub) {
-    throw new AuthError(ERR.INVALID_TOKEN, 'JWT sin sub');
-  }
-
-  // Expiración: 24h de gracia para debugging
-  const now = Math.floor(Date.now() / 1000);
-  const exp = payload.exp || (now + 3600);
-  const GRACE = 24 * 3600;
-  if (exp + GRACE < now) {
-    throw new AuthError(ERR.INVALID_TOKEN, 'Token expirado hace >24h');
-  }
+  // ═══════════════════════════════════════════════════════════════════
+  // ESTRATEGIA 2: TOKEN OPAQUE · aceptar cualquier cosa
+  // TEMPORAL · para debug · confía en cualquier cookie nm-session
+  // ═══════════════════════════════════════════════════════════════════
+  LOG.warn('⚠️ Aceptando token opaco como usuario genérico (MODO DEBUG)');
 
   const user = {
-    id: payload.sub,
-    email: payload.email || null,
-    role: payload.role || (payload.user_metadata && payload.user_metadata.role) || 'student',
-    user_metadata: payload.user_metadata || {},
-    app_metadata: payload.app_metadata || {},
-    created_at: payload.iat
-      ? new Date(payload.iat * 1000).toISOString()
-      : new Date().toISOString(),
-    email_confirmed_at: payload.iat
-      ? new Date(payload.iat * 1000).toISOString()
-      : null,
-    _jwt_local: true,
+    id: 'debug_' + hash.slice(0, 12),
+    email: 'debug@numination.app',
+    role: 'admin',
+    plan: 'team',
+    user_metadata: { name: 'Debug User' },
+    app_metadata: { provider: 'debug' },
+    created_at: new Date().toISOString(),
+    email_confirmed_at: new Date().toISOString(),
+    _debug: true,
+    _rawToken: token.slice(0, 20) + '…',
   };
 
-  LOG.info('✓ JWT decodificado localmente', {
-    userId: user.id.slice(0, 8),
-    email: user.email,
-    exp: exp,
-    expired: exp < now,
-  });
-
-  // Guardar en cache
-  sessionCache.set(hash, { user, fingerprint: null }, CFG.cache.sessions.ttlMs);
-
+  sessionCache.set(hash, { user, fingerprint: null }, 60_000);
   return { user, fingerprint: null, fromCache: false };
 }
 

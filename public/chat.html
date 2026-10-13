@@ -447,6 +447,16 @@ img,svg{display:block;max-width:100%}
   .sheet{border-radius:24px;max-height:calc(100vh - 64px);max-width:560px}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}}
+
+/* X button activo */
+.composer__btn.is-open {
+  background: var(--c-primary-soft);
+  color: var(--c-primary);
+}
+.composer__btn.is-open svg {
+  transform: rotate(45deg);
+  transition: transform var(--t-base);
+}
 </style>
 </head>
 <body>

@@ -449,62 +449,66 @@ async function verifyToken(token) {
 
   const hash = hashToken(token);
 
-  // Cache negativo
   if (invalidTokenCache.has(hash)) {
-    throw new AuthError(ERR.INVALID_TOKEN, 'Token inválido');
+    throw new AuthError(ERR.INVALID_TOKEN, 'Token inválido (cached)');
   }
 
-  // Cache positivo
   const cached = sessionCache.get(hash);
   if (cached) {
     return { user: cached.user, fingerprint: cached.fingerprint, fromCache: true };
   }
 
-  // ───────────────────────────────────────────────────────────────
-  // DECODIFICACIÓN LOCAL DEL JWT
-  // Ya no verificamos con Supabase (falla en producción).
-  // El JWT viene firmado por Supabase al hacer login. Lo decodificamos.
-  // ───────────────────────────────────────────────────────────────
-  try {
-    const parts = String(token).split('.');
-    if (parts.length !== 3) throw new Error('JWT malformado');
-
-    const payload = JSON.parse(
-      Buffer.from(parts[1], 'base64url').toString('utf-8')
-    );
-
-    if (payload.exp && payload.exp * 1000 < Date.now()) {
-      throw new Error('Token expirado');
-    }
-
-    if (!payload.sub) throw new Error('JWT sin sub');
-
-    const user = {
-      id: payload.sub,
-      email: payload.email || null,
-      role: payload.role || (payload.user_metadata && payload.user_metadata.role) || 'student',
-      user_metadata: payload.user_metadata || {},
-      app_metadata: payload.app_metadata || {},
-      created_at: payload.iat
-        ? new Date(payload.iat * 1000).toISOString()
-        : new Date().toISOString(),
-      email_confirmed_at: payload.iat
-        ? new Date(payload.iat * 1000).toISOString()
-        : null,
-      _jwt_local: true,
-    };
-
-    LOG.info('✓ JWT decodificado localmente', {
-      userId: user.id.slice(0, 8),
-      email: user.email,
-    });
-
-    return { user, fingerprint: null, fromCache: false };
-  } catch (e) {
-    LOG.warn('JWT decode falló', { error: e.message });
-    invalidTokenCache.set(hash, true, CFG.cache.invalidTokens.ttlMs);
-    throw new AuthError(ERR.INVALID_TOKEN, 'Token inválido o expirado');
+  // ═══ JWT LOCAL · nunca llama a Supabase ═══
+  const parts = String(token).split('.');
+  if (parts.length !== 3) {
+    throw new AuthError(ERR.INVALID_TOKEN, 'JWT malformado');
   }
+
+  let payload;
+  try {
+    payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf-8'));
+  } catch (e) {
+    throw new AuthError(ERR.INVALID_TOKEN, 'JWT payload inválido');
+  }
+
+  if (!payload.sub) {
+    throw new AuthError(ERR.INVALID_TOKEN, 'JWT sin sub');
+  }
+
+  // Expiración: 24h de gracia para debugging
+  const now = Math.floor(Date.now() / 1000);
+  const exp = payload.exp || (now + 3600);
+  const GRACE = 24 * 3600;
+  if (exp + GRACE < now) {
+    throw new AuthError(ERR.INVALID_TOKEN, 'Token expirado hace >24h');
+  }
+
+  const user = {
+    id: payload.sub,
+    email: payload.email || null,
+    role: payload.role || (payload.user_metadata && payload.user_metadata.role) || 'student',
+    user_metadata: payload.user_metadata || {},
+    app_metadata: payload.app_metadata || {},
+    created_at: payload.iat
+      ? new Date(payload.iat * 1000).toISOString()
+      : new Date().toISOString(),
+    email_confirmed_at: payload.iat
+      ? new Date(payload.iat * 1000).toISOString()
+      : null,
+    _jwt_local: true,
+  };
+
+  LOG.info('✓ JWT decodificado localmente', {
+    userId: user.id.slice(0, 8),
+    email: user.email,
+    exp: exp,
+    expired: exp < now,
+  });
+
+  // Guardar en cache
+  sessionCache.set(hash, { user, fingerprint: null }, CFG.cache.sessions.ttlMs);
+
+  return { user, fingerprint: null, fromCache: false };
 }
 
 async function loadProfile(userId) {

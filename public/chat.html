@@ -574,7 +574,7 @@ img,svg{display:block;max-width:100%}
         </div>
       </div>
       <form class="composer" data-form autocomplete="off">
-        <button type="button" class="composer__btn" data-new-chat-top title="Nuevo chat">
+        <button type="button" class="composer__btn" data-toggle-tools title="Mostrar/ocultar herramientas">
           <svg viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
         </button>
         <button type="button" class="composer__btn composer__mic" data-voice-mic title="Dictar (Ctrl+M)">
@@ -1654,7 +1654,10 @@ __nm.fetchJSON = function(url, opts, timeoutMs){
       els.history.appendChild(li);
     });
   }
-  function toggleTools(show){ if(els.toolsContainer) els.toolsContainer.hidden = true; if(els.suggestionChips) els.suggestionChips.hidden = !show; }
+  function toggleTools(show){
+    // Tools container: oculto por defecto, se togglea con el botón X
+    if(els.suggestionChips) els.suggestionChips.hidden = !show;
+  }
   function updateWelcome(){
     var wt = document.querySelector('[data-welcome-title]');
     var ws = document.querySelector('[data-welcome-sub]');
@@ -1744,8 +1747,13 @@ __nm.fetchJSON = function(url, opts, timeoutMs){
     });
   });
 
-  var newChatTop = document.querySelector('[data-new-chat-top]');
-  if(newChatTop) newChatTop.addEventListener('click', newChat);
+  var toolsToggleBtn = document.querySelector('[data-toggle-tools]');
+  if(toolsToggleBtn) toolsToggleBtn.addEventListener('click', function(){
+    if(els.toolsContainer){
+      els.toolsContainer.hidden = !els.toolsContainer.hidden;
+      toolsToggleBtn.title = els.toolsContainer.hidden ? 'Mostrar herramientas' : 'Ocultar herramientas';
+    }
+  });
 
   async function handleSubmit(e){
     if(e) e.preventDefault();

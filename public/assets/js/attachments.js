@@ -65,6 +65,16 @@
 (function () {
   'use strict';
 
+  /* ═══ SHIM · extractFilesFromResponse (movida a coder.js) ═══ */
+  if (typeof extractFilesFromResponse === 'undefined') {
+    try {
+      if (typeof window !== 'undefined' && !window.extractFilesFromResponse) {
+        window.extractFilesFromResponse = function() { return []; };
+      }
+    } catch (e) {}
+  }
+
+
   /* ═══════════════════════════════════════════════════════════════════════
      01 · CONFIGURACIÓN
      ═══════════════════════════════════════════════════════════════════════ */
@@ -2480,7 +2490,7 @@
     _config:             CFG,
     _state:              S,
     _internals: {
-      classify, validate, extractFilesFromResponse, buildDependencyGraph,
+      /* PATCHED_NM: extractFilesFromResponse not defined - classify, validate, extractFilesFromResponse, buildDependenc */
     },
   };
 

@@ -549,7 +549,7 @@ img,svg{display:block;max-width:100%}
           Planificar un proyecto
         </button>
       </div>
-      <div class="tools-container" data-tools-container>
+      <div class="tools-container" data-tools-container hidden>
         <div class="tools-label">
           <span class="tools-label__text">Herramientas</span>
           <span class="tools-label__line"></span>
@@ -1654,7 +1654,7 @@ __nm.fetchJSON = function(url, opts, timeoutMs){
       els.history.appendChild(li);
     });
   }
-  function toggleTools(show){ if(els.toolsContainer) els.toolsContainer.hidden = !show; if(els.suggestionChips) els.suggestionChips.hidden = !show; }
+  function toggleTools(show){ if(els.toolsContainer) els.toolsContainer.hidden = true; if(els.suggestionChips) els.suggestionChips.hidden = !show; }
   function updateWelcome(){
     var wt = document.querySelector('[data-welcome-title]');
     var ws = document.querySelector('[data-welcome-sub]');
@@ -1993,6 +1993,8 @@ __nm.fetchJSON = function(url, opts, timeoutMs){
     var list = await apiList();
     state.chats = list;
     renderHistory(); renderMessages(); updateWelcome();
+    // Ocultar tools-container por defecto
+    if(els.toolsContainer) els.toolsContainer.hidden = true;
     window.dispatchEvent(new CustomEvent('nm:chats-updated'));
   })();
 

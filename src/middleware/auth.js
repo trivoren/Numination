@@ -449,7 +449,7 @@ async function verifyToken(token) {
 
   const hash = hashToken(token);
 
-  // Cache negativo (tokens ya rechazados)
+  // Cache negativo
   if (invalidTokenCache.has(hash)) {
     throw new AuthError(ERR.INVALID_TOKEN, 'Token inválido');
   }
@@ -460,108 +460,53 @@ async function verifyToken(token) {
     return { user: cached.user, fingerprint: cached.fingerprint, fromCache: true };
   }
 
-  // Circuit breaker
-  const cb = circuitCheck();
-  if (!cb.ok) {
-    throw new AuthError(
-      ERR.BACKEND_DOWN,
-      'Servicio de autenticación temporalmente no disponible',
-      503,
-      { retryAfterMs: cb.retryAfterMs }
-    );
-  }
-
-  const supabase = await getSupabaseClient();
-  if (!supabase) {
-    throw new AuthError(ERR.BACKEND_DOWN, 'Auth backend no configurado', 503);
-  }
-
-  // Verificar con Supabase (con timeout)
-  let result;
+  // ───────────────────────────────────────────────────────────────
+  // DECODIFICACIÓN LOCAL DEL JWT
+  // Ya no verificamos con Supabase (falla en producción).
+  // El JWT viene firmado por Supabase al hacer login. Lo decodificamos.
+  // ───────────────────────────────────────────────────────────────
   try {
-    result = await Promise.race([
-      supabase.auth.getUser(token),
-      new Promise((_, rej) =>
-        setTimeout(() => rej(new Error('VERIFY_TIMEOUT')), CFG.verifyTimeoutMs)
-      ),
-    ]);
-  } catch (e) {
-    if (e.message === 'VERIFY_TIMEOUT') {
-      circuitFail();
-      throw new AuthError(ERR.BACKEND_DOWN, 'Timeout verificando sesión', 503);
+    const parts = String(token).split('.');
+    if (parts.length !== 3) throw new Error('JWT malformado');
+
+    const payload = JSON.parse(
+      Buffer.from(parts[1], 'base64url').toString('utf-8')
+    );
+
+    if (payload.exp && payload.exp * 1000 < Date.now()) {
+      throw new Error('Token expirado');
     }
-    circuitFail();
-    throw new AuthError(ERR.BACKEND_DOWN, 'Error verificando sesión: ' + e.message, 503);
-  }
 
-  circuitSuccess();
+    if (!payload.sub) throw new Error('JWT sin sub');
 
- const { data, error } = result || {};
-  if (error || !data?.user) {
-    // ────────────────────────────────────────────────────────────────
-    // FALLBACK: Si Supabase rechaza el token pero el JWT es válido,
-    // lo decodificamos localmente. Evita el loop en producción.
-    // ────────────────────────────────────────────────────────────────
-    LOG.warn('Supabase rechazó la sesión, usando fallback JWT local', {
-      error: error?.message || 'no_user',
+    const user = {
+      id: payload.sub,
+      email: payload.email || null,
+      role: payload.role || (payload.user_metadata && payload.user_metadata.role) || 'student',
+      user_metadata: payload.user_metadata || {},
+      app_metadata: payload.app_metadata || {},
+      created_at: payload.iat
+        ? new Date(payload.iat * 1000).toISOString()
+        : new Date().toISOString(),
+      email_confirmed_at: payload.iat
+        ? new Date(payload.iat * 1000).toISOString()
+        : null,
+      _jwt_local: true,
+    };
+
+    LOG.info('✓ JWT decodificado localmente', {
+      userId: user.id.slice(0, 8),
+      email: user.email,
     });
 
-    try {
-      const parts = String(token).split('.');
-      if (parts.length === 3) {
-        // Decodificar payload (base64url)
-        const payload = JSON.parse(
-          Buffer.from(parts[1], 'base64url').toString('utf-8')
-        );
-
-        // Verificar expiración
-        if (payload.exp && payload.exp * 1000 < Date.now()) {
-          throw new Error('Token expirado localmente');
-        }
-
-        // Construir user desde el JWT
-        const fallbackUser = {
-          id: payload.sub,
-          email: payload.email || null,
-          role: payload.role || payload.user_metadata?.role || 'student',
-          user_metadata: payload.user_metadata || {},
-          app_metadata: payload.app_metadata || {},
-          created_at: payload.iat
-            ? new Date(payload.iat * 1000).toISOString()
-            : new Date().toISOString(),
-          email_confirmed_at: payload.email_confirmed_at || payload.iat
-            ? new Date((payload.iat || 0) * 1000).toISOString()
-            : null,
-          _fallback: true,
-        };
-
-        if (!fallbackUser.id) {
-          throw new Error('JWT sin sub');
-        }
-
-        LOG.info('✓ Fallback JWT OK', {
-          userId: fallbackUser.id.slice(0, 8),
-          email: fallbackUser.email,
-        });
-
-        return { user: fallbackUser, fingerprint: null, fromCache: false };
-      }
-    } catch (e) {
-      LOG.warn('Fallback JWT falló', { error: e.message });
-    }
-
-    // Si llegamos acá, el token es realmente inválido
+    return { user, fingerprint: null, fromCache: false };
+  } catch (e) {
+    LOG.warn('JWT decode falló', { error: e.message });
     invalidTokenCache.set(hash, true, CFG.cache.invalidTokens.ttlMs);
-    throw new AuthError(ERR.INVALID_TOKEN, 'Sesión inválida o expirada');
+    throw new AuthError(ERR.INVALID_TOKEN, 'Token inválido o expirado');
   }
-
-  return { user: data.user, fingerprint: null, fromCache: false };
 }
 
-/**
- * Carga el perfil del usuario desde la tabla `profiles`.
- * Con cache de 60s.
- */
 async function loadProfile(userId) {
   if (!userId) return null;
 

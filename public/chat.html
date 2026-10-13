@@ -1840,7 +1840,10 @@ __nm.fetchJSON = function(url, opts, timeoutMs){
         role: 'student',
         history: history,
         webSearch: state.webEnabled,
-        chatId: cid
+        chatId: cid,
+        files: (window.NM_attachments && window.NM_attachments.hasAttachments())
+          ? window.NM_attachments.consume().files
+          : []
       })
     })
     .then(function(res){
@@ -2081,6 +2084,7 @@ __nm.fetchJSON = function(url, opts, timeoutMs){
 })();
 </script>
 
+<script src="assets/js/attachments.js" defer></script>
 <script src="assets/js/code-preview.js" defer></script>
 <script src="assets/js/voice.js" defer></script>
 

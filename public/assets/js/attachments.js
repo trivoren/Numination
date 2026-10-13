@@ -1135,14 +1135,15 @@
       return null;
     }
 
-    // 3) Clasificar
+        // 3) Clasificar (magic bytes ya chequearon arriba)
     const meta = classify(file);
-    let kind = meta.kind;
+    let kind = forcedKind || meta.kind;
 
-    // Verificar magic bytes para kind sospechosos
-    if (kind === 'binary') {
-      if (await looksLikePDF(file)) kind = 'pdf';
-      else if (await looksLikePNG(file) || await looksLikeJPEG(file) || await looksLikeGIF(file) || await looksLikeWebP(file)) kind = 'image';
+    // Doble check: si magic bytes dijo PDF pero classify dijo texto, respetar PDF
+    if (forcedKind && forcedKind !== kind) {
+      LOG.info('magic bytes override: ' + kind + ' → ' + forcedKind);
+      kind = forcedKind;
+      meta.mime = forcedKind === 'pdf' ? 'application/pdf' : meta.mime;
     }
 
     // 4) Procesar en cola

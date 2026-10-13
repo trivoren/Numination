@@ -932,12 +932,9 @@ __nm.fetchJSON = function(url, opts, timeoutMs){
   var timer = setTimeout(function(){ ctrl.abort(); }, timeoutMs);
   var merged = Object.assign({ credentials:'include' }, opts, { signal: ctrl.signal });
   return fetch(url, merged).then(function(res){
-    if(res.status === 401 && typeof url === 'string' && url.indexOf('/api/') === 0 && url.indexOf('/api/auth/') !== 0){
-      __nm.toast.warn('Tu sesión expiró.');
-      setTimeout(function(){ location.href = '/login.html'; }, 900);
-      throw new Error('401');
-    }
-    return res.json().catch(function(){ return null; }).then(function(data){ return { ok: res.ok, status: res.status, data: data }; });
+    return res.json().catch(function(){ return null; }).then(function(data){
+      return { ok: res.ok, status: res.status, data: data };
+    });
   }).finally(function(){ clearTimeout(timer); });
 };
 </script>

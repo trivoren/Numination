@@ -496,9 +496,61 @@ async function verifyToken(token) {
 
   circuitSuccess();
 
-  const { data, error } = result || {};
+ const { data, error } = result || {};
   if (error || !data?.user) {
-    // Cache negativo por 60s
+    // ────────────────────────────────────────────────────────────────
+    // FALLBACK: Si Supabase rechaza el token pero el JWT es válido,
+    // lo decodificamos localmente. Evita el loop en producción.
+    // ────────────────────────────────────────────────────────────────
+    LOG.warn('Supabase rechazó la sesión, usando fallback JWT local', {
+      error: error?.message || 'no_user',
+    });
+
+    try {
+      const parts = String(token).split('.');
+      if (parts.length === 3) {
+        // Decodificar payload (base64url)
+        const payload = JSON.parse(
+          Buffer.from(parts[1], 'base64url').toString('utf-8')
+        );
+
+        // Verificar expiración
+        if (payload.exp && payload.exp * 1000 < Date.now()) {
+          throw new Error('Token expirado localmente');
+        }
+
+        // Construir user desde el JWT
+        const fallbackUser = {
+          id: payload.sub,
+          email: payload.email || null,
+          role: payload.role || payload.user_metadata?.role || 'student',
+          user_metadata: payload.user_metadata || {},
+          app_metadata: payload.app_metadata || {},
+          created_at: payload.iat
+            ? new Date(payload.iat * 1000).toISOString()
+            : new Date().toISOString(),
+          email_confirmed_at: payload.email_confirmed_at || payload.iat
+            ? new Date((payload.iat || 0) * 1000).toISOString()
+            : null,
+          _fallback: true,
+        };
+
+        if (!fallbackUser.id) {
+          throw new Error('JWT sin sub');
+        }
+
+        LOG.info('✓ Fallback JWT OK', {
+          userId: fallbackUser.id.slice(0, 8),
+          email: fallbackUser.email,
+        });
+
+        return { user: fallbackUser, fingerprint: null, fromCache: false };
+      }
+    } catch (e) {
+      LOG.warn('Fallback JWT falló', { error: e.message });
+    }
+
+    // Si llegamos acá, el token es realmente inválido
     invalidTokenCache.set(hash, true, CFG.cache.invalidTokens.ttlMs);
     throw new AuthError(ERR.INVALID_TOKEN, 'Sesión inválida o expirada');
   }

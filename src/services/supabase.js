@@ -684,6 +684,74 @@ export async function bumpAuthVersion(userId) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
+   5c · VERIFICACIÓN DE EMAIL (HIGH-002)
+   ─────────────────────────────────────────────────────────────────────
+   Tokens de un solo uso en public.email_verification_tokens
+   (migración 2026_10_14_014). Se guarda el sha256 del token, nunca
+   el token en claro.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+export async function createEmailVerifyToken(userId, tokenHash, expiresAt) {
+  if (!sql || !isUuid(userId) || !tokenHash) return null;
+  const exp = expiresAt instanceof Date ? expiresAt : new Date(expiresAt);
+  if (!Number.isFinite(exp.getTime())) return null;
+  return withRetry(async () => {
+    const [row] = await sql`
+      insert into public.email_verification_tokens (id, user_id, token_hash, expires_at)
+      values (${uid()}, ${userId}::uuid, ${tokenHash}, ${exp})
+      returning id, expires_at
+    `;
+    // Limpieza oportunista de tokens viejos/usados.
+    await sql`delete from public.email_verification_tokens
+              where expires_at < now() - interval '1 day'
+                 or (used_at is not null and used_at < now() - interval '1 day')`;
+    return row || null;
+  }, 'createEmailVerifyToken');
+}
+
+export async function getValidEmailVerifyToken(tokenHash) {
+  if (!sql || !tokenHash || typeof tokenHash !== 'string') return null;
+  return withRetry(async () => {
+    const [row] = await sql`
+      select id, user_id, expires_at, used_at
+      from public.email_verification_tokens
+      where token_hash = ${tokenHash}
+        and used_at is null
+        and expires_at > now()
+      limit 1
+    `;
+    return row || null;
+  }, 'getValidEmailVerifyToken');
+}
+
+export async function consumeEmailVerifyToken(id) {
+  if (!sql || !id) return false;
+  const ok = await withRetry(async () => {
+    const r = await sql`
+      update public.email_verification_tokens
+      set used_at = now()
+      where id = ${id} and used_at is null
+    `;
+    return r.count > 0;
+  }, 'consumeEmailVerifyToken');
+  return Boolean(ok);
+}
+
+export async function setEmailVerified(userId) {
+  if (!sql || !isUuid(userId)) return null;
+  return withRetry(async () => {
+    const [row] = await sql`
+      update public.profiles
+      set email_verified = true,
+          "updatedAt"    = now()
+      where id = ${userId}::uuid
+      returning id, email_verified
+    `;
+    return row || null;
+  }, 'setEmailVerified');
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
    6 · CHATS
    ═══════════════════════════════════════════════════════════════════════ */
 

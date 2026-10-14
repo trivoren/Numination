@@ -479,6 +479,36 @@ export const MIGRATIONS = Object.freeze([
       await sql`DROP TABLE IF EXISTS public.revoked_sessions`;
     },
   },
+
+  /* ───────────────────────────────────────────────────────────────
+     014 · Tokens de verificación de email (HIGH-002)
+     El endpoint /verify-email/confirm aceptaba cualquier token.
+     Ahora los tokens se persisten hasheados, con expiración y un
+     solo uso.
+     ─────────────────────────────────────────────────────────────── */
+  {
+    id: '2026_10_14_014_email_verification',
+    name: 'Email verification tokens table',
+    async up(sql) {
+      await sql`
+        CREATE TABLE IF NOT EXISTS public.email_verification_tokens (
+          id text PRIMARY KEY,
+          user_id uuid NOT NULL,
+          token_hash text UNIQUE NOT NULL,
+          expires_at timestamptz NOT NULL,
+          used_at timestamptz,
+          created_at timestamptz NOT NULL DEFAULT now()
+        )
+      `;
+      await sql`
+        CREATE INDEX IF NOT EXISTS email_verify_user_idx
+          ON public.email_verification_tokens (user_id)
+      `;
+    },
+    async down(sql) {
+      await sql`DROP TABLE IF EXISTS public.email_verification_tokens`;
+    },
+  },
 ]);
 
 /* ═══════════════════════════════════════════════════════════════════════

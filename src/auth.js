@@ -42,6 +42,10 @@ import {
   revokeSession,
   isSessionRevoked,
   bumpAuthVersion,
+  createEmailVerifyToken,
+  getValidEmailVerifyToken,
+  consumeEmailVerifyToken,
+  setEmailVerified,
 } from './services/supabase.js';
 
 import { revokeTokenCache, invalidateProfile } from './middleware/auth.js';
@@ -1040,7 +1044,9 @@ export function mountAuthRoutes(app) {
     }
   });
 
-  /* VERIFY EMAIL */
+  /* VERIFY EMAIL · HIGH-002: tokens reales de un solo uso.
+     El send persiste el sha256 del token con expiración; el confirm
+     lo valida, lo consume y marca email_verified. */
   app.post('/api/auth/verify-email/send', requireAuth, async (req, res) => {
     const ip = getClientIp(req);
     if (!enforceRate(res, `verif-send:${ip}`, 5, 60 * 60_000)) return;
@@ -1051,6 +1057,15 @@ export function mountAuthRoutes(app) {
       if (profile.email_verified) return res.json({ ok: true, alreadyVerified: true });
 
       const token = crypto.randomBytes(24).toString('hex');
+      const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+      const expiresAt = new Date(Date.now() + VERIFY_WINDOW_MIN * 60 * 1000);
+      try {
+        await createEmailVerifyToken(req.user.id, tokenHash, expiresAt);
+      } catch (e) {
+        // Sin persistencia el confirm posterior daría 400: se avisa y
+        // se sigue enviando para no romper el flujo (fail-open actual).
+        log('warn', 'auth.verify.persist.failed', { message: e.message }, req);
+      }
       const url = `${getAppUrl(req)}/verify-email?token=${token}`;
       await sendVerificationEmail(profile.email, url, profile.name);
       log('info', 'auth.verify.sent', { email: profile.email }, req);
@@ -1067,8 +1082,22 @@ export function mountAuthRoutes(app) {
 
     try {
       const { token } = req.body || {};
-      if (!token || typeof token !== 'string') return fail(res, 400, 'invalid_token', 'Token inválido.');
-      log('info', 'auth.verify.confirm.received', { token: token.slice(0, 8) + '…' }, req);
+      if (!token || typeof token !== 'string' || token.length > 256) {
+        return fail(res, 400, 'invalid_token', 'Token inválido.');
+      }
+      const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+      const row = await getValidEmailVerifyToken(tokenHash);
+      if (!row) {
+        log('warn', 'auth.verify.confirm.invalid', { token: token.slice(0, 8) + '…' }, req);
+        return fail(res, 400, 'invalid_token', 'Token inválido o expirado.');
+      }
+      const consumed = await consumeEmailVerifyToken(row.id);
+      if (!consumed) {
+        return fail(res, 400, 'invalid_token', 'Token inválido o expirado.');
+      }
+      await setEmailVerified(row.user_id);
+      log('info', 'auth.verify.confirm.ok', { userId: String(row.user_id).slice(0, 8) }, req);
+      audit('verify_email', { userId: row.user_id, ip });
       return res.json({ ok: true });
     } catch (err) {
       log('error', 'auth.verify.confirm.error', { message: err.message }, req);

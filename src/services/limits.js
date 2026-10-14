@@ -32,7 +32,8 @@
      LIMITS_FAIL_MODE = 'open' | 'closed'   (default: 'open')
                        'open'   = si Upstash no está, permitir todo
                        'closed' = si Upstash no está, bloquear todo
-     LIMITS_ANON_PER_MIN = número (default: 3)
+     LIMITS_ANON_PER_MIN = número (default: 1)
+     LIMITS_ANON_DAILY_BUDGET = número (default: 500 · techo diario global anon)
    ================================================================ */
 
 export const PLAN_LIMITS = Object.freeze({
@@ -50,7 +51,32 @@ const DAY_SECONDS = 86_400;
 const MONTH_SECONDS = 30 * DAY_SECONDS;
 
 const FAIL_MODE = (process.env.LIMITS_FAIL_MODE || 'open').toLowerCase();
-const ANON_PER_MIN = Math.max(1, parseInt(process.env.LIMITS_ANON_PER_MIN || '3', 10));
+// M-006 · anónimos más estrictos: 1/min por defecto (antes 3).
+const ANON_PER_MIN = Math.max(1, parseInt(process.env.LIMITS_ANON_PER_MIN || '1', 10));
+// M-006 · presupuesto diario GLOBAL para anónimos (todas las IPs).
+// Frena el drenaje de cuota de IA por rotación de IPs. En memoria por
+// instancia: en Vercel multi-instancia el techo real se multiplica por
+// N instancias (documentado; con Upstash se podría centralizar).
+const ANON_DAILY_BUDGET = Math.max(1, parseInt(process.env.LIMITS_ANON_DAILY_BUDGET || '500', 10));
+const anonDayCount = { day: null, count: 0 };
+
+function checkAnonBudget() {
+  const day = new Date().toISOString().slice(0, 10);
+  if (anonDayCount.day !== day) {
+    anonDayCount.day = day;
+    anonDayCount.count = 0;
+  }
+  if (anonDayCount.count >= ANON_DAILY_BUDGET) {
+    const midnight = new Date();
+    midnight.setUTCHours(24, 0, 0, 0);
+    return {
+      ok: false,
+      retryAfter: Math.max(1, Math.ceil((midnight.getTime() - Date.now()) / 1000)),
+    };
+  }
+  anonDayCount.count++;
+  return { ok: true };
+}
 
 /* ───────────────────────────────────────────────────────────────────
    LUA · cuenta todo y aplica TTL en una sola operación atómica
@@ -289,6 +315,31 @@ export async function verificarLimite(req, opts = {}) {
   const limits = isAnon
     ? { ...baseLimits, messagesPerMinute: Math.min(baseLimits.messagesPerMinute, ANON_PER_MIN) }
     : baseLimits;
+
+  // M-006 · techo diario global para anónimos (anti-drenaje de cuota).
+  // Solo en modo consume: el dry-run (lecturas) no gasta presupuesto.
+  if (isAnon && !opts.dryRun) {
+    const budget = checkAnonBudget();
+    if (!budget.ok) {
+      return {
+        permitido: false,
+        plan: limits.name,
+        restanteDia: 0,
+        restanteMin: 0,
+        limites: {
+          porDia: limits.messagesPerDay,
+          porMin: limits.messagesPerMinute,
+          porMinuto: limits.messagesPerMinute,
+          porBurst: limits.messagesPerBurst,
+        },
+        uso: { hoy: 0, dia: 0, minuto: 0, burst: 0, mes: 0 },
+        razon: 'anon_budget',
+        mensaje: 'Cupo diario de pruebas agotado. Creá una cuenta gratis para seguir.',
+        retryAfter: budget.retryAfter,
+        headers: buildHeaders({ limit: 0, remaining: 0, resetSeconds: budget.retryAfter }),
+      };
+    }
+  }
 
   const { keys } = buildKeys(req);
   const upstash = getUpstash();

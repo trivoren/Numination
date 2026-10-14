@@ -233,7 +233,8 @@ function normalizeProfile(row) {
     plan,
     auth_provider: row.auth_provider || null,
     auth_version: Number(row.auth_version ?? 1),
-    email_verified: row.email_verified !== false,
+    // M-002 · fail-closed: NULL/ausente = NO verificado (antes !== false).
+    email_verified: row.email_verified === true,
     password_hash: row.password_hash || null,
     last_login_at: row.last_login_at || null,
     created_at: row.created_at || row.createdAt || null,
@@ -367,6 +368,12 @@ export async function createProfile(arg1, arg2, arg3, arg4) {
   const avatarUrl = payload.picture || payload.avatarUrl || null;
   const provider = payload.auth_provider || payload.provider || 'google';
   const passwordHash = payload.password_hash || null;
+  // M-002 · si el caller afirma verificación explícita (OAuth Google),
+  // se respeta; si no, solo Google hereda verificado (compat), email y
+  // el resto nacen sin verificar.
+  const verified = payload.email_verified !== undefined
+    ? Boolean(payload.email_verified)
+    : provider !== 'email';
   const role = String(payload.role || 'USER').toUpperCase();
   const tier = String(payload.tier || 'FREE').toUpperCase();
 
@@ -386,7 +393,7 @@ export async function createProfile(arg1, arg2, arg3, arg4) {
         ${role},
         ${tier},
         ${provider},
-        ${provider !== 'email'},
+        ${verified},
         ${passwordHash},
         now(),
         now(),

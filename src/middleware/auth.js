@@ -71,9 +71,12 @@ const CFG = {
   impersonateHeader: 'x-impersonate-id',
   customTokenHeader: 'x-nm-token',
 
-  // Query (para SSE)
+  // Query (para SSE) · M-001: default DENEGADO. El token en la URL
+  // queda en logs de proxy, historial y Referer. Solo se habilita con
+  // AUTH_ALLOW_QUERY_TOKEN=true explícito (y aun así, úsese solo donde
+  // no haya alternativa, p. ej. EventSource sin cookies).
   queryTokenKey: 'token',
-  allowQueryToken: process.env.AUTH_ALLOW_QUERY_TOKEN !== 'false',
+  allowQueryToken: process.env.AUTH_ALLOW_QUERY_TOKEN === 'true',
 
   // Cache
   cache: {
@@ -1185,7 +1188,11 @@ async function selfTest() {
 
   const req3 = { headers: {}, cookies: {}, query: { token: 'abcdefghij1234567890abcdefghij1234567890' } };
   const t3 = extractToken(req3);
-  rec('extractToken query', t3?.source === 'query', t3);
+  // M-001 · default: query token DENEGADO salvo opt-in explícito.
+  const queryDefaultOff = CFG.allowQueryToken
+    ? t3?.source === 'query'
+    : t3 === null;
+  rec('extractToken query respeta allowQueryToken', queryDefaultOff, t3);
 
   const req4 = { headers: {}, cookies: {}, query: {} };
   rec('extractToken sin token', extractToken(req4) === null, true);

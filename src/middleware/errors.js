@@ -498,8 +498,10 @@ const SENSITIVE_PATTERNS = [
   /(password|token|secret)=([^&\s]+)/gi,
   // Cookies en headers
   /(cookie|authorization|api[-_]?key)["':\s]+[^"',\s]+/gi,
-  // Rutas absolutas del filesystem (filtra /Users/... y C:\Users\...)
-  /(?:[A-Za-z]:\\Users\\[^\\]+|\/(?:home|Users)\/[^\/\s]+)/g,
+  // Rutas absolutas del filesystem (filtra C:\Users\... y C:/Users/...,
+  // /Users/... y /home/...). El primer patrón acepta ambas barras porque
+  // los stacks de Node en Windows mezclan formatos (file:///C:/...).
+  /(?:[A-Za-z]:[\\/][Uu]sers[\\/][^\\/\\s]+|\/(?:home|Users)\/[^\/\s]+)/g,
 ];
 
 export function sanitizeForClient(text) {
@@ -641,10 +643,16 @@ export function requestIdMiddleware() {
  *
  * @param {object} opts
  * @param {boolean} opts.includeStack  · incluir stack en la respuesta (solo dev)
+ * @param {boolean} opts.includeStackForLocalOnly · si true, el stack solo sale
+ *   cuando la conexión TCP es realmente local (loopback). NOTA: se mira
+ *   req.socket.remoteAddress a propósito, NO req.ip, porque con
+ *   `trust proxy` el header X-Forwarded-For lo controla el cliente y un
+ *   atacante pediría stacks mandando X-Forwarded-For: 127.0.0.1.
  * @param {string}  opts.requestIdField · nombre del campo con request ID
  */
 export function errorMiddleware(opts = {}) {
   const includeStack = Boolean(opts.includeStack);
+  const localOnly = opts.includeStackForLocalOnly !== false;
   const requestIdField = opts.requestIdField || 'requestId';
 
   return (err, req, res, _next) => {
@@ -713,13 +721,21 @@ export function errorMiddleware(opts = {}) {
       body.retryAfter = appErr.retryAfter;
     }
 
-    // Stack en desarrollo
-    if (includeStack && appErr.stack) {
+    // Stack en desarrollo — y solo si el peer TCP es loopback.
+    if (includeStack && appErr.stack && (!localOnly || isLocalPeer(req))) {
       body.stack = shortStack(appErr.stack);
     }
 
     res.status(appErr.status).json(body);
   };
+}
+
+/**
+ * ¿La conexión viene de esta misma máquina? Mira el socket real, no headers.
+ */
+export function isLocalPeer(req) {
+  const addr = req?.socket?.remoteAddress || '';
+  return addr === '127.0.0.1' || addr === '::1' || addr === '::ffff:127.0.0.1';
 }
 
 /**

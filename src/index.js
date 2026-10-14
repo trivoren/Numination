@@ -861,11 +861,27 @@ app.set('trust proxy', 1);
 app.use(requestIdMiddleware());
 
 /* ─── 2 · Security headers ─── */
+// M-003 · CSP: 'unsafe-inline' en script/style es TEMPORAL (chat.html y
+// login.html usan <script>/<style> inline). TODO: externalizar el JS/CSS
+// inline y endurecer a script-src 'self' + nonces.
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' https://accounts.google.com",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: https:",
+  "connect-src 'self' https://*.supabase.co https://api.groq.com https://generativelanguage.googleapis.com",
+  "frame-src https://accounts.google.com",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'self'",
+].join('; ');
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'camera=(self), microphone=(self), geolocation=()');
+  res.setHeader('Content-Security-Policy', CSP);
   if (IS_PROD) {
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   }
@@ -2863,7 +2879,8 @@ app.post('/api/admin/backup/cron', async (req, res) => {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 app.use(notFoundMiddleware(publicDir));
-app.use(errorMiddleware({ includeStack: !IS_PROD }));
+// M-004 · stack solo en dev Y solo para peers loopback (ver errors.js).
+app.use(errorMiddleware({ includeStack: !IS_PROD, includeStackForLocalOnly: true }));
 
 /* ═══════════════════════════════════════════════════════════════════════════
    34 · BOOT · banner + server

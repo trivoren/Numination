@@ -125,6 +125,35 @@ const GITHUB_ENABLED = Boolean(GITHUB_CLIENT_ID && GITHUB_CLIENT_SECRET);
 if (!GITHUB_ENABLED) {
   console.warn('⚠️  GitHub OAuth no configurado (GITHUB_CLIENT_ID/SECRET faltantes)');
 }
+
+/* M-005 · state anti-CSRF para GitHub OAuth sin express-session.
+   Formato: <tsHex>.<randHex>.<hmacHex(ts.rand)> con JWT_SECRET.
+   Se emite en /api/auth/github (va como ?state= a github.com, que lo
+   devuelve intacto) y se verifica en el callback (firma + freshness
+   10 min). Sin JWT_SECRET configurado no hay state posible. */
+const OAUTH_STATE_TTL_MS = 10 * 60 * 1000;
+
+function issueOAuthState() {
+  if (!JWT_SECRET) return null;
+  const ts = Date.now().toString(16);
+  const rand = crypto.randomBytes(12).toString('hex');
+  const sig = crypto.createHmac('sha256', JWT_SECRET).update(`${ts}.${rand}`).digest('hex');
+  return `${ts}.${rand}.${sig}`;
+}
+
+function verifyOAuthState(state) {
+  if (!state || typeof state !== 'string' || !JWT_SECRET) return false;
+  const parts = state.split('.');
+  if (parts.length !== 3) return false;
+  const [ts, rand, sig] = parts;
+  if (!/^[0-9a-f]+$/.test(ts) || !/^[0-9a-f]+$/.test(rand) || !/^[0-9a-f]+$/.test(sig)) return false;
+  const age = Date.now() - parseInt(ts, 16);
+  if (!Number.isFinite(age) || age < 0 || age > OAUTH_STATE_TTL_MS) return false;
+  const expected = crypto.createHmac('sha256', JWT_SECRET).update(`${ts}.${rand}`).digest('hex');
+  try {
+    return crypto.timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(sig, 'hex'));
+  } catch { return false; }
+}
 if (!RESEND_API_KEY) {
   console.warn('ℹ️  RESEND_API_KEY no configurado → correos se loguean en consola');
 }
@@ -582,7 +611,7 @@ async function clearFailedAttempts(/* profile */) {
    12 · OPERACIONES DE USUARIO
    ══════════════════════════════════════════════════════════════════════════ */
 
-async function findOrCreateUser({ email, name, picture, provider = 'google', req = null }) {
+async function findOrCreateUser({ email, name, picture, provider = 'google', emailVerified = false, req = null }) {
   const key = String(email).toLowerCase();
   let profile = null;
   try { profile = await getProfileByEmail(key); }
@@ -603,7 +632,10 @@ async function findOrCreateUser({ email, name, picture, provider = 'google', req
     role: 'student',
     provider,
     auth_provider: provider,
-    email_verified: true,
+    // M-002 · solo se marca verificado si el proveedor lo afirma.
+    // Google lo afirma (y el handler rechaza tokens no verificados);
+    // GitHub/email nacen sin verificar hasta pasar por /verify-email.
+    email_verified: emailVerified === true,
   };
 
   try {
@@ -702,6 +734,8 @@ async function handleGoogleLogin(req, res) {
     name: payload.name,
     picture: payload.picture,
     provider: 'google',
+    // Google ya verificó este email (se rechazó !email_verified arriba).
+    emailVerified: true,
     req,
   });
 
@@ -799,9 +833,20 @@ export function mountAuthRoutes(app) {
   /* GITHUB */
   if (GITHUB_ENABLED) {
     app.get('/api/auth/github', (req, res, next) => {
-      passport.authenticate('github', { session: false, callbackURL: getCallbackUrl(req) })(req, res, next);
+      // M-005 · state anti-CSRF (HMAC propio, sin sesión de servidor).
+      const state = issueOAuthState();
+      passport.authenticate('github', {
+        session: false,
+        callbackURL: getCallbackUrl(req),
+        ...(state ? { state } : {}),
+      })(req, res, next);
     });
     app.get('/api/auth/github/callback', (req, res, next) => {
+      // M-005 · rechazar callback sin state válido (login CSRF).
+      if (!verifyOAuthState(req.query.state)) {
+        log('warn', 'auth.github.callback.bad_state', {}, req);
+        return res.redirect('/login?error=state');
+      }
       passport.authenticate(
         'github',
         { session: false, callbackURL: getCallbackUrl(req) },
@@ -873,7 +918,8 @@ export function mountAuthRoutes(app) {
         role: 'student',
         provider: 'email',
         auth_provider: 'email',
-        email_verified: true,
+        // M-002 · nace SIN verificar (antes: true sin verificar nada).
+        email_verified: false,
         password_hash: hashPassword(password),
       };
 

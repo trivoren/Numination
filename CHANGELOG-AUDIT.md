@@ -88,3 +88,60 @@ sin verificar nada (PoC: `{"token":"cualquiera"}` → 200).
   como antes) pero el confirm dará 400 con "solicitá un nuevo link".
 - Sin `RESEND_API_KEY` los mails solo se loguean (dev) — igual que
   antes; no exponer esos logs.
+
+---
+
+## FASE 3 · MEDIUMs baratos ✅
+
+**Commit:** `fix(audit): MEDIUMs - query token, email verified, CSP,
+stack, OAuth state, chat anon`
+
+**3.1 · M-001 · query-token denegado por defecto** (`middleware/auth.js`)
+- `allowQueryToken` ahora exige `AUTH_ALLOW_QUERY_TOKEN=true`
+  explícito (antes `!== 'false'`). Verificado: ningún lector SSE ni
+  frontend usa `?token=` de sesión (solo el token de un solo uso de
+  verify-email en URL, no afectado).
+- Self-test interno actualizado al nuevo default.
+- Vivo: JWT válido por `?token=` sin cookie → 401 (antes 200) ✅
+
+**3.2 · M-002 · email_verified fail-closed** (`auth.js`, `supabase.js`)
+- Signup email: `false`. OAuth Google: `true` (Google lo afirma y el
+  handler rechaza `!email_verified`); GitHub: `false` (sin señal
+  fiable; el fallback `@github.local` nunca es verificado).
+- `createProfile` respeta `payload.email_verified` explícito.
+- `normalizeProfile`: `=== true` (antes `!== false` que hacía NULL →
+  verificado).
+- Vivo: signup → DB `email_verified=false` ✅
+
+**3.3 · M-003 · CSP** (`index.js`, `vercel.json`)
+- Header `Content-Security-Policy` en ambas capas. `unsafe-inline` en
+  script/style es TEMPORAL con TODO (hay inline en chat/login).
+  Verificado con curl en `/login` ✅
+
+**3.4 · M-004 · stack traces** (`errors.js`, `index.js`)
+- `errorMiddleware` acepta `includeStackForLocalOnly` (default true):
+  el stack solo sale si el peer TCP es loopback, mirando
+  `socket.remoteAddress` — NO `req.ip` (spoofeable con trust proxy).
+- Regex de redacción ampliado a `C:/Users/...` con slashes (los stacks
+  de Node mezclan formatos). Vivo: `file:///[REDACTED]/Desktop/...`
+  (el usuario del SO ya no filtra) ✅
+
+**3.5 · M-005 · GitHub OAuth state** (`auth.js`)
+- State HMAC propio (`ts.rand.hmac`, TTL 10 min, `timingSafeEqual`),
+  sin express-session (dependencia nueva evitada a propósito).
+- `/api/auth/github` lo envía (passport lo propaga: verificado en el
+  `Location: ...&state=...` vivo ✅); el callback sin state válido →
+  `/login?error=state` (verificado vivo ✅).
+- Sin `JWT_SECRET` no hay state posible (se omite; logueado en
+  diagnóstico de arranque si falta).
+
+**3.6 · M-006 · chat anónimo** (`limits.js`, sin exigir auth por
+decisión de producto)
+- `LIMITS_ANON_PER_MIN` default 3 → 1. Vivo: `verificarLimite` anon →
+  `porMin: 1` ✅
+- Presupuesto diario global anon (`LIMITS_ANON_DAILY_BUDGET`, default
+  500): excedido → denegado con `razon: 'anon_budget'` y mensaje que
+  invita a crear cuenta. En memoria por instancia (multi-instancia
+  multiplica el techo; documentado — centralizar en Upstash a futuro).
+- NO implementado: captcha (3.6a, requiere proveedor/claves). Queda
+  como recomendación en REPORTE-FIXES.md.

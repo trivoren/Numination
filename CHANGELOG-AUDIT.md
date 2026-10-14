@@ -186,3 +186,29 @@ server, mensajes unificados`
   ya no filtra "Google vs GitHub".
 - Vivo: signup duplicado email → `email_taken` genérico ✅ (rama
   OAuth verificada solo por código, sin OAuth local).
+
+---
+
+## FASE 5 · Tests de regresión ✅
+
+**Commit:** `test(audit): regression tests de los fixes`
+
+**Archivo:** `tests/audit-regression.test.js` (primero del repo; `npm
+test` antes no tenía qué correr — `node --test tests/` además falla
+en Windows con MODULE_NOT_FOUND; usar `node --test "tests/*.test.js"`
+o `npm test`).
+
+**Cobertura (14 tests, todos pasando):**
+- Unitarios sin server (6): stack gating del errorMiddleware
+  (off/remoto/local), redacción `C:/Users`, `stripTags`, anon
+  `porMin=1`.
+- Integración HTTP contra server vivo + DB real (8): signup no
+  verificado, query-token→401, signup duplicado sin proveedor,
+  verify falso→400, CSP, health mínimo, bad JSON→400+requestId,
+  logout→revocado (session + chats 401).
+- El suite crea UN solo usuario por run (email con timestamp) y lo
+  borra en `after()` vía login fresco + `DELETE /api/auth/account`.
+- Si no hay server en `AUDIT_BASE_URL` (default `:8080`), el `before()`
+  falla con el comando exacto para levantarlo.
+
+**Resultado:** `ℹ pass 14 · fail 0` ✅

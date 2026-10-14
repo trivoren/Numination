@@ -437,6 +437,48 @@ export const MIGRATIONS = Object.freeze([
       await sql`DROP VIEW IF EXISTS public.user_stats`;
     },
   },
+
+  /* ───────────────────────────────────────────────────────────────
+     013 · Revocación de sesiones server-side (HIGH-001)
+     Tabla denylist de JTIs revocados + garantiza auth_version.
+     Sin esto, el logout es solo cliente y el JWT vive 30 días.
+     ─────────────────────────────────────────────────────────────── */
+  {
+    id: '2026_10_14_013_session_revocation',
+    name: 'Revoked sessions denylist for server-side logout',
+    async up(sql) {
+      await sql`
+        CREATE TABLE IF NOT EXISTS public.revoked_sessions (
+          jti text PRIMARY KEY,
+          user_id uuid NOT NULL,
+          expires_at timestamptz NOT NULL,
+          revoked_at timestamptz NOT NULL DEFAULT now()
+        )
+      `;
+      await sql`
+        CREATE INDEX IF NOT EXISTS revoked_sessions_user_idx
+          ON public.revoked_sessions (user_id)
+      `;
+      await sql`
+        CREATE INDEX IF NOT EXISTS revoked_sessions_expires_idx
+          ON public.revoked_sessions (expires_at)
+      `;
+      // auth_version ya lo crea 001, pero IF NOT EXISTS por si el schema
+      // se creó a mano sin migraciones.
+      await sql`
+        ALTER TABLE public.profiles
+          ADD COLUMN IF NOT EXISTS auth_version integer DEFAULT 1
+      `;
+      await sql`
+        UPDATE public.profiles
+        SET auth_version = 1
+        WHERE auth_version IS NULL
+      `;
+    },
+    async down(sql) {
+      await sql`DROP TABLE IF EXISTS public.revoked_sessions`;
+    },
+  },
 ]);
 
 /* ═══════════════════════════════════════════════════════════════════════

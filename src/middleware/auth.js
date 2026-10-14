@@ -513,6 +513,22 @@ async function verifyToken(token) {
     throw new AuthError(code, 'Sesión inválida o expirada');
   }
 
+  // HIGH-001 · denylist server-side: un jti revocado (logout) invalida
+  // el JWT aunque la firma sea válida y no haya expirado.
+  // Sin DB → fail-open (igual que loadProfile): se loguea y se sigue.
+  if (payload.jti) {
+    try {
+      const { isSessionRevoked } = await import('../services/supabase.js');
+      if (await isSessionRevoked(payload.jti)) {
+        invalidTokenCache.set(hash, true, CFG.cache.invalidTokens.ttlMs);
+        throw new AuthError(ERR.SESSION_REVOKED, 'Sesión revocada. Volvé a iniciar sesión.');
+      }
+    } catch (e) {
+      if (e instanceof AuthError) throw e;
+      LOG.warn('revocation check falló (fail-open):', e.message);
+    }
+  }
+
   const user = {
     id: String(payload.sub),
     email: payload.email || null,
@@ -520,6 +536,7 @@ async function verifyToken(token) {
       ? String(payload.role).toLowerCase()
       : 'student',
     plan: 'free',
+    ver: Number(payload.ver || 1),
     user_metadata: payload.user_metadata || {},
     app_metadata: {},
     created_at: payload.iat ? new Date(payload.iat * 1000).toISOString() : new Date().toISOString(),
@@ -639,6 +656,15 @@ export async function attachUser(req, res, next) {
     const { user: rawUser, fromCache } = await verifyToken(extracted.value);
     const profile = await loadProfile(rawUser.id);
     const user = normalizeUser(rawUser, profile);
+
+    // HIGH-001 · logout-all: si la DB tiene auth_version mayor que el
+    // `ver` firmado en el JWT, todas las sesiones viejas están revocadas.
+    const tokenVer = Number(rawUser?.ver || 1);
+    const dbVer = profile ? Number(profile.auth_version ?? tokenVer) : tokenVer;
+    if (profile && dbVer > tokenVer) {
+      sessionCache.delete(hashToken(extracted.value));
+      throw new AuthError(ERR.SESSION_REVOKED, 'Sesión revocada. Volvé a iniciar sesión.');
+    }
 
     const fp = fingerprint(req);
 
@@ -1087,6 +1113,21 @@ export function invalidateProfile(userId) {
   return profileCache.delete(userId);
 }
 
+/**
+ * HIGH-001 · Borra un token concreto de las caches de sesión.
+ * Lo llama el endpoint de logout DESPUÉS de insertar el jti en la
+ * denylist, para que la revocación sea inmediata en esta instancia
+ * (sin esperar los 30s de TTL). Las demás instancias lo ven vía DB.
+ * Devuelve true si había una entrada cacheada.
+ */
+export function revokeTokenCache(token) {
+  if (!token || typeof token !== 'string') return false;
+  const hash = hashToken(token);
+  const had = sessionCache.delete(hash);
+  invalidTokenCache.delete(hash);
+  return had;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    25 · VERIFY TOKEN (público · para uso externo)
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -1303,6 +1344,7 @@ export const AUTH = {
   verifyToken: verifyRawToken,
   invalidateSession,
   invalidateProfile,
+  revokeTokenCache,
   issueApiKey,
 
   // Config

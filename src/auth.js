@@ -39,7 +39,12 @@ import {
   getProfileByResetToken,
   clearResetToken,
   deleteProfile,
+  revokeSession,
+  isSessionRevoked,
+  bumpAuthVersion,
 } from './services/supabase.js';
+
+import { revokeTokenCache, invalidateProfile } from './middleware/auth.js';
 
 /* ══════════════════════════════════════════════════════════════════════════
    1 · CONFIGURACIÓN
@@ -438,6 +443,12 @@ function issueSession(res, user, remember = true) {
 async function loadSession(token) {
   const payload = verifySession(token);
   if (!payload) return null;
+  // HIGH-001 · denylist server-side (logout). Sin DB → fail-open.
+  if (payload.jti) {
+    try {
+      if (await isSessionRevoked(payload.jti)) return null;
+    } catch { /* fail-open, se loguea en la capa sb */ }
+  }
   let profile = null;
   try { profile = await getProfileFull(payload.sub); } catch {}
   if (profile && Number(profile.auth_version || 1) > Number(payload.ver || 1)) {
@@ -1092,6 +1103,14 @@ export function mountAuthRoutes(app) {
     const payload = verifySession(token);
     if (!payload) return res.json({ ok: true, authenticated: false });
 
+    // HIGH-001 · el JWT puede tener firma válida pero estar revocado.
+    let revoked = false;
+    if (payload.jti) {
+      try { revoked = await isSessionRevoked(payload.jti); }
+      catch { revoked = false; }
+    }
+    if (revoked) return res.json({ ok: true, authenticated: false, revoked: true });
+
     let profile = null;
     try { profile = await getProfileFull(payload.sub); } catch {}
 
@@ -1123,16 +1142,63 @@ export function mountAuthRoutes(app) {
     return res.json({ authenticated: Boolean(s) });
   });
 
-  /* LOGOUT */
-  app.post('/api/auth/logout', (req, res) => {
+  /* LOGOUT · HIGH-001: revoca el JWT en el servidor, no solo la cookie.
+     1) lee el token actual (si es válido, extrae jti/sub/exp)
+     2) inserta el jti en revoked_sessions (best-effort: si la DB cae,
+        el logout sigue borrando la cookie, como antes)
+     3) purga el token de las caches del middleware (inmediatez local)
+     4) borra la cookie */
+  app.post('/api/auth/logout', async (req, res) => {
+    try {
+      const token = readSessionCookie(req);
+      if (token) {
+        const payload = verifySession(token);
+        if (payload?.jti && payload?.sub) {
+          const exp = payload.exp
+            ? new Date(payload.exp * 1000)
+            : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+          try {
+            await revokeSession(payload.jti, payload.sub, exp);
+          } catch (e) {
+            log('warn', 'auth.logout.revoke.failed', { message: e.message }, req);
+          }
+        } else if (payload && !payload.jti) {
+          // Token legacy sin jti: no se puede revocar por denylist.
+          log('warn', 'auth.logout.no_jti', {}, req);
+        }
+        try { revokeTokenCache(token); } catch {}
+      }
+    } catch (e) {
+      log('warn', 'auth.logout.error', { message: e.message }, req);
+    }
     clearSessionCookie(res);
     audit('logout', { ip: getClientIp(req) });
     return res.json({ ok: true });
   });
 
-  /* LOGOUT ALL */
+  /* LOGOUT ALL · bump de auth_version: mata TODAS las sesiones del user
+     en todas las instancias (el `ver` firmado queda viejo). */
   app.post('/api/auth/logout-all', requireAuth, async (req, res) => {
     try {
+      const token = readSessionCookie(req);
+      if (token) {
+        const payload = verifySession(token);
+        if (payload?.jti && payload?.sub) {
+          try {
+            await revokeSession(payload.jti, payload.sub,
+              payload.exp ? new Date(payload.exp * 1000) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000));
+          } catch (e) {
+            log('warn', 'auth.logout_all.revoke.failed', { message: e.message }, req);
+          }
+        }
+        try { revokeTokenCache(token); } catch {}
+      }
+      try {
+        await bumpAuthVersion(req.user.id);
+      } catch (e) {
+        log('warn', 'auth.logout_all.bump.failed', { message: e.message }, req);
+      }
+      try { invalidateProfile(req.user.id); } catch {}
       clearSessionCookie(res);
       log('info', 'auth.logout_all', { email: req.user.email }, req);
       audit('logout_all', { email: req.user.email, ip: getClientIp(req) });

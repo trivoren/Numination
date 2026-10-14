@@ -232,6 +232,7 @@ function normalizeProfile(row) {
     tier: tierRaw,
     plan,
     auth_provider: row.auth_provider || null,
+    auth_version: Number(row.auth_version ?? 1),
     email_verified: row.email_verified !== false,
     password_hash: row.password_hash || null,
     last_login_at: row.last_login_at || null,
@@ -281,6 +282,7 @@ export async function getProfileFull(userId) {
              "avatarUrl"   as picture,
              role, tier,
              auth_provider,
+             auth_version,
              email_verified,
              password_hash,
              last_login_at,
@@ -618,6 +620,67 @@ export async function clearResetToken(userId) {
     `;
     return profilePublic(row);
   }, 'clearResetToken');
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   5b · REVOCACIÓN DE SESIONES (HIGH-001)
+   ─────────────────────────────────────────────────────────────────────
+   Denylist de JTIs en public.revoked_sessions (migración
+   2026_10_14_013). El logout inserta el jti; toda validación de
+   sesión lo consulta. Sin DB (sql null) → fail-open (false), igual
+   que el resto de la capa: sin base no se puede revocar.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+function cleanJti(jti) {
+  if (typeof jti !== 'string') return null;
+  const v = jti.trim().slice(0, 64);
+  return /^[A-Za-z0-9_-]+$/.test(v) ? v : null;
+}
+
+export async function revokeSession(jti, userId, expiresAt) {
+  const clean = cleanJti(jti);
+  if (!sql || !clean || !isUuid(userId)) return false;
+  const exp = expiresAt instanceof Date ? expiresAt : new Date(expiresAt);
+  if (!Number.isFinite(exp.getTime())) return false;
+  const ok = await withRetry(async () => {
+    await sql`
+      insert into public.revoked_sessions (jti, user_id, expires_at)
+      values (${clean}, ${userId}::uuid, ${exp})
+      on conflict (jti) do nothing
+    `;
+    // Limpieza oportunista: la tabla solo crece con logouts.
+    await sql`delete from public.revoked_sessions where expires_at < now()`;
+    return true;
+  }, 'revokeSession');
+  return Boolean(ok);
+}
+
+export async function isSessionRevoked(jti) {
+  const clean = cleanJti(jti);
+  if (!sql || !clean) return false;
+  const r = await withRetry(async () => {
+    const [row] = await sql`
+      select jti from public.revoked_sessions
+      where jti = ${clean} and expires_at > now()
+      limit 1
+    `;
+    return row ? true : false;
+  }, 'isSessionRevoked');
+  return r === true;
+}
+
+export async function bumpAuthVersion(userId) {
+  if (!sql || !isUuid(userId)) return null;
+  return withRetry(async () => {
+    const [row] = await sql`
+      update public.profiles
+      set auth_version = coalesce(auth_version, 1) + 1,
+          "updatedAt"  = now()
+      where id = ${userId}::uuid
+      returning auth_version
+    `;
+    return row ? Number(row.auth_version) : null;
+  }, 'bumpAuthVersion');
 }
 
 /* ═══════════════════════════════════════════════════════════════════════

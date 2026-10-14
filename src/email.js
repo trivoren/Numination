@@ -300,8 +300,8 @@ function baseLayout({ title, preheader, content, cta, ctaUrl, footerNote }) {
     <p style="margin:0;font-size:13px;line-height:1.6;color:#6b6b70;text-align:center;letter-spacing:-0.005em;">${footerNote || 'Numination · La IA que habla el idioma de nuestra educación'}</p>
     <p style="margin:8px 0 0;font-size:12px;line-height:1.5;color:#a0a0a3;text-align:center;">
       <a href="${CFG.APP_URL}" style="color:#a0a0a3;text-decoration:underline;">numination.app</a>
-      · <a href="${CFG.APP_URL}/terminos.html" style="color:#a0a0a3;text-decoration:underline;">Términos</a>
-      · <a href="${CFG.APP_URL}/privacidad.html" style="color:#a0a0a3;text-decoration:underline;">Privacidad</a>
+      · <a href="${CFG.APP_URL}/terminos" style="color:#a0a0a3;text-decoration:underline;">Términos</a>
+      · <a href="${CFG.APP_URL}/privacidad" style="color:#a0a0a3;text-decoration:underline;">Privacidad</a>
     </p>
   </td></tr>
 </table>
@@ -339,9 +339,9 @@ const Templates = {
           <p style="margin:0;">Cualquier duda, respondé este correo y te contestamos.</p>
         `,
         cta: 'Empezar ahora',
-        ctaUrl: `${CFG.APP_URL}/chat.html`,
+        ctaUrl: `${CFG.APP_URL}/chat`,
       }),
-      text: `¡Bienvenido a Numination!\n\nTu cuenta (${email}) está lista. Empezá en ${CFG.APP_URL}/chat.html\n\n— El equipo de Numination`,
+      text: `¡Bienvenido a Numination!\n\nTu cuenta (${email}) está lista. Empezá en ${CFG.APP_URL}/chat\n\n— El equipo de Numination`,
     };
   },
 
@@ -401,7 +401,7 @@ const Templates = {
           <p style="margin:0;color:#dc2626;"><strong>Si NO fuiste vos</strong>, cambiá tu contraseña inmediatamente y escribinos a <a href="mailto:seguridad@numination.app">seguridad@numination.app</a>.</p>
         `,
         cta: 'Ver mi cuenta',
-        ctaUrl: `${CFG.APP_URL}/login.html`,
+        ctaUrl: `${CFG.APP_URL}/login`,
       }),
       text: `Tu contraseña se cambió ${fecha}. Si no fuiste vos, escribí a seguridad@numination.app`,
     };
@@ -428,7 +428,7 @@ const Templates = {
           <p style="margin:0;">Si fuiste vos, no hagas nada. Si no reconocés esta actividad, cambiá tu contraseña ya mismo.</p>
         `,
         cta: 'Revisar seguridad',
-        ctaUrl: `${CFG.APP_URL}/reset-password.html`,
+        ctaUrl: `${CFG.APP_URL}/reset-password`,
       }),
       text: `Nuevo inicio de sesión: ${fecha}${ip ? ` desde ${ip}` : ''}`,
     };
@@ -484,9 +484,9 @@ const Templates = {
           <p style="margin:0;">Seguí así, cada pregunta te acerca a entender algo nuevo.</p>
         `,
         cta: 'Seguir aprendiendo',
-        ctaUrl: `${CFG.APP_URL}/chat.html`,
+        ctaUrl: `${CFG.APP_URL}/chat`,
       }),
-      text: `Tu semana: ${chats} chats · ${mensajes} mensajes · ${memorias} memorias\n\nEntrá: ${CFG.APP_URL}/chat.html`,
+      text: `Tu semana: ${chats} chats · ${mensajes} mensajes · ${memorias} memorias\n\nEntrá: ${CFG.APP_URL}/chat`,
     };
   },
 
@@ -695,7 +695,7 @@ export function mountEmailRoutes(app, requireAuth) {
         data: {
           name: req.user.name || '',
           email: target,
-          url: `${CFG.APP_URL}/chat.html`,
+          url: `${CFG.APP_URL}/chat`,
           when: new Date().toISOString(),
           ip: req.ip,
           agent: req.get('user-agent'),
@@ -802,7 +802,7 @@ export function mountEmailRoutes(app, requireAuth) {
     const sampleData = {
       name: 'Robinson',
       email: 'robinson@ejemplo.com',
-      url: `${CFG.APP_URL}/reset-password.html?token=demo-token`,
+      url: `${CFG.APP_URL}/reset-password?token=demo-token`,
       when: new Date().toISOString(),
       ip: '190.25.14.88',
       agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',

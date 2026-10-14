@@ -1839,7 +1839,7 @@ async function api(path, opts = {}) {
 
     if (res.status === 401) {
       Toast.error('Sesión expirada', 'Volvé a iniciar sesión');
-      setTimeout(() => location.href = '/login.html', 1200);
+      setTimeout(() => location.href = '/login', 1200);
       throw new Error('session_expired');
     }
     if (res.status === 403) {
@@ -3797,7 +3797,7 @@ Views.settings = {
       try {
         await api('/api/auth/logout-all', { method: 'POST' });
         Toast.ok('Sesiones cerradas');
-        setTimeout(() => location.href = '/login.html', 800);
+        setTimeout(() => location.href = '/login', 800);
       } catch (e) { Toast.err('Error', e.message); }
     });
 
@@ -3913,12 +3913,12 @@ async function initUser() {
   try {
     const data = await api('/api/auth/me');
     if (!data?.ok || !data.user) {
-      location.href = '/login.html';
+      location.href = '/login';
       return null;
     }
     if (String(data.user.role).toLowerCase() !== 'admin') {
       Toast.err('Sin permisos', 'Necesitás rol admin para acceder');
-      setTimeout(() => location.href = '/chat.html', 1500);
+      setTimeout(() => location.href = '/chat', 1500);
       return null;
     }
     state.user = data.user;
@@ -4038,7 +4038,7 @@ function initLogout() {
     try {
       await api('/api/auth/logout', { method: 'POST' });
     } catch {}
-    location.href = '/login.html';
+    location.href = '/login';
   });
 }
 

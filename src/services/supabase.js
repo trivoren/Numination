@@ -437,7 +437,7 @@ export async function updateProfile(userId, patch = {}) {
                 email_verified,
                 last_login_at,
                 "createdAt" as created_at,
-                "UpdatedAt" as updated_at
+                "updatedAt" as updated_at
     `;
     return profilePublic(row);
   }, 'updateProfile');

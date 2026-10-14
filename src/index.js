@@ -1,4 +1,4 @@
-﻿/* ═══════════════════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════════════════
    NUMINATION · index.js · v10.0
    ─────────────────────────────────────────────────────────────────────────
    Orquestador completo: Web Search + Images + Tools + Memory + Attachments.
@@ -265,6 +265,15 @@ import { mountMemoryRoutes } from './memories.js';
 import { mountSkillsRoutes } from './skills.js';
 import { mountConnectorRoutes } from './connectors.js';
 import { mountEmailRoutes } from './email.js';
+
+/* ═══ NUMINATION LIBS · v1.0 · auto-inyectado ═══ */
+import { ipGuard, rateLimit as ipRateLimit, blockCountries } from './middleware/ip-guard.js';
+import { middleware as validateBody, SCHEMAS } from './lib/validators.js';
+import { cache, cacheMiddleware } from './lib/cache.js';
+import { createQueue, queueManager } from './lib/queue.js';
+import { http } from './lib/http.js';
+/* ═══ /NUMINATION LIBS ═══ */
+
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, '..', 'public');
@@ -909,6 +918,18 @@ app.use(express.json({ limit: CFG.jsonLimit }));
 app.use(express.urlencoded({ extended: false, limit: CFG.urlencodedLimit }));
 app.use(cookieParser());
 
+/* IP Guard · rate limiting global (opt-out con IP_GUARD=false) */
+if (process.env.IP_GUARD !== 'false') {
+  app.use(ipGuard({
+    rateLimit: true,
+    countries: process.env.IP_COUNTRY_BLOCK === 'true',
+    tor: process.env.IP_BLOCK_TOR === 'true',
+    vpn: process.env.IP_BLOCK_VPN === 'true',
+    ban: true,
+  }));
+}
+
+
 /* ─── 6 · AUTH (middleware nuevo con cache + circuit breaker) ─── */
 app.use(attachUser);
 
@@ -923,15 +944,23 @@ app.use(rateLimitUser({
   skipPaths: ['/api/health', '/api/version', '/api/ping'],
 }));
 
-/* ─── 10 · Proteger /chat.html ─── */
+/* ─── 10 · Proteger /chat + /chat.html y /coder + /coder.html ─── */
 app.use((req, res, next) => {
-  if (req.path === '/chat.html' && !req.user) return res.redirect('/login.html');
+  if ((req.path === '/chat' || req.path === '/chat.html' || req.path === '/coder' || req.path === '/coder.html') && !req.user) return res.redirect('/login');
+
+  // Admin: sin sesion -> login | sesion no-admin -> chat
+  if (req.path === '/admin' || req.path === '/admin.html') {
+    if (!req.user) return res.redirect('/login');
+    if (req.user.role !== 'admin') return res.redirect('/chat');
+  }
+
   next();
 });
 
 /* ─── 11 · Static files ─── */
 app.use(express.static(publicDir, {
   index: false,
+    extensions: ['html'],
   maxAge: IS_PROD ? '1h' : 0,
   etag: true,
   lastModified: true,
@@ -943,7 +972,7 @@ app.use(express.static(publicDir, {
 }));
 
 /* ─── 12 · Root redirect ─── */
-app.get('/', (req, res) => res.redirect('/login.html'));
+app.get('/', (req, res) => res.redirect('/login'));
 
 /* ═══════════════════════════════════════════════════════════════════════════
    15 · ROUTERS EXISTENTES
@@ -954,110 +983,14 @@ app.get('/', (req, res) => res.redirect('/login.html'));
 
 
 /* ═══════════════════════════════════════════════════════════════════════
-   INTERCEPTOR GLOBAL · v6 · consulta user real de la DB
+   FIX-NUM-2026 · INTERCEPTOR v6 ELIMINADO
+   - Aceptaba JWT decodificados SIN verificar la firma.
+   - Sin token, buscaba el PRIMER perfil de la DB y dejaba pasar la request
+     como ese usuario (account takeover).
+   - Generaba UUIDs sintéticos / admin hardcodeado.
+   La sesión ahora la resuelve attachUser (middleware/auth.js) verificando
+   la firma real. Sin sesión válida → req.user = null (nunca un usuario falso).
    ═══════════════════════════════════════════════════════════════════════ */
-let _cachedDebugUserId = null;
-
-app.use(async (req, res, next) => {
-  if (req.user) return next();
-
-  try {
-    const rawCookie = req.headers.cookie || '';
-    const match = rawCookie.match(/nm-session=([^;]+)/);
-    const token = match ? decodeURIComponent(match[1]) : null;
-
-    let userId = null;
-    let userEmail = null;
-    let userRole = 'student';
-
-    // 1. Intentar JWT del token
-    if (token) {
-      const parts = String(token).split('.');
-      if (parts.length === 3) {
-        try {
-          const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf-8'));
-          if (payload.sub) {
-            userId = payload.sub;
-            userEmail = payload.email || null;
-            userRole = payload.role || 'student';
-            console.log('[interceptor/v6] JWT OK · sub=' + userId.slice(0, 8));
-          }
-        } catch (e) {
-          console.log('[interceptor/v6] JWT decode falló:', e.message);
-        }
-      }
-    }
-
-    // 2. Si no hay userId, buscar uno real en la DB
-    if (!userId) {
-      console.log('[interceptor/v6] sin user válido, buscando en DB...');
-
-      // Usar cache si existe
-      if (_cachedDebugUserId) {
-        userId = _cachedDebugUserId.id;
-        userEmail = _cachedDebugUserId.email;
-        userRole = _cachedDebugUserId.role;
-        console.log('[interceptor/v6] usando user cacheado:', userId.slice(0, 8));
-      } else {
-        try {
-          // Importar supabase client
-          const sbUrl = process.env.SUPABASE_URL;
-          const sbKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
-
-          if (sbUrl && sbKey) {
-            const { createClient } = await import('@supabase/supabase-js');
-            const sb = createClient(sbUrl, sbKey, { auth: { persistSession: false } });
-
-            // Buscar el primer perfil
-            const { data: profiles, error } = await sb
-              .from('profiles')
-              .select('id, email, role')
-              .limit(1);
-
-            if (!error && profiles && profiles.length > 0) {
-              userId = profiles[0].id;
-              userEmail = profiles[0].email || 'user@numination.app';
-              userRole = profiles[0].role || 'student';
-              _cachedDebugUserId = { id: userId, email: userEmail, role: userRole };
-              console.log('[interceptor/v6] ✓ user real de DB:', userId.slice(0, 8), userEmail);
-            } else if (error) {
-              console.log('[interceptor/v6] DB error:', error.message);
-            }
-          }
-        } catch (e) {
-          console.log('[interceptor/v6] DB lookup falló:', e.message);
-        }
-      }
-    }
-
-    // 3. Si aún no hay, generar UUID v4 válido (no rompe FK de Chat si no hay FK constraint)
-    if (!userId) {
-      // UUID v4 válido pero aleatorio
-      userId = '00000000-0000-4000-8000-' + String(Date.now()).padStart(12, '0').slice(-12);
-      userEmail = 'debug@numination.app';
-      userRole = 'admin';
-      console.log('[interceptor/v6] usando UUID sintético:', userId);
-    }
-
-    req.user = {
-      id: userId,
-      email: userEmail,
-      role: userRole,
-      plan: 'team',
-      user_metadata: { name: userEmail ? userEmail.split('@')[0] : 'User' },
-      _interceptor: true,
-    };
-    req.userId = req.user.id;
-  } catch (e) {
-    console.error('[interceptor/v6] error:', e.message);
-    // Fallback UUID válido
-    const fallbackId = '00000000-0000-4000-8000-000000000001';
-    req.user = { id: fallbackId, email: 'fallback@numination.app', role: 'admin', plan: 'team' };
-    req.userId = fallbackId;
-  }
-
-  next();
-});
 
 mountAuthRoutes(app);
 mountChatRoutes(app, requireAuth);

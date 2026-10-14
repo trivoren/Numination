@@ -856,8 +856,8 @@ a { color: inherit; text-decoration: none; }
     TOAST_ERROR_MS: 5200,
     MAX_TOASTS: 4,
     API_TIMEOUT_MS: 15000,
-    SAFE_REDIRECTS: ['/chat.html', '/verify-email.html', '/reset-password.html', '/login.html'],
-    DEFAULT_REDIRECT: '/chat.html'
+    SAFE_REDIRECTS: ['/chat', '/verify-email', '/reset-password', '/login'],
+    DEFAULT_REDIRECT: '/chat'
   };
 
   /* ═══════════════════════════════════════════════════════════
@@ -878,7 +878,7 @@ a { color: inherit; text-decoration: none; }
     safeJson: function(res){ return res.json().catch(function(){ return null; }); },
     safeRedirect: function(path, fallback){
       var target = Config.SAFE_REDIRECTS.indexOf(path) !== -1 ? path : (fallback || Config.DEFAULT_REDIRECT);
-      window.location.replace(target);
+      if (target && target !== location.pathname && target !== location.pathname + location.search) { var _t=target,_c=location.pathname,_cs=_c+location.search;var _wr=_t&&typeof _t==='string'&&_t.charAt(0)==='/'&&_t.charAt(1)!=='/'&&_t!==_c&&_t!==_cs;try{console.log('[NM-REDIRECT]',_t,'from',_c,'willRedirect=',_wr);}catch(e){}if(_wr){window.location.href=_t;} }
     },
     uid: function(){ return 't_' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); },
     isValidEmail: function(v){
@@ -1045,17 +1045,17 @@ a { color: inherit; text-decoration: none; }
      POST-LOGIN ROUTER
      ═══════════════════════════════════════════════════════════ */
   function routeAfterAuth(user){
-    if(!user){ Utils.safeRedirect('/chat.html'); return; }
+    if(!user){ Utils.safeRedirect('/chat'); return; }
 
     if(user.emailVerified === false){
       try{
         if(user.email) sessionStorage.setItem('nm-pending-email', user.email);
       }catch(e){}
-      Utils.safeRedirect('/verify-email.html');
+      Utils.safeRedirect('/verify-email');
       return;
     }
 
-    Utils.safeRedirect('/chat.html');
+    Utils.safeRedirect('/chat');
   }
 
   /* ═══════════════════════════════════════════════════════════
@@ -1563,9 +1563,9 @@ a { color: inherit; text-decoration: none; }
   document.querySelectorAll('[data-forgot]').forEach(function(btn){
     btn.addEventListener('click', function(){
       var email = state.email || '';
-      var url = '/reset-password.html';
+      var url = '/reset-password';
       if(email) url += '?email=' + encodeURIComponent(email);
-      window.location.href = url;
+      var _u=url,_hc=location.pathname,_hcs=_hc+location.search;if(_u&&typeof _u==='string'&&_u.charAt(0)==='/'&&_u.charAt(1)!=='/'&&_u!==_hc&&_u!==_hcs){window.location.href=_u;}
     });
   });
 
@@ -1675,6 +1675,6 @@ a { color: inherit; text-decoration: none; }
 })();
 </script>
 
-<script src="https://accounts.google.com/gsi/client" async defer onload="window.onGoogleLibraryLoad && window.onGoogleLibraryLoad()"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </body>
 </html>

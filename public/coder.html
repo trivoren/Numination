@@ -763,7 +763,7 @@ img,svg{display:block;max-width:100%}
 
     if (!state.project) {
       toast('warn', 'No hay proyecto activo. Volviendo…');
-      setTimeout(function () { location.href = '/chat.html'; }, 1200);
+      setTimeout(function () { location.href = '/chat'; }, 1200);
       return null;
     }
 
@@ -1181,7 +1181,7 @@ img,svg{display:block;max-width:100%}
         body: JSON.stringify(body),
       });
 
-      if (res.status === 401) { location.href = '/login.html'; return; }
+      if (res.status === 401) { location.href = '/login'; return; }
       if (res.status === 429) {
         var err = await res.json();
         throw new Error(err.error || 'Límite alcanzado.');
@@ -1329,7 +1329,7 @@ img,svg{display:block;max-width:100%}
     if (overlay) overlay.addEventListener('click', closeSideMenu);
 
     var backChats = $('[data-back-chats]');
-    if (backChats) backChats.addEventListener('click', function () { location.href = '/chat.html'; });
+    if (backChats) backChats.addEventListener('click', function () { location.href = '/chat'; });
 
     var openFiles = $('[data-open-files]');
     if (openFiles) openFiles.addEventListener('click', function () { closeSideMenu(); openFilesPanel(); });

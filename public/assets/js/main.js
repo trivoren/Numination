@@ -38,11 +38,11 @@
 
   /* Rutas activas — v6 sin contacto.html ni nosotros.html */
   const ROUTES = {
-    home:    '/index.html',
-    login:   '/login.html',
-    chat:    '/chat.html',
+    home:    '/index',
+    login:   '/login',
+    chat:    '/chat',
     pricing: '/precio.html',
-    legal:   '/terminos.html',
+    legal:   '/terminos',
   };
 
   /* Los 4 temas del rediseño Nocturno */

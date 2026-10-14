@@ -752,7 +752,7 @@ export function notFoundMiddleware(publicDir) {
     if (page404 && fs.existsSync(page404)) {
       return res.status(404).sendFile(page404);
     }
-    return res.redirect('/login.html');
+    return res.redirect('/login');
   };
 }
 

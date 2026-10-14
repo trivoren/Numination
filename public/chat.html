@@ -1250,7 +1250,7 @@ __nm.fetchJSON = function(url, opts, timeoutMs){
     if(!p){ __nm.toast.err('Proyecto no encontrado.'); return; }
     setActiveId(id);
     __nm.toast.info('Abriendo ' + p.name + '…');
-    setTimeout(function(){ location.href = '/coder.html?project=' + encodeURIComponent(id); }, 500);
+    setTimeout(function(){ location.href = '/coder?project=' + encodeURIComponent(id); }, 500);
   }
 
   function renderProjectsPage(){
@@ -1349,9 +1349,9 @@ __nm.fetchJSON = function(url, opts, timeoutMs){
 
     /* Términos y privacidad redirigen */
     var termsBtn = settingsPage.querySelector('[data-open-terms]');
-    if(termsBtn) termsBtn.addEventListener('click', function(){ location.href = '/terminos.html'; });
+    if(termsBtn) termsBtn.addEventListener('click', function(){ location.href = '/terminos'; });
     var privacyBtn = settingsPage.querySelector('[data-open-privacy]');
-    if(privacyBtn) privacyBtn.addEventListener('click', function(){ location.href = '/privacidad.html'; });
+    if(privacyBtn) privacyBtn.addEventListener('click', function(){ location.href = '/privacidad'; });
 
     /* Switches */
     settingsPage.querySelectorAll('.nm-switch').forEach(function(sw){
@@ -1387,7 +1387,7 @@ __nm.fetchJSON = function(url, opts, timeoutMs){
       b.addEventListener('click', async function(){
         if(!await __nm.modal.confirm('Cerrar sesión', '¿Seguro?')) return;
         try{ await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }); }catch(e){}
-        location.href = '/login.html';
+        location.href = '/login';
       });
     });
     document.querySelectorAll('[data-user-menu]').forEach(function(b){ b.addEventListener('click', sOpen); });
@@ -2024,7 +2024,7 @@ __nm.fetchJSON = function(url, opts, timeoutMs){
 /* USER */
 (function(){
   __nm.fetchJSON('/api/auth/session').then(function(r){
-    if(!r || !r.data || !r.data.authenticated){ location.href = '/login.html'; return; }
+    if(!r || !r.data || !r.data.authenticated){ location.href = '/login'; return; }
     var user = r.data.user;
     var name = user.name || user.email || 'Usuario';
     var initial = (name[0] || 'U').toUpperCase();
@@ -2037,7 +2037,7 @@ __nm.fetchJSON = function(url, opts, timeoutMs){
     document.querySelectorAll('[data-profile-email]').forEach(function(el){ el.textContent = user.email || '—'; });
     var nameInput = document.querySelector('[data-profile-name]'); if(nameInput) nameInput.value = user.name || '';
     var pronounsInput = document.querySelector('[data-profile-pronouns]'); if(pronounsInput) pronounsInput.value = user.pronouns || '';
-  }).catch(function(){ location.href = '/login.html'; });
+  }).catch(function(){ location.href = '/login'; });
 })();
 </script>
 

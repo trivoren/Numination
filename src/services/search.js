@@ -319,7 +319,7 @@ async function searchChatsTable(sql, userId, parsed, opts) {
     mode: r.mode,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
-    url: `/chat.html?chat=${r.id}`,
+    url: `/chat?chat=${r.id}`,
   }));
 }
 
@@ -355,7 +355,7 @@ async function searchMessagesTable(sql, userId, parsed, opts) {
     role: r.role,
     chatId: r.chat_id,
     createdAt: r.created_at,
-    url: `/chat.html?chat=${r.chat_id}&msg=${r.id}`,
+    url: `/chat?chat=${r.chat_id}&msg=${r.id}`,
   }));
 }
 
@@ -442,7 +442,7 @@ async function searchMemoriesTable(sql, userId, parsed, opts) {
     useCount: Number(r.use_count) || 0,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
-    url: `/chat.html?memory=${r.id}`,
+    url: `/chat?memory=${r.id}`,
   }));
 }
 
@@ -476,7 +476,7 @@ async function searchProjectsTable(sql, userId, parsed, opts) {
       color: r.color,
       projectType: r.type,
       createdAt: r.created_at,
-      url: `/chat.html?project=${r.id}`,
+      url: `/chat?project=${r.id}`,
     }));
   } catch {
     // Tabla no existe: devolver array vacío silenciosamente

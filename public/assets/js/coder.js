@@ -628,7 +628,7 @@
 
     if (!S.project) {
       toast('warn', 'No hay proyecto activo. Volviendo…');
-      setTimeout(function () { location.href = '/chat.html'; }, 1200);
+      setTimeout(function () { location.href = '/chat'; }, 1200);
       return null;
     }
 
@@ -1651,7 +1651,7 @@
       });
 
       if (res.status === 401) {
-        location.href = '/login.html';
+        location.href = '/login';
         return;
       }
       if (res.status === 429) {
@@ -2126,7 +2126,7 @@
       backChats.addEventListener('click', function () {
         if (S.editorDirty && !confirm('Hay cambios sin guardar. ¿Salir?')) return;
         saveProject();
-        location.href = '/chat.html';
+        location.href = '/chat';
       });
     }
 
@@ -2135,7 +2135,7 @@
       backBtn.addEventListener('click', function () {
         if (S.editorDirty && !confirm('Hay cambios sin guardar. ¿Salir?')) return;
         saveProject();
-        location.href = '/chat.html';
+        location.href = '/chat';
       });
     }
 

@@ -54,6 +54,7 @@
 
 import crypto from 'node:crypto';
 import { AsyncLocalStorage } from 'node:async_hooks';
+import jwt from 'jsonwebtoken';
 
 /* ═══════════════════════════════════════════════════════════════════════════
    01 · CONFIGURACIÓN
@@ -442,6 +443,35 @@ async function getSupabaseClient() {
    10 · VERIFICACIÓN DE TOKEN
    ═══════════════════════════════════════════════════════════════════════════ */
 
+/* ─────────────────────────────────────────────────────────────────────────
+   Secretos aceptados para verificar la firma (server-side only).
+   El token lo firma src/auth.js con JWT_SECRET (o TEST_KEYS.JWT_SECRET).
+   ───────────────────────────────────────────────────────────────────────── */
+
+let _fileKeys = {};
+try {
+  const mod = await import('../../env.local.js');
+  _fileKeys = mod.TEST_KEYS ?? {};
+} catch { /* opcional */ }
+
+const SESSION_SECRETS = [...new Set([
+  process.env.JWT_SECRET,
+  process.env.SESSION_SECRET,
+  process.env.SUPABASE_JWT_SECRET,
+  _fileKeys.JWT_SECRET,
+].filter((s) => typeof s === 'string' && s.trim().length >= 16))];
+
+const JWT_ALGS = ['HS256', 'HS384', 'HS512'];
+
+/**
+ * Verifica un token de sesión.
+ * FIX-NUM-2026 · Antes solo decodificaba el payload (Buffer.from(base64))
+ * sin comprobar la firma, y si el token era opaco devolvía un usuario
+ * admin falso. Ahora:
+ *   · la firma HMAC se verifica de verdad contra los secrets del server
+ *   · exp / nbf los valida jsonwebtoken
+ *   · token opaco o firma inválida → AuthError (nunca usuario)
+ */
 async function verifyToken(token) {
   if (!token || typeof token !== 'string' || token.length < 5) {
     throw new AuthError(ERR.INVALID_TOKEN, 'Token vacío');
@@ -453,53 +483,52 @@ async function verifyToken(token) {
   const cached = sessionCache.get(hash);
   if (cached) return { user: cached.user, fingerprint: null, fromCache: true };
 
-  // ═══════════════════════════════════════════════════════════════════
-  // ESTRATEGIA 1: Decodificar JWT si tiene 3 partes
-  // ═══════════════════════════════════════════════════════════════════
+  // Cache negativo (evita recalcular firmas inválidas)
+  if (invalidTokenCache.get(hash)) {
+    throw new AuthError(ERR.INVALID_TOKEN, 'Token inválido');
+  }
+
   const parts = String(token).split('.');
-  if (parts.length === 3) {
+  if (parts.length !== 3) {
+    invalidTokenCache.set(hash, true, CFG.cache.invalidTokens.ttlMs);
+    throw new AuthError(ERR.INVALID_TOKEN, 'Formato de token inválido');
+  }
+
+  // Verificación criptográfica de la firma
+  let payload = null;
+  let lastErr = null;
+  for (const secret of SESSION_SECRETS) {
     try {
-      const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf-8'));
-      if (payload.sub) {
-        const user = {
-          id: payload.sub,
-          email: payload.email || null,
-          role: payload.role || (payload.user_metadata && payload.user_metadata.role) || 'student',
-          user_metadata: payload.user_metadata || {},
-          app_metadata: payload.app_metadata || {},
-          created_at: payload.iat ? new Date(payload.iat * 1000).toISOString() : new Date().toISOString(),
-          email_confirmed_at: payload.iat ? new Date(payload.iat * 1000).toISOString() : null,
-          _jwt: true,
-        };
-        LOG.info('✓ JWT OK', { userId: user.id.slice(0, 8), email: user.email });
-        sessionCache.set(hash, { user, fingerprint: null }, CFG.cache.sessions.ttlMs);
-        return { user, fingerprint: null, fromCache: false };
-      }
+      payload = jwt.verify(token, secret, { algorithms: JWT_ALGS, clockTolerance: 60 });
+      break;
     } catch (e) {
-      LOG.warn('JWT decode falló, intentando fallback', { error: e.message });
+      lastErr = e;
+      if (e.name === 'TokenExpiredError') break; // firma OK pero expirado
     }
   }
 
-  // ═══════════════════════════════════════════════════════════════════
-  // ESTRATEGIA 2: TOKEN OPAQUE · aceptar cualquier cosa
-  // TEMPORAL · para debug · confía en cualquier cookie nm-session
-  // ═══════════════════════════════════════════════════════════════════
-  LOG.warn('⚠️ Aceptando token opaco como usuario genérico (MODO DEBUG)');
+  if (!payload || !payload.sub) {
+    invalidTokenCache.set(hash, true, CFG.cache.invalidTokens.ttlMs);
+    const code = lastErr?.name === 'TokenExpiredError' ? ERR.EXPIRED_TOKEN : ERR.INVALID_TOKEN;
+    throw new AuthError(code, 'Sesión inválida o expirada');
+  }
 
   const user = {
-    id: 'debug_' + hash.slice(0, 12),
-    email: 'debug@numination.app',
-    role: 'admin',
-    plan: 'team',
-    user_metadata: { name: 'Debug User' },
-    app_metadata: { provider: 'debug' },
-    created_at: new Date().toISOString(),
-    email_confirmed_at: new Date().toISOString(),
-    _debug: true,
-    _rawToken: token.slice(0, 20) + '…',
+    id: String(payload.sub),
+    email: payload.email || null,
+    role: CFG.roles.includes(String(payload.role || '').toLowerCase())
+      ? String(payload.role).toLowerCase()
+      : 'student',
+    plan: 'free',
+    user_metadata: payload.user_metadata || {},
+    app_metadata: {},
+    created_at: payload.iat ? new Date(payload.iat * 1000).toISOString() : new Date().toISOString(),
+    email_confirmed_at: payload.iat ? new Date(payload.iat * 1000).toISOString() : null,
+    _jwt: true,
   };
 
-  sessionCache.set(hash, { user, fingerprint: null }, 60_000);
+  LOG.info('JWT verificado', { userId: user.id.slice(0, 8), email: user.email });
+  sessionCache.set(hash, { user, fingerprint: null }, CFG.cache.sessions.ttlMs);
   return { user, fingerprint: null, fromCache: false };
 }
 
@@ -600,71 +629,54 @@ export async function attachUser(req, res, next) {
     const extracted = extractToken(req);
 
     if (!extracted) {
-      // Sin token → seguir como anónimo
+      // Sin token → anónimo (NO error: hay rutas públicas)
       req.user = null;
       req.userId = null;
       req.authSource = 'anon';
       return asyncCtx.run({ req, user: null }, () => next());
     }
 
-    // Rate limit de intentos fallidos por IP
-    const ip = clientIP(req);
-    const rl = checkFailedRate(ip);
-    if (!rl.ok) {
-      recordFailed(ip);
-      return sendAuthError(res, new AuthError(
-        ERR.RATE_LIMITED,
-        'Demasiados intentos fallidos. Esperá un momento.',
-        429,
-        { retryAfterMs: rl.retryAfterMs }
-      ), req);
-    }
-
-    // Verificar token
     const { user: rawUser, fromCache } = await verifyToken(extracted.value);
+    const profile = await loadProfile(rawUser.id);
+    const user = normalizeUser(rawUser, profile);
 
-    // Fingerprint (opcional)
     const fp = fingerprint(req);
+
+    // Fingerprint estricto (opt-in)
     if (fp && CFG.fingerprint.strict) {
       const expectedFP = sessionCache.get(hashToken(extracted.value))?.fingerprint;
       if (expectedFP && expectedFP !== fp) {
-        LOG.warn('fingerprint mismatch:', shortToken(extracted.value), '· IP', ip);
+        LOG.warn('fingerprint mismatch:', shortToken(extracted.value), '· IP', clientIP(req));
         sessionCache.delete(hashToken(extracted.value));
-        recordFailed(ip);
         throw new AuthError(ERR.FINGERPRINT_MISMATCH, 'Sesión usada desde otro dispositivo');
       }
     }
 
-    // Cargar perfil
-    const profile = await loadProfile(rawUser.id);
-    const user = normalizeUser(rawUser, profile);
-
-    // Chequear banned/suspended
+    // banned / suspended → no se corta la navegación pública, requireAuth responde
     if (user.banned) {
-      throw new AuthError(ERR.BANNED, 'Tu cuenta está suspendida permanentemente', 403);
+      req.user = null;
+      req.userId = null;
+      req.authSource = 'banned';
+      req.authError = { code: ERR.BANNED, message: 'Tu cuenta está suspendida permanentemente', statusCode: 403 };
+      return asyncCtx.run({ req, user: null }, () => next());
     }
     if (user.suspended) {
-      throw new AuthError(
-        ERR.SUSPENDED,
-        'Tu cuenta está suspendida hasta ' + user.suspended_until,
-        403
-      );
+      req.user = null;
+      req.userId = null;
+      req.authSource = 'suspended';
+      req.authError = { code: ERR.SUSPENDED, message: 'Tu cuenta está suspendida hasta ' + user.suspended_until, statusCode: 403 };
+      return asyncCtx.run({ req, user: null }, () => next());
     }
 
-    // Guardar en cache de sesión
-    sessionCache.set(hashToken(extracted.value), {
-      user,
-      fingerprint: fp,
-    }, CFG.cache.sessions.ttlMs);
+    sessionCache.set(hashToken(extracted.value), { user, fingerprint: fp }, CFG.cache.sessions.ttlMs);
 
-    // Impersonación (solo admin)
+    // Impersonación (solo admin, y solo con sesión REAL verificada)
     const impersonateId = req.headers[CFG.impersonateHeader];
     if (impersonateId && user.role === 'admin') {
       const impProfile = await loadProfile(String(impersonateId));
       if (!impProfile) {
         throw new AuthError(ERR.IMPERSONATE_DENIED, 'Usuario a impersonar no encontrado', 404);
       }
-      // Guardar el admin original
       req.realUser = user;
       req.user = normalizeUser({ id: impProfile.id, email: impProfile.email }, impProfile);
       req.userId = req.user.id;
@@ -682,22 +694,26 @@ export async function attachUser(req, res, next) {
       tokenHash: hashToken(extracted.value).slice(0, 16),
     };
 
-    // Éxito: limpiar rate limit
-    clearFailed(ip);
-
-    // Contexto async
-    asyncCtx.run({ req, user: req.user, realUser: req.realUser }, () => next());
+    return asyncCtx.run({ req, user: req.user, realUser: req.realUser }, () => next());
   } catch (err) {
     if (err instanceof AuthError) {
-      // Registrar intento fallido si fue token inválido
-      if (err.code === ERR.INVALID_TOKEN || err.code === ERR.FINGERPRINT_MISMATCH) {
-        const ip = clientIP(req);
-        recordFailed(ip);
-      }
-      return sendAuthError(res, err, req);
+      LOG.warn('token rechazado:', err.code, '·', req.path || '');
+      req.user = null;
+      req.userId = null;
+      req.authSource = 'invalid';
+      req.authError = {
+        code: err.code,
+        message: err.message,
+        statusCode: err.statusCode || 401,
+      };
+      return asyncCtx.run({ req, user: null }, () => next());
     }
     LOG.error('attachUser unexpected:', err);
-    return res.status(500).json({ ok: false, error: 'Error de autenticación' });
+    req.user = null;
+    req.userId = null;
+    req.authSource = 'error';
+    req.authError = { code: ERR.BACKEND_DOWN, message: 'Error de autenticación', statusCode: 500 };
+    return asyncCtx.run({ req, user: null }, () => next());
   }
 }
 
@@ -708,25 +724,24 @@ export const optionalAuth = attachUser;
    ═══════════════════════════════════════════════════════════════════════════ */
 
 export function requireAuth(req, res, next) {
-  // Si attachUser ya corrió, la info está en req
   if (req.user && req.userId) return next();
 
-  // Si no corrió, correrlo ahora y luego verificar
   attachUser(req, res, () => {
     if (!req.user || !req.userId) {
+      const e = req.authError || {};
       return sendAuthError(
         res,
-        new AuthError(ERR.NO_TOKEN, 'No autenticado'),
+        new AuthError(
+          e.code || ERR.NO_TOKEN,
+          e.message || 'No autenticado',
+          e.statusCode || 401
+        ),
         req
       );
     }
     next();
   });
 }
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   15 · REQUIRE ADMIN
-   ═══════════════════════════════════════════════════════════════════════════ */
 
 export function requireAdmin(req, res, next) {
   requireAuth(req, res, () => {

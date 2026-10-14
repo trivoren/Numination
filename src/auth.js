@@ -80,7 +80,11 @@ const GITHUB_CLIENT_SECRET = pickEnv('GITHUB_CLIENT_SECRET', TEST_KEYS.GITHUB_CL
 const RESEND_API_KEY = pickEnv('RESEND_API_KEY', TEST_KEYS.RESEND_API_KEY) ?? null;
 const FROM_EMAIL     = process.env.NUMINATION_FROM_EMAIL ?? 'Numination <no-reply@numination.app>';
 
-const COOKIE_NAME          = 'numination_session';
+/* FIX-NUM-2026 · la cookie debe coincidir con middleware/auth.js (CFG.cookieName)
+   y con SESSION_COOKIE. Antes estaba hardcodeada como 'numination_session'
+   mientras el resto del server leía 'nm-session' → login OK pero sesión vacía. */
+const COOKIE_NAME          = process.env.SESSION_COOKIE || 'nm-session';
+const LEGACY_COOKIE_NAMES  = ['numination_session'];
 const SESSION_DAYS         = 30;
 const SESSION_DAYS_SHORT   = 1;
 const FRESH_WINDOW_SEC     = 5 * 60;
@@ -411,6 +415,18 @@ function setSessionCookie(res, token, remember = true) {
 
 function clearSessionCookie(res) {
   res.clearCookie(COOKIE_NAME, { path: '/' });
+  for (const legacy of LEGACY_COOKIE_NAMES) {
+    res.clearCookie(legacy, { path: '/' });
+  }
+}
+
+function readSessionCookie(req) {
+  const c = (req && req.cookies) || {};
+  if (c[COOKIE_NAME]) return c[COOKIE_NAME];
+  for (const legacy of LEGACY_COOKIE_NAMES) {
+    if (c[legacy]) return c[legacy];
+  }
+  return null;
 }
 
 function issueSession(res, user, remember = true) {
@@ -441,102 +457,62 @@ export function requestId(req, res, next) {
 }
 
 export async function attachUser(req, res, next) {
-  // PATCH v4 · Ultra permisivo (modo debug)
+  // Seguro: verifica firma JWT real. Sin sesión válida → req.user = null (nunca inventar).
   if (req.user) return next();
-
-  const token = (req.cookies && req.cookies['nm-session'])
-    || (req.headers.authorization || '').replace(/^Bearers+/i, '')
-    || (req.headers['x-nm-token'])
-    || (req.query && req.query.token);
-
-  if (token) {
-    const parts = String(token).split('.');
-    if (parts.length === 3) {
-      try {
-        const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf-8'));
-        if (payload.sub) {
-          req.user = {
-            id: payload.sub,
-            email: payload.email || null,
-            role: payload.role || 'student',
-            plan: 'free',
-            user_metadata: payload.user_metadata || {},
-          };
-          req.userId = req.user.id;
-        }
-      } catch (e) {}
+  try {
+    let token = readSessionCookie(req);
+    if (!token) {
+      const h = req.headers.authorization || req.headers.Authorization || '';
+      const m = String(h).match(/^Bearer\s+(.+)$/i);
+      if (m) token = m[1].trim();
     }
-  }
-
+    if (!token) return next();
+    const s = await loadSession(token);
+    if (!s) return next();
+    const { payload, profile } = s;
+    req.user = {
+      id: payload.sub,
+      email: payload.email || profile?.email || null,
+      role: (payload.role || profile?.role || 'student').toLowerCase(),
+      plan: profile?.plan || 'free',
+      iat: payload.iat,
+      exp: payload.exp,
+      jti: payload.jti,
+      user_metadata: profile?.user_metadata || {},
+    };
+    req.userId = req.user.id;
+  } catch (e) {}
   return next();
 }
 
 export async function requireAuth(req, res, next) {
-  // ═══════════════════════════════════════════════════════════════════
-  // PATCH v4 · Ultra permisivo (modo debug)
-  // ═══════════════════════════════════════════════════════════════════
-  if (req.user) return next();
-
+  // Seguro: exige JWT firmado válido. Sin token o firma inválida → 401. Nunca inventa usuarios.
+  if (req.user?.id) return next();
   try {
-    const token = (req.cookies && req.cookies['nm-session'])
-      || (req.headers.authorization || '').replace(/^Bearers+/i, '')
-      || (req.headers['x-nm-token'])
-      || (req.query && req.query.token);
-
+    let token = readSessionCookie(req);
     if (!token) {
-      console.warn('[auth/v4] no token, dejando pasar como debug');
-      req.user = {
-        id: 'debug_no_token',
-        email: 'debug@numination.app',
-        role: 'admin',
-        plan: 'team',
-      };
-      req.userId = req.user.id;
-      return next();
+      const h = req.headers.authorization || req.headers.Authorization || '';
+      const m = String(h).match(/^Bearer\s+(.+)$/i);
+      if (m) token = m[1].trim();
     }
-
-    const parts = String(token).split('.');
-    if (parts.length === 3) {
-      try {
-        const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf-8'));
-        if (payload.sub) {
-          req.user = {
-            id: payload.sub,
-            email: payload.email || null,
-            role: payload.role || 'student',
-            plan: 'free',
-            user_metadata: payload.user_metadata || {},
-            _jwt: true,
-          };
-          req.userId = req.user.id;
-          console.log('[auth/v4] JWT OK ·', req.user.email);
-          return next();
-        }
-      } catch (e) {
-        console.warn('[auth/v4] JWT decode falló:', e.message);
-      }
-    }
-
-    // Token opaco → aceptar como debug
-    console.warn('[auth/v4] aceptando token opaco como debug');
+    if (!token) return fail(res, 401, 'no_session', 'No autenticado');
+    const s = await loadSession(token);
+    if (!s) return fail(res, 401, 'invalid_session', 'Sesión inválida o expirada');
+    const { payload, profile } = s;
     req.user = {
-      id: 'debug_opaque_' + String(token).slice(0, 8),
-      email: 'debug@numination.app',
-      role: 'admin',
-      plan: 'team',
+      id: payload.sub,
+      email: payload.email || profile?.email || null,
+      role: (payload.role || profile?.role || 'student').toLowerCase(),
+      plan: profile?.plan || 'free',
+      iat: payload.iat,
+      exp: payload.exp,
+      jti: payload.jti,
+      user_metadata: profile?.user_metadata || {},
     };
     req.userId = req.user.id;
     return next();
   } catch (e) {
-    console.error('[auth/v4] excepción:', e.message);
-    req.user = {
-      id: 'debug_error',
-      email: 'debug@numination.app',
-      role: 'admin',
-      plan: 'team',
-    };
-    req.userId = req.user.id;
-    return next();
+    return fail(res, 401, 'no_session', 'No autenticado');
   }
 }
 
@@ -817,18 +793,18 @@ export function mountAuthRoutes(app) {
         (err, user, info) => {
           if (err) {
             log('error', 'auth.github.callback.error', { message: err.message }, req);
-            return res.redirect('/login.html?error=github');
+            return res.redirect('/login?error=github');
           }
           if (!user) {
             const reason = info?.message === 'access_denied' ? 'access_denied' : 'github';
             log('warn', 'auth.github.callback.no_user', { reason }, req);
-            return res.redirect('/login.html?error=' + reason);
+            return res.redirect('/login?error=' + reason);
           }
           const token = signSession(user, true);
           setSessionCookie(res, token, true);
           log('info', 'auth.login.github.ok', { email: user.email }, req);
           audit('login.github.ok', { email: user.email });
-          return res.redirect('/chat.html');
+          return res.redirect('/chat');
         }
       )(req, res, next);
     });
@@ -1014,7 +990,7 @@ export function mountAuthRoutes(app) {
       try { await setResetToken(profile.id, token, expiresAt); }
       catch (e) { log('warn', 'auth.forgot.setResetToken.failed', { message: e.message }, req); }
 
-      const resetUrl = `${getAppUrl(req)}/reset-password.html?token=${token}`;
+      const resetUrl = `${getAppUrl(req)}/reset-password?token=${token}`;
       await sendPasswordResetEmail(profile.email, resetUrl, profile.name);
 
       log('info', 'auth.forgot.ok', { email: emailNorm }, req);
@@ -1064,7 +1040,7 @@ export function mountAuthRoutes(app) {
       if (profile.email_verified) return res.json({ ok: true, alreadyVerified: true });
 
       const token = crypto.randomBytes(24).toString('hex');
-      const url = `${getAppUrl(req)}/verify-email.html?token=${token}`;
+      const url = `${getAppUrl(req)}/verify-email?token=${token}`;
       await sendVerificationEmail(profile.email, url, profile.name);
       log('info', 'auth.verify.sent', { email: profile.email }, req);
       return res.json({ ok: true });
@@ -1091,7 +1067,7 @@ export function mountAuthRoutes(app) {
 
   /* ME */
   app.get('/api/auth/me', async (req, res) => {
-    const token = req.cookies?.[COOKIE_NAME];
+    const token = readSessionCookie(req);
     if (!token) return res.json({ ok: false, user: null });
 
     const s = await loadSession(token);
@@ -1110,7 +1086,7 @@ export function mountAuthRoutes(app) {
 
   /* SESSION */
   app.get('/api/auth/session', async (req, res) => {
-    const token = req.cookies?.[COOKIE_NAME];
+    const token = readSessionCookie(req);
     if (!token) return res.json({ ok: true, authenticated: false });
 
     const payload = verifySession(token);
@@ -1141,7 +1117,7 @@ export function mountAuthRoutes(app) {
 
   /* CHECK */
   app.get('/api/auth/check', async (req, res) => {
-    const token = req.cookies?.[COOKIE_NAME];
+    const token = readSessionCookie(req);
     if (!token) return res.json({ authenticated: false });
     const s = await loadSession(token);
     return res.json({ authenticated: Boolean(s) });

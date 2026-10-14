@@ -145,3 +145,44 @@ decisión de producto)
   multiplica el techo; documentado — centralizar en Upstash a futuro).
 - NO implementado: captcha (3.6a, requiere proveedor/claves). Queda
   como recomendación en REPORTE-FIXES.md.
+
+---
+
+## FASE 4 · LOWs ✅
+
+**Commit:** `fix(audit): LOWs - health minimo, cookie secure, escapado
+server, mensajes unificados`
+
+**4.1 · L-001 · health mínimo** (`index.js`, `scripts/smoke-test.js`)
+- `/api/health` sin admin → solo `{ok, service, version, uptime,
+  ts}`. El detalle (keys/modelos/subsistemas) solo con `role:admin`.
+  Vivo: público mínimo ✅
+- `smoke-test.js`: `health-db`/`health-engines` hacen SKIP sin cookie
+  (antes fallarían contra el health mínimo); nuevo test
+  `health-minimal-public` que falla si el health público expone
+  `keys/models/engines/subsystems/features`.
+
+**4.2 · L-002 · Secure** (`auth.js`)
+- `setSessionCookie`/`clearSessionCookie` aceptan `req`: `Secure` si
+  prod/Vercel **o** `req.secure` **o** `x-forwarded-proto:https`.
+  Todos los call-sites pasan `req`. El `clear` usa los mismos
+  atributos (si no, algunos browsers no borran cookie Secure).
+- Vivo: localhost HTTP → sin Secure (correcto); con
+  `X-Forwarded-Proto: https` → con Secure ✅
+
+**4.3 · L-003 · títulos sin HTML** (`chats.js`)
+- Nuevo `stripTags` (exportado para tests) aplicado en POST y PATCH de
+  chats. El contenido de mensajes NO se toca (lo necesita el markdown
+  del frontend, que escapa primero).
+- Vivo: `{"title":"<img src=x onerror=alert(1)>"}` → guardado como
+  `Nuevo chat`, sin `<>` en la API ✅
+
+**4.4 · L-005 · mensajes unificados** (`auth.js`)
+- Ambos mensajes ya no nombran el proveedor. Los `code`
+  (`email_taken_oauth`, `use_oauth`) y el campo `provider` se
+  mantienen porque `login.html` los usa para guiar al botón correcto
+  (quitarlos rompería el flujo). Mitigación parcial y documentada: un
+  atacante determinado aún puede enumerar por code, pero la API cruda
+  ya no filtra "Google vs GitHub".
+- Vivo: signup duplicado email → `email_taken` genérico ✅ (rama
+  OAuth verificada solo por código, sin OAuth local).

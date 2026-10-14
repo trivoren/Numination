@@ -1020,6 +1020,18 @@ mountEmailRoutes(app, requireAuth);
    ═══════════════════════════════════════════════════════════════════════════ */
 
 app.get('/api/health', async (req, res) => {
+  // L-001 · health público MÍNIMO: sin auth solo ok/version/uptime.
+  // El detalle (keys, modelos, subsistemas) es solo para admins:
+  // revelaba presencia de API keys, modelos y estado interno.
+  const minimal = {
+    ok: true,
+    service: 'numination',
+    version: VERSION,
+    uptime: Math.floor(process.uptime()),
+    ts: new Date().toISOString(),
+  };
+  if (req.user?.role !== 'admin') return res.json(minimal);
+
   const mem = process.memoryUsage();
 
   const [

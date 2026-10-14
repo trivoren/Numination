@@ -393,7 +393,8 @@ test('health', 'GET /api/health responde 200', async ({ http }) => {
   return `v${res.json.version} · ${res.ms}ms`;
 }, { critical: true, group: 'health' });
 
-test('health-db', 'Base de datos conectada', async ({ http }) => {
+test('health-db', 'Base de datos conectada', async ({ http, hasAuth }) => {
+  if (!hasAuth) return 'SKIP (health detallado requiere admin)';
   const res = await http.get('/api/health');
   assertJson(res);
   const db = res.json.database;
@@ -402,7 +403,8 @@ test('health-db', 'Base de datos conectada', async ({ http }) => {
   return 'conectada';
 }, { group: 'health' });
 
-test('health-engines', 'Los 3 motores configurados', async ({ http }) => {
+test('health-engines', 'Los 3 motores configurados', async ({ http, hasAuth }) => {
+  if (!hasAuth) return 'SKIP (health detallado requiere admin)';
   const res = await http.get('/api/health');
   assertJson(res);
   const keys = res.json.keys || {};
@@ -413,6 +415,18 @@ test('health-engines', 'Los 3 motores configurados', async ({ http }) => {
   assert(have.length >= 1, `Ningún motor disponible · keys: ${JSON.stringify(keys)}`);
   return have.join(' · ');
 }, { critical: true, group: 'health' });
+
+test('health-minimal-public', 'Health público no expone keys/modelos', async ({ http }) => {
+  const res = await http.get('/api/health');
+  assertStatus(res, 200);
+  assertJson(res);
+  assertField(res.json, 'ok', true);
+  assertField(res.json, 'version');
+  for (const f of ['keys', 'models', 'engines', 'subsystems', 'features']) {
+    assert(!(f in res.json), `Health público expone "${f}"`);
+  }
+  return 'mínimo ok';
+}, { group: 'security' });
 
 test('version', 'GET /api/version responde 200', async ({ http }) => {
   const res = await http.get('/api/version');

@@ -440,21 +440,32 @@ function verifySession(token) {
   catch { return null; }
 }
 
-function setSessionCookie(res, token, remember = true) {
+function setSessionCookie(res, token, remember = true, req = null) {
   const maxAge = (remember ? SESSION_DAYS : SESSION_DAYS_SHORT) * 24 * 60 * 60 * 1000;
+  // L-002 · Secure siempre que el canal sea HTTPS, no solo en prod:
+  // cubre deploys tras proxy TLS sin NODE_ENV=production.
+  const fwdProto = req?.get?.('x-forwarded-proto');
+  const secure = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1'
+    || req?.secure === true || fwdProto === 'https';
   res.cookie(COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production' || process.env.VERCEL === '1',
+    secure,
     sameSite: 'lax',
     maxAge,
     path: '/',
   });
 }
 
-function clearSessionCookie(res) {
-  res.clearCookie(COOKIE_NAME, { path: '/' });
+function clearSessionCookie(res, req = null) {
+  // Mismos atributos que al crearla: si la cookie es Secure y el
+  // clear no lo es, algunos browsers no la borran.
+  const fwdProto = req?.get?.('x-forwarded-proto');
+  const secure = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1'
+    || req?.secure === true || fwdProto === 'https';
+  const opts = { path: '/', sameSite: 'lax', secure };
+  res.clearCookie(COOKIE_NAME, opts);
   for (const legacy of LEGACY_COOKIE_NAMES) {
-    res.clearCookie(legacy, { path: '/' });
+    res.clearCookie(legacy, opts);
   }
 }
 
@@ -467,9 +478,9 @@ function readSessionCookie(req) {
   return null;
 }
 
-function issueSession(res, user, remember = true) {
+function issueSession(res, user, remember = true, req = null) {
   const token = signSession(user, remember);
-  setSessionCookie(res, token, remember);
+  setSessionCookie(res, token, remember, req);
   return { ok: true, user: publicUser(user) };
 }
 
@@ -741,7 +752,7 @@ async function handleGoogleLogin(req, res) {
 
   log('info', 'auth.login.google.ok', { email: user.email }, req);
   audit('login.google.ok', { email: user.email });
-  return res.json(issueSession(res, user, remember));
+  return res.json(issueSession(res, user, remember, req));
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -861,7 +872,7 @@ export function mountAuthRoutes(app) {
             return res.redirect('/login?error=' + reason);
           }
           const token = signSession(user, true);
-          setSessionCookie(res, token, true);
+          setSessionCookie(res, token, true, req);
           log('info', 'auth.login.github.ok', { email: user.email }, req);
           audit('login.github.ok', { email: user.email });
           return res.redirect('/chat');
@@ -907,7 +918,9 @@ export function mountAuthRoutes(app) {
           return fail(res, 409, 'email_taken', 'Ese correo ya está registrado. Inicia sesión.');
         }
         return fail(res, 409, 'email_taken_oauth',
-          'Ese correo ya tiene cuenta con Google o GitHub. Entra por ahí.');
+          // L-005 · mensaje genérico (el code se mantiene porque el
+          // frontend lo usa para guiar al login correcto).
+          'Ese correo ya está registrado. Inicia sesión.');
       }
 
       const nuevo = {
@@ -931,7 +944,7 @@ export function mountAuthRoutes(app) {
       log('info', 'auth.signup.ok', { email: emailNorm }, req);
       audit('signup.email', { email: emailNorm, ip });
 
-      return res.status(201).json(issueSession(res, profile, true));
+      return res.status(201).json(issueSession(res, profile, true, req));
     } catch (err) {
       log('error', 'auth.signup.error', { message: err.message }, req);
       return fail(res, 500, 'signup_failed', 'No pudimos crear tu cuenta.');
@@ -968,8 +981,10 @@ export function mountAuthRoutes(app) {
 
       if (!profile.password_hash) {
         if (profile.auth_provider && profile.auth_provider !== 'email') {
+          // L-005 · el mensaje ya no nombra el proveedor (el code y el
+          // campo provider se mantienen: el frontend los necesita).
           return fail(res, 401, 'use_oauth',
-            `Esa cuenta usa ${profile.auth_provider === 'github' ? 'GitHub' : 'Google'}. Entra por ahí.`,
+            'Esa cuenta usa otro método de entrada. Usa el botón correspondiente.',
             { provider: profile.auth_provider });
         }
         return fail(res, 401, 'invalid_credentials', 'Correo o contraseña incorrectos.');
@@ -991,7 +1006,7 @@ export function mountAuthRoutes(app) {
 
       log('info', 'auth.login.ok', { email: emailNorm }, req);
       audit('login.ok', { email: emailNorm, ip });
-      return res.json(issueSession(res, profile, remember));
+      return res.json(issueSession(res, profile, remember, req));
     } catch (err) {
       log('error', 'auth.login.error', { message: err.message }, req);
       return fail(res, 500, 'login_failed', 'No pudimos iniciar sesión.');
@@ -1246,7 +1261,7 @@ export function mountAuthRoutes(app) {
     } catch (e) {
       log('warn', 'auth.logout.error', { message: e.message }, req);
     }
-    clearSessionCookie(res);
+    clearSessionCookie(res, req);
     audit('logout', { ip: getClientIp(req) });
     return res.json({ ok: true });
   });
@@ -1274,7 +1289,7 @@ export function mountAuthRoutes(app) {
         log('warn', 'auth.logout_all.bump.failed', { message: e.message }, req);
       }
       try { invalidateProfile(req.user.id); } catch {}
-      clearSessionCookie(res);
+      clearSessionCookie(res, req);
       log('info', 'auth.logout_all', { email: req.user.email }, req);
       audit('logout_all', { email: req.user.email, ip: getClientIp(req) });
       return res.json({ ok: true, invalidatedAt: new Date().toISOString() });
@@ -1320,7 +1335,7 @@ export function mountAuthRoutes(app) {
       }
 
       await deleteProfile(req.user.id);
-      clearSessionCookie(res);
+      clearSessionCookie(res, req);
 
       log('info', 'auth.account.deleted', { email: req.user.email }, req);
       audit('account_deleted', { email: req.user.email, ip: getClientIp(req) });

@@ -526,6 +526,16 @@ function sanitizeMessage(text) {
   return text.trim().slice(0, MAX_CHARS);
 }
 
+/* L-003 · los títulos se renderizan como texto plano (__nm.esc), sin
+   markdown: se les quitan las etiquetas HTML en el servidor para que
+   la API no sirva HTML crudo a futuros clientes (móvil, embeds).
+   El contenido de mensajes NO se toca: lo necesita el renderer
+   markdown del frontend (que escapa antes de formatear). */
+export function stripTags(text) {
+  if (typeof text !== 'string') return '';
+  return text.replace(/<[^>]*>/g, '');
+}
+
 function sanitizeHistory(history) {
   if (!Array.isArray(history)) return [];
 
@@ -566,9 +576,9 @@ export function mountChatRoutes(app, requireAuth) {
      â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   app.post('/api/chats', requireAuth, async (req, res) => {
     try {
-      const title = String(
+      const title = stripTags(String(
         req.body?.title || 'Nuevo chat'
-      ).trim().slice(0, MAX_TITLE) || 'Nuevo chat';
+      )).trim().slice(0, MAX_TITLE) || 'Nuevo chat';
 
       const chat = await crearChat(req.user.id, title);
       if (!chat) return fail(res, 500, 'create_failed', 'No pudimos crear el chat.');
@@ -600,7 +610,7 @@ export function mountChatRoutes(app, requireAuth) {
      â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   app.patch('/api/chats/:id', requireAuth, async (req, res) => {
     try {
-      const title = String(req.body?.title || '').trim().slice(0, MAX_TITLE);
+      const title = stripTags(String(req.body?.title || '')).trim().slice(0, MAX_TITLE);
       if (!title) return fail(res, 400, 'title_required', 'Falta el tÃ­tulo.');
 
       const chat = await renombrarChat(req.params.id, req.user.id, title);

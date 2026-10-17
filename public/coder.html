@@ -86,7 +86,7 @@ img,svg{display:block;max-width:100%}
 .topbar__title{font-size:17px;font-weight:700;letter-spacing:-.02em;color:var(--c-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
 .topbar__sub{font-size:12px;color:var(--c-text-muted);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .topbar__actions{display:flex;align-items:center;gap:2px;flex-shrink:0}
-.topbar__icon{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--c-text-2);transition:all var(--t-fast);cursor:pointer}
+.topbar__icon{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--c-text-2);transition:all var(--t-fast);cursor:pointer;position:relative}
 .topbar__icon:hover{background:var(--c-bg-hover);color:var(--c-text)}
 .topbar__icon.is-active{color:var(--c-primary);background:var(--c-primary-soft)}
 .topbar__icon svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
@@ -98,7 +98,7 @@ img,svg{display:block;max-width:100%}
 /* SIDE MENU */
 .side-overlay{position:fixed;inset:0;background:rgba(0,0,0,.42);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);z-index:180;opacity:0;visibility:hidden;transition:opacity var(--t-base),visibility var(--t-base)}
 .side-overlay.is-active{opacity:1;visibility:visible}
-.side-menu{position:fixed;top:0;left:0;bottom:0;width:min(320px,85vw);background:var(--c-surface);border-right:1px solid var(--c-border);z-index:190;transform:translateX(-100%);transition:transform var(--t-slow);display:flex;flex-direction:column;padding:16px 8px;box-shadow:4px 0 24px rgba(0,0,0,.10)}
+.side-menu{position:fixed;top:0;left:0;bottom:0;width:min(320px,85vw);background:var(--c-surface);border-right:1px solid var(--c-border);z-index:190;transform:translateX(-100%);transition:transform var(--t-slow);display:flex;flex-direction:column;padding:16px 8px;box-shadow:4px 0 24px rgba(0,0,0,.10);overflow-y:auto}
 .side-menu.is-open{transform:translateX(0)}
 .side-menu__head{padding:12px 12px 20px;display:flex;align-items:center;gap:10px}
 .side-menu__head-icon{width:40px;height:40px;border-radius:12px;background:var(--c-primary-soft);color:var(--c-primary);display:flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -110,27 +110,44 @@ img,svg{display:block;max-width:100%}
 .side-menu__item:hover{background:var(--c-bg-hover)}
 .side-menu__item svg{width:22px;height:22px;color:var(--c-text-2);flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .side-menu__divider{height:1px;background:var(--c-border-soft);margin:8px 12px}
+.side-menu__footer{padding:14px 16px;font-size:11.5px;color:var(--c-text-subtle);margin-top:auto;line-height:1.4}
 
 /* FILES PANEL */
 .files-panel{flex-shrink:0;background:var(--c-surface-2);border-bottom:1px solid var(--c-border);max-height:0;overflow:hidden;transition:max-height var(--t-slow)}
 .files-panel.is-open{max-height:60vh;overflow-y:auto}
 .files-panel__inner{padding:8px 12px 16px;display:flex;flex-direction:column;gap:2px}
-.file-row{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:10px;cursor:pointer;transition:background var(--t-fast)}
+.files-panel__head{display:flex;align-items:center;justify-content:space-between;padding:8px 8px 6px}
+.files-panel__title{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--c-text-muted)}
+.files-panel__add{padding:6px 10px;border-radius:8px;font-size:12px;font-weight:600;color:var(--c-primary);display:inline-flex;align-items:center;gap:4px;cursor:pointer;transition:background var(--t-fast)}
+.files-panel__add:hover{background:var(--c-primary-soft)}
+.files-panel__add svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.file-row{display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:10px;cursor:pointer;transition:background var(--t-fast)}
 .file-row:hover{background:var(--c-bg-hover)}
 .file-row.is-active{background:var(--c-primary-soft)}
-.file-row__icon{width:24px;height:24px;flex-shrink:0;color:var(--c-text-2);fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.file-row__icon{width:22px;height:22px;flex-shrink:0;color:var(--c-text-2);fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .file-row.is-active .file-row__icon{color:var(--c-primary)}
-.file-row__name{flex:1;min-width:0;font-size:15px;font-weight:500;color:var(--c-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--font-mono);letter-spacing:-.01em}
-.file-row__meta{font-size:12px;color:var(--c-text-subtle);font-family:var(--font-mono);flex-shrink:0}
-.file-row__badge{padding:3px 8px;border-radius:6px;background:var(--c-success-soft);color:var(--c-success);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
-.files-panel__empty{padding:20px;text-align:center;font-size:13.5px;color:var(--c-text-muted)}
+.file-row__name{flex:1;min-width:0;font-size:14.5px;font-weight:500;color:var(--c-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--font-mono);letter-spacing:-.01em}
+.file-row__meta{font-size:11.5px;color:var(--c-text-subtle);font-family:var(--font-mono);flex-shrink:0}
+.file-row__badge{padding:3px 8px;border-radius:6px;background:var(--c-success-soft);color:var(--c-success);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-family:var(--font-mono);flex-shrink:0}
+.file-row__del{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px;color:var(--c-text-subtle);transition:all var(--t-fast);flex-shrink:0}
+.file-row__del:hover{color:var(--c-danger);background:var(--c-danger-soft)}
+.file-row__del svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.files-panel__empty{padding:24px 20px;text-align:center;font-size:13.5px;color:var(--c-text-muted);line-height:1.5}
 
 /* MAIN */
 .main{flex:1;min-height:0;display:flex;flex-direction:column;overflow-y:auto;position:relative;scroll-behavior:smooth}
 .content{flex:1;padding:20px 20px 8px;display:flex;flex-direction:column;gap:16px;max-width:820px;width:100%;margin:0 auto}
 
+/* WELCOME */
+.welcome{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 24px}
+.welcome__icon{width:80px;height:80px;border-radius:22px;background:var(--c-primary-soft);color:var(--c-primary);display:flex;align-items:center;justify-content:center;margin-bottom:24px}
+.welcome__icon svg{width:42px;height:42px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.welcome__title{font-size:22px;font-weight:700;letter-spacing:-.025em;color:var(--c-text);margin-bottom:10px;line-height:1.25;max-width:480px}
+.welcome__desc{font-size:14.5px;color:var(--c-text-muted);line-height:1.5;max-width:420px}
+
 /* PREVIEW CARD */
 .preview-card{padding:20px;background:var(--c-surface);border:1px solid var(--c-border);border-radius:20px;display:flex;flex-direction:column;gap:14px;transition:box-shadow var(--t-base)}
+.preview-card:hover{box-shadow:var(--sh-md)}
 .preview-card__head{display:flex;align-items:flex-start;gap:14px}
 .preview-card__icon{width:48px;height:48px;border-radius:14px;background:var(--c-primary-soft);color:var(--c-primary);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .preview-card__icon svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
@@ -143,9 +160,25 @@ img,svg{display:block;max-width:100%}
 .preview-card__btn{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:15px;border-radius:14px;background:var(--c-primary);color:#fff;font-size:15px;font-weight:700;letter-spacing:-.005em;transition:all var(--t-fast);cursor:pointer;box-shadow:0 4px 14px var(--c-primary-glow);font-family:inherit}
 .preview-card__btn:hover{background:var(--c-primary-hover);transform:translateY(-1px);box-shadow:0 6px 18px var(--c-primary-glow)}
 .preview-card__btn:active{transform:translateY(0) scale(.99)}
+.preview-card__btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
 .preview-card__btn svg{width:18px;height:18px;fill:currentColor}
 
-/* THREAD (chat dentro de coder) */
+/* FILE VIEWER */
+.file-viewer{background:var(--c-surface);border:1px solid var(--c-border);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+.file-viewer__head{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--c-border);background:var(--c-surface-2)}
+.file-viewer__icon{width:28px;height:28px;border-radius:8px;background:var(--c-primary-soft);color:var(--c-primary);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.file-viewer__icon svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.file-viewer__name{flex:1;min-width:0;font-size:14px;font-weight:600;color:var(--c-text);font-family:var(--font-mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.file-viewer__actions{display:flex;align-items:center;gap:2px}
+.file-viewer__btn{width:30px;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--c-text-2);transition:all var(--t-fast);cursor:pointer}
+.file-viewer__btn:hover{background:var(--c-bg-hover);color:var(--c-text)}
+.file-viewer__btn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.file-viewer__body{padding:16px;background:#0f0f10;color:#e6e6e6;font-family:var(--font-mono);font-size:12.5px;line-height:1.6;max-height:400px;overflow:auto;white-space:pre;tab-size:2}
+.file-viewer__body::-webkit-scrollbar-thumb{background:#3a3a42;background-clip:content-box}
+.file-viewer__editor{width:100%;padding:16px;background:#0f0f10;color:#e6e6e6;font-family:var(--font-mono);font-size:12.5px;line-height:1.6;border:none;min-height:200px;max-height:400px;overflow:auto;white-space:pre;tab-size:2;resize:vertical}
+.file-viewer__editor:focus{outline:2px solid var(--c-primary)}
+
+/* THREAD */
 .thread{display:flex;flex-direction:column;gap:20px;padding:8px 0 16px}
 .thread[hidden]{display:none}
 .message{display:flex;gap:12px;animation:msgIn .28s cubic-bezier(.16,1,.3,1)}
@@ -173,6 +206,12 @@ img,svg{display:block;max-width:100%}
 .message__text a{color:var(--c-primary);text-decoration:underline;text-underline-offset:2px;font-weight:500}
 .message__text ul,.message__text ol{padding-left:22px;margin:10px 0}
 .message__text li{margin:4px 0}
+.message__tools{display:flex;gap:6px;margin-top:10px;opacity:0;transition:opacity var(--t-base);flex-wrap:wrap}
+.message:hover .message__tools{opacity:1}
+.message__tool{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;padding:0;border-radius:8px;color:var(--c-text-muted);transition:all var(--t-fast);cursor:pointer;position:relative}
+.message__tool:hover{color:var(--c-text);background:var(--c-bg-hover)}
+.message__tool svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.message__tool[data-tooltip]:hover::after{content:attr(data-tooltip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--c-text);color:var(--c-bg);font-size:11px;font-weight:600;padding:4px 8px;border-radius:6px;white-space:nowrap;pointer-events:none}
 .md-pre-head{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;background:#000;border-bottom:1px solid #1c1c20;font-size:11px;color:#a0a0a3;font-family:var(--font-mono)}
 .md-pre-copy{padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;color:#a0a0a3;transition:all var(--t-fast);font-family:var(--font);cursor:pointer}
 .md-pre-copy:hover{color:#fff;background:rgba(255,255,255,.10)}
@@ -230,9 +269,9 @@ img,svg{display:block;max-width:100%}
 .arch-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:var(--r-pill);background:var(--c-primary-soft);color:var(--c-primary);font-size:12.5px;font-weight:600}
 .arch-chip svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 .arch-columns{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:8px}
-.arch-column{padding:16px 12px;background:var(--c-bg-soft);border:1px dashed var(--c-border-strong);border-radius:14px;min-height:80px;display:flex;flex-direction:column;gap:8px;text-align:center}
+.arch-column{padding:16px 12px;background:var(--c-bg-soft);border:1px dashed var(--c-border-strong);border-radius:14px;min-height:100px;display:flex;flex-direction:column;gap:8px;text-align:center}
 .arch-column__title{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--c-text-muted)}
-.arch-column__body{font-size:12.5px;color:var(--c-text-subtle);line-height:1.4;flex:1;display:flex;align-items:center;justify-content:center}
+.arch-column__body{font-size:12px;color:var(--c-text-subtle);line-height:1.5;flex:1;display:flex;align-items:center;justify-content:center;word-break:break-word;font-family:var(--font-mono)}
 
 .deps-header{padding:16px 18px;background:var(--c-surface);border:1px solid var(--c-border);border-radius:16px;display:flex;align-items:center;gap:12px}
 .deps-header__icon{width:36px;height:36px;flex-shrink:0;color:var(--c-primary);display:flex;align-items:center;justify-content:center}
@@ -289,6 +328,7 @@ img,svg{display:block;max-width:100%}
 .preview-error__icon svg{width:56px;height:56px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .preview-error__title{font-size:18px;font-weight:700;letter-spacing:-.02em;color:#f0f0f5}
 .preview-error__desc{font-size:13.5px;color:rgba(255,255,255,.55);line-height:1.5;max-width:420px}
+.preview-error__desc code{font-family:var(--font-mono);background:rgba(255,255,255,.08);padding:2px 6px;border-radius:4px;color:#4090ff;font-size:12.5px}
 .preview-error__actions{display:flex;flex-direction:column;align-items:center;gap:14px;margin-top:20px}
 .preview-error__retry{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:var(--r-pill);background:#4090ff;color:#fff;font-size:14.5px;font-weight:700;transition:all var(--t-fast);cursor:pointer;font-family:inherit;box-shadow:0 4px 14px rgba(64,144,255,.35)}
 .preview-error__retry:hover{background:#5a9dff;transform:translateY(-1px)}
@@ -336,6 +376,8 @@ img,svg{display:block;max-width:100%}
   .building-cell{width:26px;height:18px;border-radius:5px}
   .settings-modal{padding:20px;border-radius:20px}
   .arch-columns{grid-template-columns:1fr}
+  .message__tools{opacity:1}
+  .composer-area{padding:10px 12px calc(12px + env(safe-area-inset-bottom,0px))}
 }
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
@@ -366,11 +408,18 @@ img,svg{display:block;max-width:100%}
       <svg viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
       Archivos del proyecto
     </button>
+    <button type="button" class="side-menu__item" data-open-preview-menu>
+      <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><polygon points="10 9 15 12 10 15"/></svg>
+      Vista previa
+    </button>
     <div class="side-menu__divider"></div>
     <button type="button" class="side-menu__item" data-open-settings>
       <svg viewBox="0 0 24 24"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="10.5" r="2.5"/><circle cx="8.5" cy="7.5" r="2.5"/><circle cx="6.5" cy="12.5" r="2.5"/></svg>
       Cambiar tema
     </button>
+    <div class="side-menu__footer">
+      Numination · Coder · Chat + editor
+    </div>
   </aside>
 
   <!-- TOPBAR -->
@@ -380,7 +429,7 @@ img,svg{display:block;max-width:100%}
     </button>
     <div class="topbar__title-block">
       <h1 class="topbar__title" data-project-name>Mi proyecto</h1>
-      <span class="topbar__sub">Editor de código</span>
+      <span class="topbar__sub" data-topbar-sub>Editor de código</span>
     </div>
     <div class="topbar__actions">
       <button type="button" class="topbar__icon" data-open-architect title="Modo arquitecto">
@@ -389,27 +438,35 @@ img,svg{display:block;max-width:100%}
       <button type="button" class="topbar__icon" data-open-deps title="Mapa de dependencias">
         <svg viewBox="0 0 24 24"><rect x="3" y="3" width="6" height="6" rx="1.5"/><rect x="15" y="3" width="6" height="6" rx="1.5"/><rect x="9" y="15" width="6" height="6" rx="1.5"/><path d="M6 9v3M18 9v3M12 15v-3"/></svg>
       </button>
-      <button type="button" class="topbar__icon" data-undo title="Deshacer">
-        <svg viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1 0 3-7.7L3 8"/></svg>
+      <button type="button" class="topbar__icon" data-download title="Descargar proyecto">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       </button>
       <button type="button" class="topbar__files-btn" data-toggle-files>
         <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
         Ver archivos
-      </button>
-      <button type="button" class="topbar__icon" data-download title="Descargar proyecto">
-        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       </button>
     </div>
   </header>
 
   <!-- FILES PANEL -->
   <div class="files-panel" data-files-panel>
-    <div class="files-panel__inner" data-files-list></div>
+    <div class="files-panel__inner">
+      <div class="files-panel__head">
+        <span class="files-panel__title">Archivos del proyecto</span>
+        <button type="button" class="files-panel__add" data-file-new>
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Nuevo
+        </button>
+      </div>
+      <div data-files-list></div>
+    </div>
   </div>
 
   <!-- MAIN -->
   <main class="main" data-main>
     <div class="content">
+
+      <!-- Preview card -->
       <div class="preview-card">
         <div class="preview-card__head">
           <div class="preview-card__icon">
@@ -427,6 +484,19 @@ img,svg{display:block;max-width:100%}
         </button>
       </div>
 
+      <!-- File viewer (si hay archivo activo) -->
+      <div data-file-viewer-host></div>
+
+      <!-- Welcome (si no hay mensajes) -->
+      <div class="welcome" data-welcome>
+        <div class="welcome__icon">
+          <svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        </div>
+        <h2 class="welcome__title">¿Qué querés construir hoy?</h2>
+        <p class="welcome__desc">Describile a Numi lo que necesitás y va a generar los archivos directamente en tu proyecto.</p>
+      </div>
+
+      <!-- Thread -->
       <div class="thread" data-thread hidden></div>
     </div>
   </main>
@@ -470,7 +540,7 @@ img,svg{display:block;max-width:100%}
         </div>
         <div class="arch-info__body">
           <h2 class="arch-info__title">Mapa bidireccional del repositorio</h2>
-          <p class="arch-info__desc">Visualizá la estructura de tu proyecto, los archivos principales y las relaciones que se detectaron.</p>
+          <p class="arch-info__desc">Visualizá la estructura de tu proyecto, los archivos principales y las relaciones detectadas.</p>
         </div>
       </div>
       <div class="arch-info__chips">
@@ -478,19 +548,23 @@ img,svg{display:block;max-width:100%}
           <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
           <span data-arch-file-count>0 archivos</span>
         </span>
+        <span class="arch-chip" data-arch-loc-chip>
+          <svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          <span data-arch-loc>0 LOC</span>
+        </span>
       </div>
       <div class="arch-columns">
         <div class="arch-column">
-          <span class="arch-column__title">Core</span>
-          <div class="arch-column__body" data-arch-col-core>Sin archivos</div>
-        </div>
-        <div class="arch-column">
-          <span class="arch-column__title">Data</span>
-          <div class="arch-column__body" data-arch-col-data>Sin archivos</div>
+          <span class="arch-column__title">Código</span>
+          <div class="arch-column__body" data-arch-col-code>Sin archivos</div>
         </div>
         <div class="arch-column">
           <span class="arch-column__title">Estilos</span>
-          <div class="arch-column__body" data-arch-col-backend>Sin archivos</div>
+          <div class="arch-column__body" data-arch-col-styles>Sin archivos</div>
+        </div>
+        <div class="arch-column">
+          <span class="arch-column__title">Datos / Docs</span>
+          <div class="arch-column__body" data-arch-col-data>Sin archivos</div>
         </div>
       </div>
     </div>
@@ -612,7 +686,7 @@ img,svg{display:block;max-width:100%}
 
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
-   CODER · v3.0 · Chat funcional dentro de coder.html
+   CODER · v3.1 · Chat + editor + preview + architect + deps
    ═══════════════════════════════════════════════════════════════════════ */
 (function () {
   'use strict';
@@ -623,17 +697,18 @@ img,svg{display:block;max-width:100%}
     FILES_KEY: 'numination-project-files-v11',
     CONTENTS_KEY: 'numination-project-contents-v11',
     CHAT_MAP_KEY: 'numination-coder-chats-v1',
-    TOAST_DURATION: 3200,
+    TOAST_DURATION: 3400,
   };
 
   var state = {
     project: null,
     files: [],
     activeFile: null,
-    previewState: 'idle',
+    editingFile: null,
     chatId: null,
     messages: [],
     isGenerating: false,
+    previewState: 'idle',
   };
 
   var $ = function (s, c) { return (c || document).querySelector(s); };
@@ -645,7 +720,7 @@ img,svg{display:block;max-width:100%}
   }
   function storeWrite(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 
-  function escape(s) {
+  function escapeHtml(s) {
     var d = document.createElement('div');
     d.textContent = String(s == null ? '' : s);
     return d.innerHTML;
@@ -658,8 +733,10 @@ img,svg{display:block;max-width:100%}
 
   function fileIcon(name) {
     var ext = getExt(name);
-    if (['js', 'jsx', 'ts', 'tsx', 'html', 'htm', 'vue', 'svelte'].indexOf(ext) !== -1)
+    if (['js', 'jsx', 'ts', 'tsx', 'vue', 'svelte'].indexOf(ext) !== -1)
       return '<svg class="file-row__icon" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>';
+    if (['html', 'htm'].indexOf(ext) !== -1)
+      return '<svg class="file-row__icon" viewBox="0 0 24 24"><path d="m18 2 4 4-4 4"/><path d="M2 6h20"/><path d="m6 18-4-4 4-4"/><path d="M22 18H2"/></svg>';
     if (['css', 'scss', 'sass', 'less'].indexOf(ext) !== -1)
       return '<svg class="file-row__icon" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>';
     return '<svg class="file-row__icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
@@ -671,7 +748,7 @@ img,svg{display:block;max-width:100%}
     var el = document.createElement('div');
     el.className = 'toast toast--' + kind;
     var ico = { ok: '✓', err: '✕', info: 'ⓘ', warn: '⚠' }[kind] || '';
-    el.innerHTML = '<span class="toast__icon">' + ico + '</span><span>' + escape(msg) + '</span>';
+    el.innerHTML = '<span class="toast__icon">' + ico + '</span><span>' + escapeHtml(msg) + '</span>';
     host.appendChild(el);
     var timer = setTimeout(function () {
       el.style.transition = 'opacity .3s, transform .3s';
@@ -682,9 +759,9 @@ img,svg{display:block;max-width:100%}
     el.addEventListener('click', function () { clearTimeout(timer); el.remove(); }, { once: true });
   }
 
-  /* ─── Markdown render (igual que chat.html) ─── */
+  /* ─── Markdown ─── */
   function mdRender(text) {
-    var h = escape(String(text || ''));
+    var h = escapeHtml(String(text || ''));
     h = h.replace(/```(\w+)?\n?([\s\S]*?)```/g, function (m, lang, code) {
       var l = lang || 'texto'; var enc = encodeURIComponent(code.trim());
       return '<div class="md-pre-head"><span>' + l + '</span><button type="button" class="md-pre-copy" data-copy="' + enc + '">Copiar</button></div><pre><code>' + code.trim() + '</code></pre>';
@@ -719,23 +796,21 @@ img,svg{display:block;max-width:100%}
     });
   }
 
-  /* ─── Persistencia de archivos ─── */
+  /* ─── Persistencia ─── */
   function saveFiles() {
     if (!state.project) return;
     var all = storeRead(CFG.FILES_KEY, {}) || {};
     all[state.project.id] = state.files.map(function (f) { return f.name; });
     storeWrite(CFG.FILES_KEY, all);
   }
-
   function saveContents() {
     if (!state.project) return;
     var all = storeRead(CFG.CONTENTS_KEY, {}) || {};
     var map = {};
-    state.files.forEach(function (f) { if (f.content) map[f.name] = f.content; });
+    state.files.forEach(function (f) { map[f.name] = f.content || ''; });
     all[state.project.id] = map;
     storeWrite(CFG.CONTENTS_KEY, all);
   }
-
   function saveChatMap(chatId) {
     if (!state.project) return;
     var map = storeRead(CFG.CHAT_MAP_KEY, {}) || {};
@@ -769,7 +844,6 @@ img,svg{display:block;max-width:100%}
 
     var allFiles = storeRead(CFG.FILES_KEY, {}) || {};
     var fileNames = allFiles[state.project.id] || [];
-
     var allContents = storeRead(CFG.CONTENTS_KEY, {}) || {};
     var contents = allContents[state.project.id] || {};
 
@@ -778,7 +852,7 @@ img,svg{display:block;max-width:100%}
         name: name,
         path: name,
         ext: getExt(name),
-        size: (contents[name] || '').length || Math.floor(Math.random() * 4000) + 300,
+        size: (contents[name] || '').length,
         content: contents[name] || '',
       };
     });
@@ -787,14 +861,19 @@ img,svg{display:block;max-width:100%}
     return state.project;
   }
 
-  /* ─── Render topbar ─── */
+  /* ─── Topbar ─── */
   function renderTopbar() {
     var name = state.project.name || 'Mi proyecto';
-    document.querySelectorAll('[data-project-name]').forEach(function (el) { el.textContent = name; });
-    document.querySelectorAll('[data-menu-project-name]').forEach(function (el) { el.textContent = name; });
+    $$('[data-project-name]').forEach(function (el) { el.textContent = name; });
+    $$('[data-menu-project-name]').forEach(function (el) { el.textContent = name; });
+    var sub = $('[data-topbar-sub]');
+    if (sub) {
+      var n = state.files.length;
+      sub.textContent = n === 0 ? 'Editor de código' : n + ' archivo' + (n === 1 ? '' : 's') + ' · Editor de código';
+    }
   }
 
-  /* ─── Render archivos ─── */
+  /* ─── Files list ─── */
   function renderFiles() {
     var listEl = $('[data-files-list]');
     if (!listEl) return;
@@ -807,17 +886,135 @@ img,svg{display:block;max-width:100%}
       var row = document.createElement('div');
       row.className = 'file-row' + (state.activeFile === f.name ? ' is-active' : '');
       row.innerHTML = fileIcon(f.name) +
-        '<div class="file-row__name">' + escape(f.name) + '</div>' +
-        '<div class="file-row__meta">' + (Math.round((f.size || 0) / 1024 * 10) / 10) + ' KB</div>';
-      row.addEventListener('click', function () {
+        '<div class="file-row__name">' + escapeHtml(f.name) + '</div>' +
+        '<div class="file-row__meta">' + formatSize(f.size) + '</div>' +
+        '<button type="button" class="file-row__del" title="Eliminar">' +
+          '<svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>' +
+        '</button>';
+      row.addEventListener('click', function (e) {
+        if (e.target.closest('.file-row__del')) return;
         state.activeFile = f.name;
+        state.editingFile = null;
         renderFiles();
-        toast('info', 'Abriendo ' + f.name);
+        renderFileViewer();
+        renderTopbar();
+      });
+      row.querySelector('.file-row__del').addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (!confirm('¿Eliminar "' + f.name + '"?')) return;
+        state.files = state.files.filter(function (x) { return x.name !== f.name; });
+        if (state.activeFile === f.name) { state.activeFile = null; state.editingFile = null; }
+        saveFiles(); saveContents(); renderFiles(); renderFileViewer(); renderTopbar();
+        updatePreviewBadge();
+        toast('ok', 'Archivo eliminado');
       });
       listEl.appendChild(row);
     });
   }
 
+  function formatSize(bytes) {
+    if (!bytes) return '0 B';
+    if (bytes < 1024) return bytes + ' B';
+    return (Math.round(bytes / 1024 * 10) / 10) + ' KB';
+  }
+
+  /* ─── File viewer ─── */
+  function renderFileViewer() {
+    var host = $('[data-file-viewer-host]');
+    if (!host) return;
+    host.innerHTML = '';
+    if (!state.activeFile) return;
+    var file = state.files.find(function (f) { return f.name === state.activeFile; });
+    if (!file) return;
+
+    var isEditing = state.editingFile === file.name;
+    var viewer = document.createElement('div');
+    viewer.className = 'file-viewer';
+
+    var head = document.createElement('div');
+    head.className = 'file-viewer__head';
+    head.innerHTML =
+      '<div class="file-viewer__icon">' + fileIcon(file.name).replace('file-row__icon', '') + '</div>' +
+      '<div class="file-viewer__name">' + escapeHtml(file.name) + '</div>' +
+      '<div class="file-viewer__actions">' +
+        '<button type="button" class="file-viewer__btn" data-action="copy" title="Copiar">' +
+          '<svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' +
+        '</button>' +
+        (isEditing
+          ? '<button type="button" class="file-viewer__btn" data-action="save" title="Guardar">' +
+              '<svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>' +
+            '</button>'
+          : '<button type="button" class="file-viewer__btn" data-action="edit" title="Editar">' +
+              '<svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>' +
+            '</button>') +
+        '<button type="button" class="file-viewer__btn" data-action="close" title="Cerrar">' +
+          '<svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+        '</button>' +
+      '</div>';
+
+    var body;
+    if (isEditing) {
+      body = document.createElement('textarea');
+      body.className = 'file-viewer__editor';
+      body.value = file.content || '';
+      body.dataset.edit = '1';
+    } else {
+      body = document.createElement('div');
+      body.className = 'file-viewer__body';
+      body.textContent = file.content || '(vacío)';
+    }
+
+    viewer.appendChild(head);
+    viewer.appendChild(body);
+    host.appendChild(viewer);
+
+    head.querySelector('[data-action="copy"]').addEventListener('click', function () {
+      navigator.clipboard.writeText(file.content || '').then(function () {
+        toast('ok', 'Copiado');
+      });
+    });
+    var closeBtn = head.querySelector('[data-action="close"]');
+    if (closeBtn) closeBtn.addEventListener('click', function () {
+      state.activeFile = null; state.editingFile = null;
+      renderFiles(); renderFileViewer(); renderTopbar();
+    });
+    var editBtn = head.querySelector('[data-action="edit"]');
+    if (editBtn) editBtn.addEventListener('click', function () {
+      state.editingFile = file.name;
+      renderFileViewer();
+    });
+    var saveBtn = head.querySelector('[data-action="save"]');
+    if (saveBtn) saveBtn.addEventListener('click', function () {
+      var ta = viewer.querySelector('[data-edit="1"]');
+      if (!ta) return;
+      file.content = ta.value;
+      file.size = ta.value.length;
+      saveContents();
+      state.editingFile = null;
+      renderFiles(); renderFileViewer();
+      updatePreviewBadge();
+      toast('ok', 'Guardado');
+    });
+  }
+
+  /* ─── Nuevo archivo ─── */
+  function newFile() {
+    var name = prompt('Nombre del archivo (ej: index.html, styles.css):');
+    if (!name || !name.trim()) return;
+    name = name.trim().replace(/^[\/\.]+/, '');
+    if (state.files.find(function (f) { return f.name === name; })) {
+      toast('warn', 'Ya existe ese archivo');
+      return;
+    }
+    state.files.push({ name: name, path: name, ext: getExt(name), size: 0, content: '' });
+    saveFiles(); saveContents();
+    state.activeFile = name;
+    renderFiles(); renderFileViewer(); renderTopbar();
+    updatePreviewBadge();
+    toast('ok', 'Creado: ' + name);
+  }
+
+  /* ─── Files panel ─── */
   function toggleFilesPanel() {
     var panel = $('[data-files-panel]');
     var btn = $('[data-toggle-files]');
@@ -847,32 +1044,36 @@ img,svg{display:block;max-width:100%}
     if (overlay) overlay.classList.remove('is-active');
   }
 
-  /* ─── Arquitecto ─── */
-  function updateArchCounts() {
+  /* ─── Architect ─── */
+  function openArchitect() {
+    var modal = $('[data-architect-modal]');
+    if (!modal) return;
+    var sub = $('[data-architect-sub]');
+    if (sub) sub.textContent = state.project.name || 'Mi proyecto';
+
     var fileCountEl = $('[data-arch-file-count]');
     if (fileCountEl) fileCountEl.textContent = state.files.length + ' archivo' + (state.files.length === 1 ? '' : 's');
 
-    var core = [], data = [], estilos = [];
+    var totalLoc = state.files.reduce(function (acc, f) { return acc + (f.content || '').split('\n').length; }, 0);
+    var locEl = $('[data-arch-loc]');
+    if (locEl) locEl.textContent = totalLoc + ' LOC';
+
+    var code = [], styles = [], data = [];
     state.files.forEach(function (f) {
       var ext = f.ext;
-      if (['jsx', 'tsx', 'js', 'ts', 'html', 'htm', 'vue', 'svelte'].indexOf(ext) !== -1) core.push(f.name);
-      else if (['json', 'csv', 'xml', 'yaml', 'yml', 'txt', 'md'].indexOf(ext) !== -1) data.push(f.name);
-      else if (['css', 'scss', 'sass', 'less'].indexOf(ext) !== -1) estilos.push(f.name);
-      else core.push(f.name);
+      if (['js', 'jsx', 'ts', 'tsx', 'vue', 'svelte', 'html', 'htm'].indexOf(ext) !== -1) code.push(f.name);
+      else if (['css', 'scss', 'sass', 'less'].indexOf(ext) !== -1) styles.push(f.name);
+      else data.push(f.name);
     });
-    var coreEl = $('[data-arch-col-core]');
+
+    var codeEl = $('[data-arch-col-code]');
+    var stylesEl = $('[data-arch-col-styles]');
     var dataEl = $('[data-arch-col-data]');
-    var estilosEl = $('[data-arch-col-backend]');
-    if (coreEl) coreEl.textContent = core.length ? core.slice(0, 3).join(', ') + (core.length > 3 ? '…' : '') : 'Sin archivos';
-    if (dataEl) dataEl.textContent = data.length ? data.slice(0, 3).join(', ') + (data.length > 3 ? '…' : '') : 'Sin archivos';
-    if (estilosEl) estilosEl.textContent = estilos.length ? estilos.slice(0, 3).join(', ') + (estilos.length > 3 ? '…' : '') : 'Sin archivos';
-  }
-  function openArchitect() {
-    var modal = $('[data-architect-modal]');
-    var sub = $('[data-architect-sub]');
-    if (!modal) return;
-    if (sub) sub.textContent = state.project.name || 'Mi proyecto';
-    updateArchCounts();
+
+    if (codeEl) codeEl.textContent = code.length ? code.slice(0, 5).join('\n') + (code.length > 5 ? '\n…' : '') : 'Sin archivos';
+    if (stylesEl) stylesEl.textContent = styles.length ? styles.slice(0, 5).join('\n') + (styles.length > 5 ? '\n…' : '') : 'Sin archivos';
+    if (dataEl) dataEl.textContent = data.length ? data.slice(0, 5).join('\n') + (data.length > 5 ? '\n…' : '') : 'Sin archivos';
+
     modal.hidden = false;
   }
   function closeArchitect() { var m = $('[data-architect-modal]'); if (m) m.hidden = true; }
@@ -887,7 +1088,39 @@ img,svg{display:block;max-width:100%}
     fileName = fileName || (state.files[0] ? state.files[0].name : 'archivo');
     if (fileEl) fileEl.textContent = fileName;
     if (nodeLabel) nodeLabel.textContent = fileName;
-    if (metaEl) metaEl.textContent = '0 dependencias detectadas';
+
+    // Analizar imports básicos
+    var file = state.files.find(function (f) { return f.name === fileName; });
+    var deps = [];
+    if (file && file.content) {
+      var c = file.content;
+      var importRe = /(?:import\s+[\s\S]*?\s+from\s+['"]([^'"]+)['"]|require\(['"]([^'"]+)['"]\))/g;
+      var m;
+      while ((m = importRe.exec(c)) !== null) {
+        var dep = m[1] || m[2];
+        if (deps.indexOf(dep) === -1) deps.push(dep);
+      }
+    }
+
+    if (metaEl) metaEl.textContent = deps.length + ' dependencia' + (deps.length === 1 ? '' : 's') + ' detectada' + (deps.length === 1 ? '' : 's');
+    var canvas = modal.querySelector('.deps-canvas');
+    if (canvas) {
+      var nodes = canvas.querySelectorAll('.dep-node:not(:first-child)');
+      nodes.forEach(function (n) { n.remove(); });
+      var empty = canvas.querySelector('[data-deps-empty]');
+      if (deps.length === 0) {
+        if (empty) empty.hidden = false;
+      } else {
+        if (empty) empty.hidden = true;
+        deps.forEach(function (dep) {
+          var el = document.createElement('div');
+          el.className = 'dep-node';
+          el.innerHTML = '<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>' + escapeHtml(dep) + '</span>';
+          canvas.appendChild(el);
+        });
+      }
+    }
+
     modal.hidden = false;
   }
   function closeDeps() { var m = $('[data-deps-modal]'); if (m) m.hidden = true; }
@@ -917,46 +1150,79 @@ img,svg{display:block;max-width:100%}
     var modal = $('[data-preview-modal]');
     var iframe = $('[data-preview-iframe]');
     if (modal) modal.hidden = true;
-    if (iframe) iframe.src = 'about:blank';
+    if (iframe) iframe.removeAttribute('srcdoc');
     clearTimeout(previewTimeoutId);
     previewTimeoutId = null;
   }
-  function startPreviewLoad() {
-    setPreviewState('loading');
+  function buildPreviewDoc() {
     var htmlFile = state.files.find(function (f) { return f.ext === 'html' || f.ext === 'htm'; });
+    if (!htmlFile) return null;
 
-    if (!htmlFile) {
-      previewTimeoutId = setTimeout(function () { setPreviewState('error'); }, 1800);
-      return;
-    }
-
-    var htmlContent = htmlFile.content || ('<h1>' + escape(state.project.name) + '</h1><p>Tu proyecto está listo.</p><p>Pedile a Numi que agregue más cosas.</p>');
+    var htmlContent = htmlFile.content || '';
     var cssFile = state.files.find(function (f) { return f.ext === 'css'; });
-    var cssContent = cssFile ? (cssFile.content || '') : '';
     var jsFile = state.files.find(function (f) { return f.ext === 'js'; });
+    var cssContent = cssFile ? (cssFile.content || '') : '';
     var jsContent = jsFile ? (jsFile.content || '') : '';
 
-    var baseCss = 'body{font-family:system-ui,sans-serif;padding:32px;line-height:1.6;background:#0f0f15;color:#f0f0f5}h1{letter-spacing:-.02em;margin-bottom:12px}button{padding:10px 18px;background:#4090ff;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;margin-top:12px}button:hover{background:#5a9dff}';
+    // ¿Ya tiene <html>?
+    var looksFull = /<html[\s>]/i.test(htmlContent);
 
-    var doc =
-      '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><style>' +
+    if (looksFull) {
+      // Inyectar CSS/JS si no están referenciados
+      if (cssContent && !/\.css/i.test(htmlContent)) {
+        htmlContent = htmlContent.replace('</head>', '<style>' + cssContent + '</style></head>');
+      }
+      if (jsContent && !/\.js/i.test(htmlContent)) {
+        htmlContent = htmlContent.replace('</body>', '<script>' + jsContent + '<\/script></body>');
+      }
+      return htmlContent;
+    }
+
+    var baseCss = 'body{font-family:system-ui,sans-serif;padding:32px;line-height:1.6;background:#0f0f15;color:#f0f0f5;margin:0}h1{letter-spacing:-.02em;margin-bottom:12px}button{padding:10px 18px;background:#4090ff;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;margin-top:12px}button:hover{background:#5a9dff}a{color:#4090ff}';
+
+    return '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><style>' +
       baseCss + '\n' + cssContent +
       '</style></head><body>' +
       htmlContent +
       (jsContent ? '<script>' + jsContent + '<\/script>' : '') +
       '</body></html>';
-
+  }
+  function startPreviewLoad() {
+    setPreviewState('loading');
+    var doc = buildPreviewDoc();
+    if (!doc) {
+      previewTimeoutId = setTimeout(function () { setPreviewState('error'); }, 1400);
+      return;
+    }
     previewTimeoutId = setTimeout(function () {
       var iframe = $('[data-preview-iframe]');
       if (!iframe) return;
       iframe.srcdoc = doc;
-      iframe.onload = function () { setTimeout(function () { setPreviewState('ready'); }, 400); };
+      iframe.onload = function () { setTimeout(function () { setPreviewState('ready'); }, 300); };
       iframe.onerror = function () { setPreviewState('error'); };
-    }, 1400);
+    }, 900);
   }
 
-  /* ─── Descarga ─── */
+  function updatePreviewBadge() {
+    var badge = $('[data-preview-badge]');
+    var desc = $('[data-preview-desc]');
+    if (!badge) return;
+    var hasHtml = state.files.some(function (f) { return f.ext === 'html' || f.ext === 'htm'; });
+    if (hasHtml) {
+      badge.textContent = 'Listo';
+      badge.classList.remove('is-pending', 'is-error');
+      if (desc) desc.textContent = 'Abrí la versión actual de tu proyecto.';
+    } else {
+      badge.textContent = 'Sin HTML';
+      badge.classList.add('is-pending');
+      badge.classList.remove('is-error');
+      if (desc) desc.textContent = 'Todavía no hay un index.html. Pedile a Numi que lo cree.';
+    }
+  }
+
+  /* ─── Download ─── */
   function downloadProject() {
+    if (state.files.length === 0) { toast('warn', 'No hay archivos para descargar'); return; }
     var payload = {
       project: state.project.name,
       files: state.files.map(function (f) { return { name: f.name, content: f.content || '', ext: f.ext }; }),
@@ -975,41 +1241,58 @@ img,svg{display:block;max-width:100%}
   }
 
   /* ═══════════════════════════════════════════════════════════════════════
-     CHAT · envío real de mensajes al backend
+     CHAT · envío real
      ═══════════════════════════════════════════════════════════════════════ */
+
+  function renderThread() {
+    var thread = $('[data-thread]');
+    var welcome = $('[data-welcome]');
+    if (!thread) return;
+    if (state.messages.length === 0) {
+      thread.hidden = true;
+      thread.innerHTML = '';
+      if (welcome) welcome.style.display = '';
+      return;
+    }
+    if (welcome) welcome.style.display = 'none';
+    thread.hidden = false;
+    thread.innerHTML = '';
+    state.messages.forEach(function (m) { thread.appendChild(renderMessageBubble(m)); });
+    scrollToBottom();
+  }
 
   function renderMessageBubble(msg) {
     var div = document.createElement('div');
     div.className = 'message message--' + msg.role;
     if (msg.role === 'user') {
-      div.innerHTML = '<div class="message__content"><div class="message__text">' + mdRender(msg.content) + '</div></div>';
+      div.innerHTML = '<div class="message__content"><div class="message__text">' + mdRender(msg.content) + '</div>' +
+        '<div class="message__tools">' +
+          '<button class="message__tool" data-tool="copy" data-tooltip="Copiar"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>' +
+        '</div></div>';
+      var copyBtn = div.querySelector('[data-tool="copy"]');
+      if (copyBtn) copyBtn.addEventListener('click', function () {
+        navigator.clipboard.writeText(msg.content).then(function () { toast('ok', 'Copiado'); });
+      });
     } else {
-      div.innerHTML = '<div class="message__avatar">N</div><div class="message__content"><div class="message__role">Numination</div><div class="message__text">' + mdRender(msg.content) + '</div></div>';
+      div.innerHTML = '<div class="message__avatar">N</div><div class="message__content"><div class="message__role">Numination</div><div class="message__text">' + mdRender(msg.content) + '</div>' +
+        '<div class="message__tools">' +
+          '<button class="message__tool" data-tool="copy" data-tooltip="Copiar"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>' +
+        '</div></div>';
+      var copyBtn2 = div.querySelector('[data-tool="copy"]');
+      if (copyBtn2) copyBtn2.addEventListener('click', function () {
+        navigator.clipboard.writeText(msg.content).then(function () { toast('ok', 'Copiado'); });
+      });
     }
     mdEnhance(div);
     return div;
   }
 
-  function renderThread() {
-    var thread = $('[data-thread]');
-    if (!thread) return;
-    if (state.messages.length === 0) { thread.hidden = true; thread.innerHTML = ''; return; }
-    thread.hidden = false;
-    thread.innerHTML = '';
-    state.messages.forEach(function (m) { thread.appendChild(renderMessageBubble(m)); });
-  }
-
-  /* Extrae archivos del texto de Numi.
-     Formatos soportados:
-       ```lang filename.ext\n...\n```
-       **filename.ext**\n```lang\n...\n```
-  */
+  /* Extraer archivos del texto de Numi. */
   function extractFiles(text) {
     if (!text) return [];
     var out = [];
     var seen = {};
 
-    // Formato 1: ```lang filename.ext\ncode```
     var re1 = /```(\w+)?\s+([\w\-\/\.]+\.\w+)\n([\s\S]*?)```/g;
     var m;
     while ((m = re1.exec(text)) !== null) {
@@ -1019,13 +1302,20 @@ img,svg{display:block;max-width:100%}
       out.push({ name: name, content: m[3].trim(), lang: m[1] || '' });
     }
 
-    // Formato 2: **filename.ext**\n```lang\ncode```
     var re2 = /\*\*([\w\-\/\.]+\.\w+)\*\*[\s\n]*```(\w+)?\n([\s\S]*?)```/g;
     while ((m = re2.exec(text)) !== null) {
       var name2 = m[1].replace(/^[\/\.]+/, '');
       if (!name2 || seen[name2]) continue;
       seen[name2] = 1;
       out.push({ name: name2, content: m[3].trim(), lang: m[2] || '' });
+    }
+
+    var re3 = /```([\w\-\/\.]+\.\w+)\n([\s\S]*?)```/g;
+    while ((m = re3.exec(text)) !== null) {
+      var name3 = m[1].replace(/^[\/\.]+/, '');
+      if (!name3 || seen[name3]) continue;
+      seen[name3] = 1;
+      out.push({ name: name3, content: m[2].trim(), lang: '' });
     }
 
     return out;
@@ -1048,23 +1338,6 @@ img,svg{display:block;max-width:100%}
     }
   }
 
-  function updatePreviewBadge() {
-    var badge = $('[data-preview-badge]');
-    var desc = $('[data-preview-desc]');
-    if (!badge) return;
-    var hasHtml = state.files.some(function (f) { return f.ext === 'html' || f.ext === 'htm'; });
-    if (hasHtml) {
-      badge.textContent = 'Listo';
-      badge.classList.remove('is-pending', 'is-error');
-      if (desc) desc.textContent = 'Abrí la versión actual de tu proyecto.';
-    } else {
-      badge.textContent = 'Sin HTML';
-      badge.classList.add('is-pending');
-      badge.classList.remove('is-error');
-      if (desc) desc.textContent = 'Todavía no hay un index.html. Pedile a Numi que lo cree.';
-    }
-  }
-
   async function apiCreateChat(title) {
     try {
       var res = await fetch('/api/chats', {
@@ -1075,6 +1348,14 @@ img,svg{display:block;max-width:100%}
       });
       var data = await res.json();
       return data && data.chat ? data.chat.id : null;
+    } catch (e) { return null; }
+  }
+
+  async function apiGetChat(chatId) {
+    try {
+      var res = await fetch('/api/chats/' + chatId, { credentials: 'include' });
+      var data = await res.json();
+      return data && data.chat ? data.chat : null;
     } catch (e) { return null; }
   }
 
@@ -1099,6 +1380,16 @@ img,svg{display:block;max-width:100%}
     return chatId;
   }
 
+  async function loadChatHistory() {
+    if (!state.chatId) return;
+    var chat = await apiGetChat(state.chatId);
+    if (!chat || !chat.messages) return;
+    state.messages = chat.messages.map(function (m) {
+      return { role: m.role === 'user' ? 'user' : 'assistant', content: m.content || '' };
+    });
+    renderThread();
+  }
+
   function buildSystemPrefix() {
     var lines = [];
     lines.push('Estás en el modo Coder de Numination, un editor de código dentro de la app.');
@@ -1106,7 +1397,7 @@ img,svg{display:block;max-width:100%}
     if (state.files.length > 0) {
       lines.push('Archivos actuales del proyecto:');
       state.files.forEach(function (f) {
-        lines.push('  · ' + f.name + (f.content ? ' (' + f.content.length + ' chars)' : ' (vacío)'));
+        lines.push('  · ' + f.name + ' (' + (f.content || '').length + ' chars)');
       });
     } else {
       lines.push('El proyecto todavía no tiene archivos.');
@@ -1135,19 +1426,18 @@ img,svg{display:block;max-width:100%}
     state.isGenerating = true;
     handleInput();
 
-    // 1. Añadir mensaje de usuario al thread
     state.messages.push({ role: 'user', content: prompt });
     renderThread();
     scrollToBottom();
 
-    // 2. Asegurar chat
     var chatId = await ensureChat();
-
-    // 3. Guardar mensaje en backend (silencioso)
     if (chatId) apiSaveMessage(chatId, 'user', prompt);
 
-    // 4. Live message assistant
     var thread = $('[data-thread]');
+    var welcome = $('[data-welcome]');
+    if (welcome) welcome.style.display = 'none';
+    thread.hidden = false;
+
     var live = document.createElement('div');
     live.className = 'message message--assistant';
     live.innerHTML = '<div class="message__avatar">N</div><div class="message__content"><div class="message__role">Numination <span class="typing-indicator"><span></span><span></span><span></span></span></div><div class="message__text"><span class="stream-text"></span><span class="stream-cursor"></span></div></div>';
@@ -1158,9 +1448,7 @@ img,svg{display:block;max-width:100%}
     var cursorSpan = live.querySelector('.stream-cursor');
     var typingEl = live.querySelector('.typing-indicator');
     var acc = '';
-    var pendingFiles = [];
 
-    // 5. Preparar body
     var history = state.messages.slice(0, -1).slice(-12).filter(function (m) { return m.content; }).map(function (m) {
       return { role: m.role === 'user' ? 'user' : 'assistant', content: m.content };
     });
@@ -1212,7 +1500,6 @@ img,svg{display:block;max-width:100%}
         });
       }
 
-      // 6. Finalizar
       if (typingEl) typingEl.remove();
       if (cursorSpan) cursorSpan.remove();
       if (!acc.trim()) acc = 'Sin respuesta.';
@@ -1223,19 +1510,32 @@ img,svg{display:block;max-width:100%}
       state.messages.push({ role: 'assistant', content: acc });
       if (chatId) apiSaveMessage(chatId, 'ai', acc);
 
-      // 7. Extraer archivos del texto
-      pendingFiles = extractFiles(acc);
+      // Extraer archivos
+      var pendingFiles = extractFiles(acc);
       if (pendingFiles.length > 0) {
         pendingFiles.forEach(upsertFile);
-        saveFiles();
-        saveContents();
-        renderFiles();
-        updatePreviewBadge();
+        saveFiles(); saveContents();
+        renderFiles(); renderTopbar(); updatePreviewBadge();
         var list = pendingFiles.map(function (f) { return f.name; }).join(', ');
         toast('ok', pendingFiles.length + ' archivo(s): ' + list);
-        // Abrir el panel para que se vea
         openFilesPanel();
+        // Auto-abrir el primer archivo generado
+        if (pendingFiles.length > 0) {
+          state.activeFile = pendingFiles[0].name;
+          renderFiles();
+          renderFileViewer();
+        }
       }
+
+      // Añadir tools al bubble final
+      var tools = document.createElement('div');
+      tools.className = 'message__tools';
+      tools.innerHTML = '<button class="message__tool" data-tool="copy" data-tooltip="Copiar"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>';
+      tools.querySelector('[data-tool="copy"]').addEventListener('click', function () {
+        navigator.clipboard.writeText(acc).then(function () { toast('ok', 'Copiado'); });
+      });
+      var contentEl = live.querySelector('.message__content');
+      if (contentEl) contentEl.appendChild(tools);
     } catch (err) {
       if (typingEl) typingEl.remove();
       if (cursorSpan) cursorSpan.remove();
@@ -1253,41 +1553,37 @@ img,svg{display:block;max-width:100%}
     if (main) main.scrollTop = main.scrollHeight;
   }
 
-  /* ─── Composer setup ─── */
+  /* ─── Composer ─── */
   function setupComposer() {
     var form = $('[data-form]');
     var field = $('[data-field]');
     var send = $('[data-send]');
+    if (!form || !field || !send) return;
 
-    if (field) {
-      field.addEventListener('input', handleInput);
-      field.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault();
-          if (!send.disabled) form.dispatchEvent(new Event('submit', { cancelable: true }));
-        }
-      });
-    }
-
-    if (form) {
-      form.addEventListener('submit', function (e) {
+    field.addEventListener('input', handleInput);
+    field.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        var text = field.value.trim();
-        if (!text || state.isGenerating) return;
-        field.value = '';
-        handleInput();
-        sendMessage(text);
-      });
-    }
+        if (!send.disabled) form.dispatchEvent(new Event('submit', { cancelable: true }));
+      }
+    });
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var text = field.value.trim();
+      if (!text || state.isGenerating) return;
+      field.value = '';
+      handleInput();
+      sendMessage(text);
+    });
 
     var addBtn = $('[data-attach]');
     if (addBtn) addBtn.addEventListener('click', function () { toast('info', 'Adjuntar archivos próximamente'); });
-
     var micBtn = $('[data-mic]');
     if (micBtn) micBtn.addEventListener('click', function () { toast('info', 'Dictado próximamente'); });
   }
 
-  /* ─── Tema ─── */
+  /* ─── Theme ─── */
   function setupTheme() {
     var modal = $('[data-settings-modal]');
     function setTheme(id) {
@@ -1334,11 +1630,17 @@ img,svg{display:block;max-width:100%}
     var openFiles = $('[data-open-files]');
     if (openFiles) openFiles.addEventListener('click', function () { closeSideMenu(); openFilesPanel(); });
 
+    var openPreviewMenu = $('[data-open-preview-menu]');
+    if (openPreviewMenu) openPreviewMenu.addEventListener('click', function () { closeSideMenu(); openPreview(); });
+
     var openSettings = $('[data-open-settings]');
     if (openSettings) openSettings.addEventListener('click', function () { closeSideMenu(); settingsApi.open(); });
 
     var filesBtn = $('[data-toggle-files]');
     if (filesBtn) filesBtn.addEventListener('click', toggleFilesPanel);
+
+    var fileNew = $('[data-file-new]');
+    if (fileNew) fileNew.addEventListener('click', newFile);
 
     var archBtn = $('[data-open-architect]');
     if (archBtn) archBtn.addEventListener('click', openArchitect);
@@ -1352,14 +1654,11 @@ img,svg{display:block;max-width:100%}
 
     var depsBtn = $('[data-open-deps]');
     if (depsBtn) depsBtn.addEventListener('click', function () {
-      var first = state.files[0];
-      openDeps(first ? first.name : 'archivo');
+      var first = state.activeFile || (state.files[0] && state.files[0].name);
+      openDeps(first || 'archivo');
     });
     var depsClose = $('[data-deps-close]');
     if (depsClose) depsClose.addEventListener('click', closeDeps);
-
-    var undoBtn = $('[data-undo]');
-    if (undoBtn) undoBtn.addEventListener('click', function () { toast('info', 'Nada para deshacer'); });
 
     var downloadBtn = $('[data-download]');
     if (downloadBtn) downloadBtn.addEventListener('click', downloadProject);
@@ -1372,8 +1671,20 @@ img,svg{display:block;max-width:100%}
     if (previewRetry) previewRetry.addEventListener('click', startPreviewLoad);
     var previewRefresh = $('[data-preview-refresh]');
     if (previewRefresh) previewRefresh.addEventListener('click', startPreviewLoad);
+    var previewExt = $('[data-preview-external]');
+    if (previewExt) previewExt.addEventListener('click', function () {
+      var doc = buildPreviewDoc();
+      if (!doc) { toast('warn', 'No hay HTML para abrir'); return; }
+      var blob = new Blob([doc], { type: 'text/html' });
+      var url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    });
 
     document.addEventListener('keydown', function (e) {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        return;
+      }
       if (e.key !== 'Escape') return;
       var sm = $('[data-side-menu]');
       var st = $('[data-settings-modal]');
@@ -1389,18 +1700,24 @@ img,svg{display:block;max-width:100%}
   }
 
   /* ─── Init ─── */
-  function init() {
+  async function init() {
     var p = loadProject();
     if (!p) return;
     renderTopbar();
     renderFiles();
+    renderFileViewer();
     updatePreviewBadge();
     renderThread();
     var settingsApi = setupTheme();
     setupComposer();
     setupEvents(settingsApi);
     handleInput();
-    console.log('%cCoder · v3.0 · chat activo · ' + p.name, 'color:#1877f2;font-weight:700;padding:3px 10px;background:#e7f3ff;border-radius:6px');
+
+    if (state.chatId) {
+      await loadChatHistory();
+    }
+
+    console.log('%cCoder · v3.1 · ' + p.name + ' · ' + state.files.length + ' archivo(s)', 'color:#1877f2;font-weight:700;padding:3px 10px;background:#e7f3ff;border-radius:6px');
   }
 
   if (document.readyState === 'loading') {
@@ -1410,6 +1727,16 @@ img,svg{display:block;max-width:100%}
   }
 })();
 </script>
+
+<!-- =========================================================
+     CONEXIÓN TOTAL A TUS SCRIPTS LOCALES (public/js/)
+     ========================================================= -->
+<script src="/js/main.js" defer></script>
+<script src="/js/coder.js" defer></script>
+<script src="/js/attachments.js" defer></script>
+<script src="/js/voice.js" defer></script>
+<script src="/js/skills.js" defer></script>
+<script src="/js/code-preview.js" defer></script>
 
 </body>
 </html>

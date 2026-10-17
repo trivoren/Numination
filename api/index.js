@@ -1,2 +1,4 @@
-import app from '../src/index.js';
-export default app;
+// api/index.js
+const app = require('../src/index.js');
+
+module.exports = app;

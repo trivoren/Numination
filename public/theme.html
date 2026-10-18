@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es-CO" data-theme="gray">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Cambiar tema · Numination</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/css/themes.css" />
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text-primary);min-height:100dvh}
+.bar{display:flex;align-items:center;gap:8px;padding:12px 8px}
+.bar a{width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;color:inherit;text-decoration:none}
+.bar a:hover{background:var(--surface-alt)}
+.bar h1{font-size:18px;font-weight:600}
+.list{padding:16px}
+.opt{display:flex;align-items:center;gap:16px;padding:16px;margin-bottom:12px;background:var(--surface);border:1px solid var(--border);border-radius:16px;cursor:pointer;width:100%;text-align:left;font:inherit;color:inherit}
+.opt.on{border-color:var(--accent);border-width:2px}
+.swatch{width:40px;height:40px;border-radius:10px;border:1px solid #ccc;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dot{width:16px;height:16px;border-radius:50%}
+.opt strong{flex:1;font-size:16px;font-weight:600}
+.check{color:var(--accent);font-size:20px}
+</style>
+</head>
+<body>
+<header class="bar"><a href="/settings">←</a><h1>Cambiar tema</h1></header>
+<main class="list" id="list"></main>
+<script>
+(function(){
+  var modes=[
+    {id:'dark',label:'Oscuro',bg:'#121212',accent:'#6ed7ff',border:'#333'},
+    {id:'gray',label:'Gris',bg:'#ececec',accent:'#1e88c7',border:'#d8d8d8'},
+    {id:'light',label:'Blanco',bg:'#ffffff',accent:'#1e88c7',border:'#e2e2e2'},
+    {id:'midnight',label:'Medianoche',bg:'#05070d',accent:'#7c5cfc',border:'#20263a'}
+  ];
+  var cur='gray';
+  try{cur=localStorage.getItem('numination-theme')||'gray';}catch(_){}
+  document.documentElement.dataset.theme=cur;
+  var list=document.getElementById('list');
+  function render(){
+    list.innerHTML='';
+    modes.forEach(function(m){
+      var b=document.createElement('button');
+      b.type='button';
+      b.className='opt'+(m.id===cur?' on':'');
+      b.innerHTML='<span class="swatch" style="background:'+m.bg+';border-color:'+m.border+'"><span class="dot" style="background:'+m.accent+'"></span></span><strong>'+m.label+'</strong>'+(m.id===cur?'<span class="check">✓</span>':'');
+      b.onclick=function(){
+        cur=m.id;
+        try{localStorage.setItem('numination-theme',cur);}catch(_){}
+        document.documentElement.dataset.theme=cur;
+        render();
+      };
+      list.appendChild(b);
+    });
+  }
+  render();
+})();
+</script>
+</body>
+</html>

@@ -2,41 +2,134 @@
 <html lang="es-CO" data-theme="gray">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Ajustes · Numination</title>
 <meta name="supabase-publishable-key" content="sb_publishable_mrKTw0QGiuikjTb6SY0Hgg_Nak0QLk7" />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="/assets/css/themes.css" />
-<style>body{margin:0;font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text-primary)}.bar{display:flex;gap:10px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border)}a{color:inherit;text-decoration:none}.body{max-width:640px;margin:0 auto;padding:16px}.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px}.theme{display:grid;grid-template-columns:1fr 1fr;gap:10px}button.t{padding:14px;border-radius:14px;border:2px solid var(--border);background:var(--surface);cursor:pointer;text-align:left}button.t.on{border-color:var(--accent)}.link{display:block;padding:12px 0;border-bottom:1px solid var(--border)}</style>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text-primary);min-height:100dvh}
+.bar{display:flex;align-items:center;gap:8px;padding:12px 8px;background:var(--bg)}
+.bar a{display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;color:var(--text-primary);text-decoration:none}
+.bar a:hover{background:var(--surface-alt)}
+.bar h1{font-size:18px;font-weight:600;flex:1}
+.tile{display:flex;align-items:center;gap:14px;padding:14px 20px;cursor:pointer;text-decoration:none;color:inherit;border:none;background:none;width:100%;text-align:left;font:inherit}
+.tile:hover{background:var(--surface-alt)}
+.tile .ico{width:24px;text-align:center;font-size:18px;flex-shrink:0}
+.tile .body{flex:1;min-width:0}
+.tile .title{font-size:16px;color:var(--text-primary)}
+.tile .sub{font-size:13px;color:var(--text-secondary);margin-top:2px}
+.tile .chev{color:var(--text-secondary);font-size:18px}
+.tile.danger .title,.tile.danger .ico{color:#ff5252}
+.div{height:1px;background:var(--border);margin:8px 0}
+.switch-row{display:flex;align-items:center;gap:14px;padding:14px 20px}
+.switch-row .body{flex:1}
+.switch{position:relative;width:48px;height:28px;flex-shrink:0}
+.switch input{opacity:0;width:0;height:0}
+.switch span{position:absolute;inset:0;background:var(--border);border-radius:999px;transition:.2s}
+.switch span::after{content:'';position:absolute;width:22px;height:22px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+.switch input:checked+span{background:var(--accent)}
+.switch input:checked+span::after{transform:translateX(20px)}
+</style>
 </head>
 <body>
-<header class="bar"><a href="/chat">←</a><strong>Ajustes</strong></header>
-<main class="body">
-  <div class="card"><h3>Tema</h3><div class="theme" id="themes"></div></div>
-  <div class="card">
-    <a class="link" href="/theme">Tema completo</a>
-    <a class="link" href="/profile">Perfil</a>
-    <a class="link" href="/credits">Créditos</a>
-    <a class="link" href="/plans">Planes</a>
-    <a class="link" href="/connectors">Conectores</a>
-    <a class="link" href="/custom-strings">Personalización</a>
-    <a class="link" href="/uploaded-files">Archivos subidos</a>
-    <a class="link" href="/privacy">Privacidad</a>
-    <a class="link" href="/terminos">Términos</a>
+<header class="bar">
+  <a href="/chat" aria-label="Volver">←</a>
+  <h1>Ajustes</h1>
+</header>
+<main>
+  <a class="tile" href="/custom-strings">
+    <span class="ico">👤</span>
+    <span class="body"><span class="title">Perfil</span><span class="sub" id="email">—</span></span>
+    <span class="chev">›</span>
+  </a>
+  <div class="div"></div>
+  <a class="tile" href="/memory">
+    <span class="ico">🧠</span>
+    <span class="body"><span class="title">Memoria</span><span class="sub">Lo que Numination recuerda de tus chats</span></span>
+    <span class="chev">›</span>
+  </a>
+  <a class="tile" href="/notifications">
+    <span class="ico">🔔</span>
+    <span class="body"><span class="title">Notificaciones</span></span>
+    <span class="chev">›</span>
+  </a>
+  <a class="tile" href="/privacy">
+    <span class="ico">🔒</span>
+    <span class="body"><span class="title">Privacidad</span></span>
+    <span class="chev">›</span>
+  </a>
+  <a class="tile" href="/terminos">
+    <span class="ico">📄</span>
+    <span class="body"><span class="title">Términos de uso</span><span class="sub">Condiciones para usar Numination</span></span>
+    <span class="chev">›</span>
+  </a>
+  <a class="tile" href="/privacy">
+    <span class="ico">🛡</span>
+    <span class="body"><span class="title">Política de privacidad web</span><span class="sub">Cómo tratamos tus datos</span></span>
+    <span class="chev">›</span>
+  </a>
+  <div class="div"></div>
+  <a class="tile" href="/theme">
+    <span class="ico">🎨</span>
+    <span class="body"><span class="title">Cambiar tema</span></span>
+    <span class="chev">›</span>
+  </a>
+  <div class="div"></div>
+  <div class="switch-row">
+    <span class="body">
+      <div class="title" style="font-size:16px">Actualizaciones automáticas</div>
+      <div class="sub" style="font-size:12px;color:var(--text-secondary);margin-top:2px">Detecta y descarga nuevas versiones automáticamente</div>
+    </span>
+    <label class="switch"><input type="checkbox" id="auto-upd" checked /><span></span></label>
   </div>
-  <button id="logout" style="width:100%;height:48px;border:none;border-radius:14px;background:var(--text-primary);color:var(--bg);font-weight:700;cursor:pointer">Cerrar sesión</button>
+  <a class="tile" href="/credits">
+    <span class="ico">⚡</span>
+    <span class="body"><span class="title">Créditos</span><span class="sub">Consulta tu saldo y consigue más créditos</span></span>
+    <span class="chev">›</span>
+  </a>
+  <a class="tile" href="/plans">
+    <span class="ico">⭐</span>
+    <span class="body"><span class="title">Suscripciones</span><span class="sub">Planes, créditos semanales y beneficios</span></span>
+    <span class="chev">›</span>
+  </a>
+  <div class="div"></div>
+  <a class="tile" href="/subscription-coder">
+    <span class="ico">💻</span>
+    <span class="body"><span class="title">Suscripción Coder</span></span>
+    <span class="chev">›</span>
+  </a>
+  <div class="div"></div>
+  <button type="button" class="tile danger" id="logout">
+    <span class="ico">⎋</span>
+    <span class="body"><span class="title">Cerrar sesión</span></span>
+  </button>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/assets/js/config.js"></script>
 <script src="/assets/js/api.js"></script>
 <script src="/assets/js/auth.js"></script>
 <script>
-const themes=['gray','light','dark','midnight'];const labels={gray:'Gris',light:'Blanco',dark:'Oscuro',midnight:'Medianoche'};
-let cur='gray';try{cur=localStorage.getItem('numination-theme')||'gray';}catch(_){}
-document.documentElement.dataset.theme=cur;
-const g=document.getElementById('themes');
-themes.forEach(t=>{const b=document.createElement('button');b.type='button';b.className='t'+(t===cur?' on':'');b.textContent=labels[t];b.onclick=()=>{cur=t;localStorage.setItem('numination-theme',t);document.documentElement.dataset.theme=t;g.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');};g.appendChild(b);});
-document.getElementById('logout').onclick=async()=>{await NuminationAuth.signOut();location.replace('/login');};
+(async function(){
+  try{var t=localStorage.getItem('numination-theme');document.documentElement.dataset.theme=t||'gray';}catch(_){document.documentElement.dataset.theme='gray';}
+  function withTimeout(p,ms){return Promise.race([p,new Promise(function(r){setTimeout(function(){r(null);},ms);})]);}
+  var session=null;
+  try{session=await withTimeout(NuminationAuth.getSession(),5000);}catch(_){}
+  if(!session){location.replace('/login');return;}
+  document.getElementById('email').textContent=(session.user&&session.user.email)||'—';
+  try{
+    var au=localStorage.getItem('numination-auto-update');
+    document.getElementById('auto-upd').checked=au!=='0';
+  }catch(_){}
+  document.getElementById('auto-upd').onchange=function(e){
+    try{localStorage.setItem('numination-auto-update',e.target.checked?'1':'0');}catch(_){}
+  };
+  document.getElementById('logout').onclick=async function(){
+    try{await NuminationAuth.signOut();}catch(_){}
+    location.replace('/login');
+  };
+})();
 </script>
 </body>
 </html>

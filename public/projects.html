@@ -18,16 +18,23 @@
 <script src="/assets/js/auth.js"></script>
 <script>
 (async function(){
-  try{const t=localStorage.getItem('numination-theme');if(t)document.documentElement.dataset.theme=t;}catch(_){}
-  if(!(await NuminationAuth.getSession())){location.replace('/login');return;}
+  try{var t=localStorage.getItem('numination-theme');if(t)document.documentElement.dataset.theme=t;}catch(_){}
+  function withTimeout(p,ms){return Promise.race([p,new Promise(function(r){setTimeout(function(){r(null);},ms);})]);}
+  var session=null;
+  try{session=await withTimeout(NuminationAuth.getSession(),5000);}catch(_){session=null;}
+  if(!session){location.replace('/login');return;}
   async function load(){
     try{
-      const d=await NuminationApi.listProjects();
-      const list=Array.isArray(d)?d:(d.projects||[]);
-      document.getElementById('list').innerHTML=list.length?list.map(p=>'<a class="item" href="/coder?projectId='+encodeURIComponent(p.id)+'"><strong>'+(p.name||'Proyecto')+'</strong><div style="color:var(--text-secondary);font-size:13px">'+(p.description||p.id)+'</div></a>').join(''):'Sin proyectos';
-    }catch(e){document.getElementById('list').textContent=e.message;}
+      var d=await NuminationApi.listProjects();
+      var list=Array.isArray(d)?d:(d.projects||[]);
+      document.getElementById('list').innerHTML=list.length?list.map(function(p){return '<a class="item" href="/coder?projectId='+encodeURIComponent(p.id)+'"><strong>'+(p.name||'Proyecto')+'</strong><div style="color:var(--text-secondary);font-size:13px">'+(p.description||p.id)+'</div></a>';}).join(''):'Sin proyectos todavía. Toca Nuevo.';
+    }catch(e){document.getElementById('list').textContent=(e&&e.message)||'Error cargando proyectos';}
   }
-  document.getElementById('new').onclick=async()=>{const name=prompt('Nombre');if(!name)return;try{await NuminationApi.createProject({name:name.trim()});load();}catch(e){alert(e.message);}};
+  document.getElementById('new').onclick=async function(){
+    var name=prompt('Nombre del proyecto');
+    if(!name)return;
+    try{await NuminationApi.createProject({name:name.trim()});load();}catch(e){alert((e&&e.message)||'Error');}
+  };
   load();
 })();
 </script>

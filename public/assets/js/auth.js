@@ -7,48 +7,45 @@
 
   function getClient() {
     if (supabase) return supabase;
-    if (!global.supabase || !global.supabase.createClient) {
-      throw new Error('Carga @supabase/supabase-js antes de auth.js');
+    var lib = global.supabase;
+    if (!lib || typeof lib.createClient !== 'function') {
+      throw new Error('Supabase JS no cargó. Revisa la red / CDN.');
     }
-    const key = CFG.supabasePublishableKey;
-    supabase = global.supabase.createClient(CFG.supabaseUrl, key || 'missing-key', {
+    supabase = lib.createClient(CFG.supabaseUrl, CFG.supabasePublishableKey, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
-        storageKey: CFG.storageKeys.session,
+        storageKey: CFG.storageKeys.supabaseAuth,
       },
     });
     return supabase;
   }
 
-  async function syncSessionToApi() {
+  async function syncTokenFromSession(session) {
+    if (session && session.access_token) {
+      Api.setToken(session.access_token);
+      return session;
+    }
+    Api.clearSession();
+    return null;
+  }
+
+  async function getSession() {
     const client = getClient();
     const result = await client.auth.getSession();
     if (result.error) throw result.error;
-    const session = (result.data && result.data.session) || null;
-    if (session) {
-      Api.saveSession({
-        access_token: session.access_token,
-        refresh_token: session.refresh_token,
-        expires_at: session.expires_at,
-        user: session.user,
-      });
-      Api.setToken(session.access_token);
-    } else {
-      Api.clearSession();
-    }
-    return session;
+    return syncTokenFromSession((result.data && result.data.session) || null);
   }
-
-  async function getSession() { return syncSessionToApi(); }
 
   async function signInWithPassword(email, password) {
     const client = getClient();
-    const result = await client.auth.signInWithPassword({ email: String(email).trim(), password: String(password) });
+    const result = await client.auth.signInWithPassword({
+      email: String(email).trim(),
+      password: String(password),
+    });
     if (result.error) throw result.error;
-    await syncSessionToApi();
-    return result.data;
+    return syncTokenFromSession((result.data && result.data.session) || null);
   }
 
   async function signUp(email, password, meta) {
@@ -59,8 +56,7 @@
       options: { data: meta || {}, emailRedirectTo: CFG.authRedirectUrl },
     });
     if (result.error) throw result.error;
-    await syncSessionToApi();
-    return result.data;
+    return syncTokenFromSession((result.data && result.data.session) || null);
   }
 
   async function signInWithOAuth(provider) {
@@ -74,24 +70,19 @@
   }
 
   async function signOut() {
-    const client = getClient();
-    await client.auth.signOut();
+    try {
+      const client = getClient();
+      await client.auth.signOut();
+    } catch (_) {}
     Api.clearSession();
   }
 
   global.NuminationAuth = {
     getClient: getClient,
     getSession: getSession,
-    syncSessionToApi: syncSessionToApi,
     signInWithPassword: signInWithPassword,
     signUp: signUp,
     signInWithOAuth: signInWithOAuth,
     signOut: signOut,
-    me: async function () { await syncSessionToApi(); return Api.me(); },
-    requireAuth: async function (loginPath) {
-      const session = await getSession();
-      if (!session) { location.replace(loginPath || '/login'); return null; }
-      return session;
-    },
   };
 })(typeof window !== 'undefined' ? window : globalThis);

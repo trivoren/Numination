@@ -29,7 +29,8 @@ button,textarea{font:inherit;color:inherit}button{border:none;background:none;cu
 .composer{display:flex;gap:6px;align-items:flex-end;background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:6px}
 .composer textarea{flex:1;border:none;outline:none;background:transparent;padding:10px;min-height:42px;max-height:120px;resize:none}
 .send{width:40px;height:40px;border-radius:50%;background:var(--text-primary);color:var(--bg);font-weight:700}.send:disabled{opacity:.35}
-.gate{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:100;color:var(--text-secondary)}
+.gate{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:var(--bg);z-index:100;color:var(--text-secondary)}
+.gate[hidden]{display:none!important}
 .nav-label{font-size:12px;font-weight:700;margin:12px 0 6px;color:var(--text-secondary)}
 </style>
 </head>
@@ -70,107 +71,150 @@ button,textarea{font:inherit;color:inherit}button{border:none;background:none;cu
     <button class="send" id="send" disabled>→</button>
   </div>
 </footer>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="/assets/js/config.js"></script>
 <script src="/assets/js/api.js"></script>
 <script src="/assets/js/auth.js"></script>
 <script>
-(async function(){
-  try{var t=localStorage.getItem('numination-theme');document.documentElement.dataset.theme=t||'gray';}catch(_){}
-  function withTimeout(p, ms){
-    return Promise.race([p, new Promise(function(resolve){ setTimeout(function(){ resolve(null); }, ms); })]);
-  }
-  var Auth=window.NuminationAuth, Api=window.NuminationApi;
-  if(!Auth||!Api){ location.replace('/login'); return; }
-  var session=null;
-  try{ session=await withTimeout(Auth.getSession(), 5000); }catch(_){ session=null; }
-  if(!session){ location.replace('/login'); return; }
-  document.getElementById('gate').hidden=true;
-  document.getElementById('uname').textContent=((session.user&&session.user.email)||'Usuario').split('@')[0];
+(function(){
+  try{var t=localStorage.getItem('numination-theme');document.documentElement.dataset.theme=t||'gray';}catch(_){document.documentElement.dataset.theme='gray';}
 
-  var state={chats:[],active:null,messages:[],sending:false};
-  var msgs=document.getElementById('msgs');
-  var empty=document.getElementById('empty');
-  var input=document.getElementById('input');
-  var send=document.getElementById('send');
+  // Limpiar key vieja corrupta que bloqueaba getSession
+  try{localStorage.removeItem('numination-supabase-session');}catch(_){}
 
-  function openDrawer(o){
-    document.getElementById('drawer').classList.toggle('open',o);
-    document.getElementById('backdrop').classList.toggle('open',o);
-  }
-  document.getElementById('menu').onclick=function(){openDrawer(true);};
-  document.getElementById('backdrop').onclick=function(){openDrawer(false);};
-  document.getElementById('logout').onclick=async function(){try{await Auth.signOut();}catch(_){} location.replace('/login');};
+  var gate=document.getElementById('gate');
+  var forced=setTimeout(function(){
+    // Nunca quedarse eterno: si hay token sigue; si no, login
+    var tok=null;
+    try{tok=localStorage.getItem('numination-api-token');}catch(_){}
+    if(tok){gate.hidden=true;}
+    else{location.replace('/login');}
+  },2500);
 
-  function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');}
-  function md(t){return esc(t).replace(/```([\s\S]*?)```/g,'<pre>$1</pre>').replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\n/g,'<br>');}
-  function renderMsgs(){
-    if(!state.messages.length){empty.hidden=false;msgs.hidden=true;msgs.innerHTML='';return;}
-    empty.hidden=true;msgs.hidden=false;
-    msgs.innerHTML=state.messages.map(function(m){return m.fromUser?'<div class="user">'+esc(m.text)+'</div>':'<div class="ai">'+md(m.text)+'</div>';}).join('');
-    document.getElementById('scroll').scrollTop=1e9;
-  }
-  function renderChats(){
-    document.getElementById('chat-list').innerHTML=state.chats.map(function(c){
-      return '<button type="button" class="chat-item'+(c.id===state.active?' active':'')+'" data-id="'+c.id+'">'+(c.title||c.name||'Chat')+'</button>';
-    }).join('');
-    document.querySelectorAll('#chat-list [data-id]').forEach(function(b){
-      b.onclick=function(){openChat(b.getAttribute('data-id'));};
+  function boot(){
+    var Auth=window.NuminationAuth, Api=window.NuminationApi;
+    if(!Auth||!Api){location.replace('/login');return;}
+
+    Auth.getSession().then(function(session){
+      clearTimeout(forced);
+      if(!session){location.replace('/login');return;}
+      gate.hidden=true;
+      startApp(session, Auth, Api);
+    }).catch(function(){
+      clearTimeout(forced);
+      var tok=null;
+      try{tok=localStorage.getItem('numination-api-token');}catch(_){}
+      if(tok){gate.hidden=true;startApp({user:{email:'usuario'}}, Auth, Api);}
+      else{location.replace('/login');}
     });
   }
-  async function loadChats(){
-    try{var d=await Api.listChats();state.chats=Array.isArray(d)?d:(d.chats||[]);}catch(_){state.chats=[];}
-    renderChats();
-  }
-  async function loadCredits(){
-    try{var c=await Api.credits();document.getElementById('bal').textContent=String(c.balance!=null?c.balance:'—');}catch(_){}
-  }
-  async function openChat(id){
-    state.active=id;state.messages=[];renderMsgs();renderChats();openDrawer(false);
-    try{
-      var d=await Api.getMessages(id);
-      var list=Array.isArray(d)?d:(d.messages||[]);
-      state.messages=list.map(function(m){return {text:m.content||m.text||'',fromUser:m.role==='user'||m.fromUser===true};});
-      renderMsgs();
-    }catch(_){}
-  }
-  document.getElementById('new-chat').onclick=function(){state.active=null;state.messages=[];renderMsgs();renderChats();openDrawer(false);};
 
-  function updateSend(){send.disabled=!input.value.trim()||state.sending;}
-  input.oninput=updateSend;
-  input.onkeydown=function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();go();}};
-  send.onclick=go;
+  function startApp(session, Auth, Api){
+    document.getElementById('uname').textContent=((session.user&&session.user.email)||'Usuario').split('@')[0];
+    var state={chats:[],active:null,messages:[],sending:false};
+    var msgs=document.getElementById('msgs');
+    var empty=document.getElementById('empty');
+    var input=document.getElementById('input');
+    var send=document.getElementById('send');
 
-  async function go(){
-    var text=input.value.trim();if(!text||state.sending)return;
-    state.messages.push({text:text,fromUser:true});input.value='';updateSend();
-    state.sending=true;renderMsgs();
-    try{
-      if(!state.active){
-        var created=await Api.createChat({});
-        state.active=created.id||created.chatId;
-        await loadChats();
+    function openDrawer(o){
+      document.getElementById('drawer').classList.toggle('open',o);
+      document.getElementById('backdrop').classList.toggle('open',o);
+    }
+    document.getElementById('menu').onclick=function(){openDrawer(true);};
+    document.getElementById('backdrop').onclick=function(){openDrawer(false);};
+    document.getElementById('logout').onclick=function(){
+      Auth.signOut().finally(function(){location.replace('/login');});
+    };
+
+    function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+    function md(t){return esc(t).replace(/```([\s\S]*?)```/g,'<pre>$1</pre>').replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\n/g,'<br>');}
+    function renderMsgs(){
+      if(!state.messages.length){empty.hidden=false;msgs.hidden=true;msgs.innerHTML='';return;}
+      empty.hidden=true;msgs.hidden=false;
+      msgs.innerHTML=state.messages.map(function(m){
+        return m.fromUser?'<div class="user">'+esc(m.text)+'</div>':'<div class="ai">'+md(m.text)+'</div>';
+      }).join('');
+      document.getElementById('scroll').scrollTop=1e9;
+    }
+    function renderChats(){
+      document.getElementById('chat-list').innerHTML=state.chats.map(function(c){
+        return '<button type="button" class="chat-item'+(c.id===state.active?' active':'')+'" data-id="'+c.id+'">'+(c.title||c.name||'Chat')+'</button>';
+      }).join('');
+      document.querySelectorAll('#chat-list [data-id]').forEach(function(b){
+        b.onclick=function(){openChat(b.getAttribute('data-id'));};
+      });
+    }
+    function loadChats(){
+      return Api.listChats().then(function(d){
+        state.chats=Array.isArray(d)?d:(d.chats||[]);
+        renderChats();
+      }).catch(function(){state.chats=[];renderChats();});
+    }
+    function loadCredits(){
+      return Api.credits().then(function(c){
+        document.getElementById('bal').textContent=String(c.balance!=null?c.balance:'—');
+      }).catch(function(){});
+    }
+    function openChat(id){
+      state.active=id;state.messages=[];renderMsgs();renderChats();openDrawer(false);
+      Api.getMessages(id).then(function(d){
+        var list=Array.isArray(d)?d:(d.messages||[]);
+        state.messages=list.map(function(m){
+          return {text:m.content||m.text||'',fromUser:m.role==='user'||m.fromUser===true};
+        });
+        renderMsgs();
+      }).catch(function(){});
+    }
+    document.getElementById('new-chat').onclick=function(){
+      state.active=null;state.messages=[];renderMsgs();renderChats();openDrawer(false);
+    };
+
+    function updateSend(){send.disabled=!input.value.trim()||state.sending;}
+    input.oninput=updateSend;
+    input.onkeydown=function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();go();}};
+    send.onclick=go;
+
+    async function go(){
+      var text=input.value.trim();if(!text||state.sending)return;
+      state.messages.push({text:text,fromUser:true});input.value='';updateSend();
+      state.sending=true;renderMsgs();
+      try{
+        if(!state.active){
+          var created=await Api.createChat({});
+          state.active=created.id||created.chatId;
+          await loadChats();
+        }
+        try{await Api.saveMessage(state.active,{role:'user',content:text});}catch(_){}
+        state.messages.push({text:'',fromUser:false});
+        var idx=state.messages.length-1;
+        var out='';
+        try{
+          for await (var ev of Api.chatStream({chatId:state.active,message:text,mode:'chat'})){
+            var d=ev.data||{};var chunk=d.delta||d.content||d.text||d.token||'';
+            if(chunk){out+=chunk;state.messages[idx].text=out;renderMsgs();}
+          }
+        }catch(_){}
+        if(!out){
+          var res=await Api.chat({chatId:state.active,message:text,mode:'chat'});
+          state.messages[idx].text=res.content||res.message||res.reply||'Sin respuesta';
+        }
+      }catch(e){
+        state.messages.push({text:(e&&e.message)||'Error',fromUser:false});
+      }finally{
+        state.sending=false;renderMsgs();updateSend();loadCredits();loadChats();
       }
-      try{await Api.saveMessage(state.active,{role:'user',content:text});}catch(_){}
-      state.messages.push({text:'',fromUser:false});
-      var idx=state.messages.length-1;
-      var out='';
-      for await (var ev of Api.chatStream({chatId:state.active,message:text,mode:'chat'})){
-        var d=ev.data||{};var chunk=d.delta||d.content||d.text||d.token||'';
-        if(chunk){out+=chunk;state.messages[idx].text=out;renderMsgs();}
-      }
-      if(!out){
-        var res=await Api.chat({chatId:state.active,message:text,mode:'chat'});
-        state.messages[idx].text=res.content||res.message||res.reply||'Sin respuesta';
-      }
-    }catch(e){state.messages.push({text:(e&&e.message)||'Error',fromUser:false});}
-    finally{state.sending=false;renderMsgs();updateSend();loadCredits();loadChats();}
+    }
+
+    var qid=new URLSearchParams(location.search).get('id');
+    Promise.all([loadChats(),loadCredits()]).then(function(){
+      if(qid) openChat(qid);
+      renderMsgs();updateSend();
+    });
   }
 
-  var qid=new URLSearchParams(location.search).get('id');
-  await Promise.all([loadChats(),loadCredits()]);
-  if(qid) await openChat(qid);
-  renderMsgs();updateSend();
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot);
+  else boot();
 })();
 </script>
 </body>

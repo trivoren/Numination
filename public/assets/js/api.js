@@ -23,24 +23,28 @@
   }
 
   let accessToken = null;
-  function setToken(t) { accessToken = t && String(t).trim() ? String(t).trim() : null; }
+
+  function setToken(t) {
+    accessToken = t && String(t).trim() ? String(t).trim() : null;
+    try {
+      if (accessToken) localStorage.setItem(CFG.storageKeys.apiToken, accessToken);
+      else localStorage.removeItem(CFG.storageKeys.apiToken);
+    } catch (_) {}
+  }
+
   function getToken() {
     if (accessToken) return accessToken;
     try {
-      const raw = localStorage.getItem(CFG.storageKeys.session);
-      if (!raw) return null;
-      const s = JSON.parse(raw);
-      const t = s.access_token || s.accessToken || null;
+      const t = localStorage.getItem(CFG.storageKeys.apiToken);
       if (t) accessToken = t;
       return t;
     } catch (_) { return null; }
   }
-  function saveSession(session) {
-    if (!session) { accessToken = null; localStorage.removeItem(CFG.storageKeys.session); return; }
-    localStorage.setItem(CFG.storageKeys.session, JSON.stringify(session));
-    setToken(session.access_token || session.accessToken || null);
+
+  function clearSession() {
+    accessToken = null;
+    try { localStorage.removeItem(CFG.storageKeys.apiToken); } catch (_) {}
   }
-  function clearSession() { accessToken = null; try { localStorage.removeItem(CFG.storageKeys.session); } catch (_) {} }
 
   function headers(extra) {
     const h = new Headers(extra || {});
@@ -52,6 +56,7 @@
     if (key) h.set('apikey', key);
     return h;
   }
+
   function uri(path) {
     const base = CFG.apiBaseUrl.replace(/\/+$/, '');
     return base + (path.startsWith('/') ? path : '/' + path);
@@ -60,57 +65,39 @@
   async function request(method, path, body, opts) {
     opts = opts || {};
     const cancelToken = opts.cancelToken;
-    const timeoutMs = opts.timeoutMs || 35000;
-    const retryable = !!opts.retryable;
-    const maxAttempts = retryable ? 4 : 1;
-    const delays = [1000, 2000, 4000];
-    let lastError = null;
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      if (cancelToken && cancelToken.isCancelled) throw new ApiRequestCancelled();
-      const controller = new AbortController();
-      if (cancelToken) cancelToken.attach(controller);
-      const timer = setTimeout(function () { controller.abort(); }, timeoutMs);
-      try {
-        const init = { method: method, headers: headers(), signal: controller.signal };
-        if (body !== undefined && method !== 'GET' && method !== 'HEAD') init.body = JSON.stringify(body);
-        const res = await fetch(uri(path), init);
-        clearTimeout(timer);
-        if (cancelToken) cancelToken.detach(controller);
-        let data = {};
-        const ct = res.headers.get('content-type') || '';
-        if (ct.indexOf('application/json') !== -1) {
-          try { data = await res.json(); } catch (_) { data = {}; }
-        } else {
-          const text = await res.text();
-          try { data = text ? JSON.parse(text) : {}; } catch (_) { data = { raw: text }; }
-        }
-        if (!res.ok) throw new ApiException(res.status, String(data.error || data.message || res.statusText || 'Error'), data.code || null);
-        return data;
-      } catch (e) {
-        clearTimeout(timer);
-        if (cancelToken) cancelToken.detach(controller);
-        if (e instanceof ApiRequestCancelled) throw e;
-        if (e instanceof ApiException) {
-          if (e.statusCode >= 400 && e.statusCode < 500 && e.statusCode !== 429) throw e;
-          lastError = e;
-        } else if (e && e.name === 'AbortError') {
-          if (cancelToken && cancelToken.isCancelled) throw new ApiRequestCancelled();
-          lastError = new ApiException(504, 'La solicitud tardó demasiado');
-        } else {
-          lastError = new ApiException(-1, 'Error de conexión');
-        }
-        if (retryable && attempt < maxAttempts - 1) {
-          await new Promise(function (r) { setTimeout(r, delays[attempt]); });
-          continue;
-        }
-        throw lastError;
+    const timeoutMs = opts.timeoutMs || 25000;
+    const controller = new AbortController();
+    if (cancelToken) cancelToken.attach(controller);
+    const timer = setTimeout(function () { controller.abort(); }, timeoutMs);
+    try {
+      const init = { method: method, headers: headers(), signal: controller.signal };
+      if (body !== undefined && method !== 'GET' && method !== 'HEAD') init.body = JSON.stringify(body);
+      const res = await fetch(uri(path), init);
+      clearTimeout(timer);
+      if (cancelToken) cancelToken.detach(controller);
+      let data = {};
+      const ct = res.headers.get('content-type') || '';
+      if (ct.indexOf('application/json') !== -1) {
+        try { data = await res.json(); } catch (_) { data = {}; }
+      } else {
+        const text = await res.text();
+        try { data = text ? JSON.parse(text) : {}; } catch (_) { data = { raw: text }; }
       }
+      if (!res.ok) throw new ApiException(res.status, String(data.error || data.message || res.statusText || 'Error'), data.code || null);
+      return data;
+    } catch (e) {
+      clearTimeout(timer);
+      if (cancelToken) cancelToken.detach(controller);
+      if (e instanceof ApiException) throw e;
+      if (e && e.name === 'AbortError') {
+        if (cancelToken && cancelToken.isCancelled) throw new ApiRequestCancelled();
+        throw new ApiException(504, 'La solicitud tardó demasiado');
+      }
+      throw new ApiException(-1, 'Error de conexión');
     }
-    throw lastError || new ApiException(-1, 'Error de conexión');
   }
 
   async function* chatStream(body, cancelToken) {
-    if (cancelToken && cancelToken.isCancelled) throw new ApiRequestCancelled();
     const controller = new AbortController();
     if (cancelToken) cancelToken.attach(controller);
     try {
@@ -125,19 +112,12 @@
         try { data = await res.json(); } catch (_) {}
         throw new ApiException(res.status, String(data.error || data.message || res.statusText), data.code);
       }
-      const ct = res.headers.get('content-type') || '';
-      if (ct.indexOf('text/event-stream') === -1) {
-        const data = await res.json().catch(function () { return {}; });
-        yield { event: 'done', data: data };
-        return;
-      }
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
       let eventName = 'message';
       let dataLines = [];
       while (true) {
-        if (cancelToken && cancelToken.isCancelled) throw new ApiRequestCancelled();
         const result = await reader.read();
         if (result.done) break;
         buffer += decoder.decode(result.value, { stream: true });
@@ -150,10 +130,7 @@
               const raw = dataLines.join('\n');
               let payload;
               try { payload = JSON.parse(raw); } catch (_) { payload = { raw: raw }; }
-              yield {
-                event: eventName,
-                data: payload && typeof payload === 'object' && !Array.isArray(payload) ? payload : { value: payload },
-              };
+              yield { event: eventName, data: payload && typeof payload === 'object' && !Array.isArray(payload) ? payload : { value: payload } };
             }
             eventName = 'message';
             dataLines = [];
@@ -174,37 +151,31 @@
     ApiCancelToken: ApiCancelToken,
     setToken: setToken,
     getToken: getToken,
-    saveSession: saveSession,
     clearSession: clearSession,
     request: request,
-    me: function () { return request('GET', '/auth/me', undefined, { retryable: true }); },
+    me: function () { return request('GET', '/auth/me'); },
     updateMe: function (b) { return request('PATCH', '/auth/me', b); },
-    confirmAge: function (b) { return request('POST', '/auth/confirm-age', b); },
-    listChats: function () { return request('GET', '/chats', undefined, { retryable: true }); },
+    listChats: function () { return request('GET', '/chats'); },
     createChat: function (b) { return request('POST', '/chats', b || {}); },
     updateChat: function (id, b) { return request('PATCH', '/chats/' + encodeURIComponent(id), b); },
     deleteChat: function (id) { return request('DELETE', '/chats/' + encodeURIComponent(id)); },
-    getMessages: function (id) { return request('GET', '/chats/' + encodeURIComponent(id) + '/messages', undefined, { retryable: true }); },
+    getMessages: function (id) { return request('GET', '/chats/' + encodeURIComponent(id) + '/messages'); },
     saveMessage: function (id, b) { return request('POST', '/chats/' + encodeURIComponent(id) + '/messages', b); },
-    chat: function (b, o) { return request('POST', '/ai/chat', b, o); },
+    chat: function (b) { return request('POST', '/ai/chat', b); },
     chatStream: chatStream,
-    coder: function (b, o) { return request('POST', '/ai/coder', b, o); },
-    listProjects: function () { return request('GET', '/projects', undefined, { retryable: true }); },
+    coder: function (b) { return request('POST', '/ai/coder', b); },
+    listProjects: function () { return request('GET', '/projects'); },
     createProject: function (b) { return request('POST', '/projects', b); },
-    projectFiles: function (id) { return request('GET', '/projects/' + encodeURIComponent(id) + '/files', undefined, { retryable: true }); },
-    credits: function () { return request('GET', '/credits', undefined, { retryable: true }); },
-    paymentPlans: function () { return request('GET', '/payments/plans', undefined, { retryable: true }); },
+    projectFiles: function (id) { return request('GET', '/projects/' + encodeURIComponent(id) + '/files'); },
+    credits: function () { return request('GET', '/credits'); },
+    paymentPlans: function () { return request('GET', '/payments/plans'); },
     createPayment: function (b) { return request('POST', '/payments/create', b); },
-    creditsHistory: function () { return request('GET', '/credits/history', undefined, { retryable: true }); },
-    memory: function () { return request('GET', '/memory', undefined, { retryable: true }); },
+    creditsHistory: function () { return request('GET', '/credits/history'); },
+    memory: function () { return request('GET', '/memory'); },
     saveMemory: function (b) { return request('POST', '/memory', b); },
-    notifications: function () { return request('GET', '/notifications', undefined, { retryable: true }); },
-    markNotifications: function (b) { return request('POST', '/notifications', b); },
-    integrations: function () { return request('GET', '/integrations', undefined, { retryable: true }); },
-    startIntegration: function (b) { return request('POST', '/integrations/start', b); },
-    disconnectIntegration: function (b) { return request('POST', '/integrations/disconnect', b); },
-    artifacts: function () { return request('GET', '/artifacts', undefined, { retryable: true }); },
-    health: function () { return request('GET', '/health', undefined, { retryable: true }); },
-    modes: function () { return request('GET', '/modes', undefined, { retryable: true }); },
+    notifications: function () { return request('GET', '/notifications'); },
+    integrations: function () { return request('GET', '/integrations'); },
+    artifacts: function () { return request('GET', '/artifacts'); },
+    health: function () { return request('GET', '/health'); },
   };
 })(typeof window !== 'undefined' ? window : globalThis);

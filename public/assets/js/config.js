@@ -9,8 +9,6 @@
     try {
       const meta = document.querySelector('meta[name="supabase-publishable-key"]');
       if (meta && meta.content && meta.content.trim()) return meta.content.trim();
-      const ls = localStorage.getItem('numination-supabase-key');
-      if (ls && ls.trim()) return ls.trim();
     } catch (_) {}
     return DEFAULT_PUBLISHABLE_KEY;
   }
@@ -20,10 +18,12 @@
     apiBaseUrl: API_BASE_URL,
     updaterBaseUrl: UPDATER_BASE_URL,
     get supabasePublishableKey() { return readPublishableKey(); },
-    authRedirectUrl: (typeof location !== 'undefined' ? location.origin + '/login' : 'https://numinationchat.vercel.app/login'),
+    authRedirectUrl: (typeof location !== 'undefined' ? location.origin + '/login' : ''),
     appVersion: '1.0.0',
+    // IMPORTANTE: no reutilizar la misma key que supabase.auth (rompe getSession)
     storageKeys: {
-      session: 'numination-supabase-session',
+      supabaseAuth: 'sb-numination-auth',
+      apiToken: 'numination-api-token',
       theme: 'numination-theme',
       prefs: 'numination-prefs',
     },

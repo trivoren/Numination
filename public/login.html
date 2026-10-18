@@ -4,92 +4,492 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#F7F9F8" />
+<meta name="robots" content="noindex, nofollow" />
 <title>Welcome · Numination</title>
 <meta name="supabase-publishable-key" content="sb_publishable_mrKTw0QGiuikjTb6SY0Hgg_Nak0QLk7" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 <style>
-:root{--bg:#F7F9F8;--navy:#16325C;--ink:#111;--muted:#8A8A8A;--line:#D4D4D4;--white:#fff;--error:#C23B3B}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px}
-.view{width:100%;max-width:400px}
-.view[hidden]{display:none}
-h1{font-size:32px;font-weight:800;text-align:center;margin-bottom:40px;letter-spacing:-.6px;line-height:1.15}
-h2{font-size:26px;font-weight:800;margin-bottom:8px}
-.sub{color:var(--muted);font-size:14px;margin-bottom:24px}
-.field{display:flex;align-items:center;gap:8px;min-height:52px;padding:0 16px;background:#fff;border:1px solid var(--line);border-radius:28px;margin-bottom:12px}
-.field input{flex:1;border:none;outline:none;font:inherit;padding:14px 0;background:transparent}
-.btn{width:100%;height:50px;border:none;border-radius:28px;background:var(--navy);color:#fff;font-weight:600;font-size:15px;cursor:pointer}
-.btn:disabled{opacity:.7}
-.err{color:var(--error);font-size:13px;margin:8px 0;min-height:18px}
-.socials{display:flex;justify-content:center;gap:12px;margin-top:36px}
-.social{width:52px;height:52px;border-radius:14px;border:1px solid #E2E2E2;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
-.footer{text-align:center;margin-top:28px;color:var(--muted);font-size:14px}
-.footer button{background:none;border:none;font:inherit;font-weight:700;text-decoration:underline;cursor:pointer;color:var(--ink)}
-.back{width:40px;height:40px;border:none;background:none;font-size:20px;cursor:pointer;margin-bottom:12px}
+/* AuthScreen Flutter — AuthColors */
+:root {
+  --bg: #F7F9F8;
+  --navy: #16325C;
+  --ink: #111111;
+  --muted: #8A8A8A;
+  --line: #D4D4D4;
+  --white: #ffffff;
+  --error: #C23B3B;
+  --oauth-border: #E2E2E2;
+  --focus: #9AA7BC;
+  --font: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; width: 100%; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+button:disabled { cursor: not-allowed; }
+input {
+  font-family: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  outline: none;
+}
+
+.auth-app {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 32px;
+  background: var(--bg);
+}
+.view {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.view[hidden] { display: none; }
+
+.login-title {
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: -0.6px;
+  text-align: center;
+  color: var(--ink);
+  margin-bottom: 44px;
+}
+
+.login-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 18px 0 16px;
+  min-height: 52px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  transition: border-color 180ms ease;
+}
+.login-field:focus-within { border-color: var(--focus); }
+.login-field svg {
+  width: 20px;
+  height: 20px;
+  color: var(--muted);
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.login-field input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 16px 0;
+  font-size: 15px;
+  color: var(--ink);
+}
+.login-field input::placeholder {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.login-error {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--error);
+  text-align: left;
+  min-height: 18px;
+}
+.login-error:empty { display: none; }
+
+.login-primary {
+  margin-top: 16px;
+  width: 100%;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--navy);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.1px;
+  border-radius: 28px;
+  transition: opacity 180ms ease, filter 180ms ease;
+}
+.login-primary:hover:not(:disabled) { filter: brightness(0.95); }
+.login-primary:disabled { opacity: 0.7; }
+.login-primary svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.login-primary.is-loading { position: relative; color: transparent; }
+.login-primary.is-loading svg { opacity: 0; }
+.login-primary.is-loading::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border: 2.5px solid rgba(255,255,255,.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.login-socials {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 40px;
+}
+.login-social {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--white);
+  border: 1px solid var(--oauth-border);
+  border-radius: 14px;
+  transition: transform 160ms ease;
+}
+.login-social:hover:not(:disabled) { transform: translateY(-1px); }
+.login-social:disabled { opacity: 0.6; }
+.login-social svg { width: 22px; height: 22px; display: block; }
+
+.login-footer {
+  margin-top: 28px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--muted);
+}
+.login-footer button {
+  color: var(--ink);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  background: none;
+  border: none;
+}
+
+.view-back {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 0 20px -8px;
+  border-radius: 50%;
+  color: var(--ink);
+}
+.view-back:hover { background: rgba(0,0,0,.04); }
+.view-back svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.sub-title {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin-bottom: 8px;
+  color: var(--ink);
+}
+.sub-sub {
+  font-size: 14px;
+  color: var(--muted);
+  margin-bottom: 28px;
+}
+
+@media (max-width: 380px) {
+  .auth-app { padding: 24px 20px; }
+  .login-title { font-size: 28px; }
+}
 </style>
 </head>
 <body>
-<div class="view" id="entry">
-  <h1>Welcome to<br/>Numination.</h1>
-  <form id="form-entry">
-    <label class="field"><input type="email" id="entry-email" placeholder="Correo electrónico" autocomplete="email" /></label>
-    <p class="err" id="entry-error"></p>
-    <button class="btn" type="submit">Continuar</button>
-  </form>
-  <div class="socials">
-    <button type="button" class="social" id="btn-google" title="Google">G</button>
-    <button type="button" class="social" id="btn-github" title="GitHub">GH</button>
+<main class="auth-app">
+  <!-- ENTRY — AuthScreen Flutter -->
+  <div class="view" id="view-entry">
+    <h1 class="login-title">Welcome to<br />Numination.</h1>
+
+    <form id="form-entry" autocomplete="on" novalidate>
+      <label class="login-field">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="3" y="5" width="18" height="14" rx="2" />
+          <path d="m3 7 9 6 9-6" />
+        </svg>
+        <input
+          type="email"
+          id="entry-email"
+          inputmode="email"
+          autocomplete="email"
+          placeholder="Correo electrónico"
+          aria-label="Correo electrónico"
+        />
+      </label>
+      <p class="login-error" id="entry-error"></p>
+      <button type="submit" class="login-primary" id="btn-continue">
+        <span>Continuar</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <line x1="5" y1="12" x2="19" y2="12" />
+          <polyline points="12 5 19 12 12 19" />
+        </svg>
+      </button>
+    </form>
+
+    <div class="login-socials">
+      <button type="button" class="login-social" id="btn-google" aria-label="Google" title="Google">
+        <svg viewBox="0 0 48 48" aria-hidden="true">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+        </svg>
+      </button>
+      <button type="button" class="login-social" id="btn-github" aria-label="GitHub" title="GitHub">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="#0a0a0a" d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
+        </svg>
+      </button>
+    </div>
+
+    <p class="login-footer">
+      Don't have an account?
+      <button type="button" id="btn-signup">Sign up</button>
+    </p>
   </div>
-  <p class="footer">Don't have an account? <button type="button" id="btn-signup">Sign up</button></p>
-</div>
-<div class="view" id="password" hidden>
-  <button type="button" class="back" id="back-pw">←</button>
-  <h2>Ingresa tu contraseña</h2>
-  <p class="sub" id="pw-email"></p>
-  <form id="form-pw">
-    <label class="field"><input type="password" id="pw-input" placeholder="Contraseña" autocomplete="current-password" /></label>
-    <p class="err" id="pw-error"></p>
-    <button class="btn" type="submit" id="btn-login">Entrar</button>
-  </form>
-</div>
-<div class="view" id="signup" hidden>
-  <button type="button" class="back" id="back-su">←</button>
-  <h2>Crear cuenta</h2>
-  <p class="sub">Correo y contraseña segura.</p>
-  <form id="form-su">
-    <label class="field"><input type="email" id="su-email" placeholder="Correo" autocomplete="email" /></label>
-    <label class="field"><input type="password" id="su-pw" placeholder="Contraseña" autocomplete="new-password" /></label>
-    <p class="err" id="su-error"></p>
-    <button class="btn" type="submit">Crear cuenta</button>
-  </form>
-</div>
+
+  <!-- PASSWORD -->
+  <div class="view" id="view-password" hidden>
+    <button type="button" class="view-back" id="btn-back-password" aria-label="Volver">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6" /></svg>
+    </button>
+    <h2 class="sub-title">Ingresa tu contraseña</h2>
+    <p class="sub-sub" id="password-email-label"></p>
+    <form id="form-password" autocomplete="on">
+      <label class="login-field">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="3" y="11" width="18" height="11" rx="2" />
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </svg>
+        <input type="password" id="password-input" autocomplete="current-password" placeholder="Contraseña" />
+      </label>
+      <p class="login-error" id="password-error"></p>
+      <button type="submit" class="login-primary" id="btn-login">
+        <span>Entrar</span>
+      </button>
+    </form>
+  </div>
+
+  <!-- SIGN UP -->
+  <div class="view" id="view-signup" hidden>
+    <button type="button" class="view-back" id="btn-back-signup" aria-label="Volver">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6" /></svg>
+    </button>
+    <h2 class="sub-title">Crear cuenta</h2>
+    <p class="sub-sub">Usa tu correo y una contraseña segura.</p>
+    <form id="form-signup" autocomplete="on">
+      <label class="login-field" style="margin-bottom:12px">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="3" y="5" width="18" height="14" rx="2" />
+          <path d="m3 7 9 6 9-6" />
+        </svg>
+        <input type="email" id="signup-email" autocomplete="email" placeholder="Correo electrónico" />
+      </label>
+      <label class="login-field">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="3" y="11" width="18" height="11" rx="2" />
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </svg>
+        <input type="password" id="signup-password" autocomplete="new-password" placeholder="Contraseña" />
+      </label>
+      <p class="login-error" id="signup-error"></p>
+      <button type="submit" class="login-primary" id="btn-create" style="margin-top:16px">
+        <span>Crear cuenta</span>
+      </button>
+    </form>
+  </div>
+</main>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/assets/js/config.js"></script>
 <script src="/assets/js/api.js"></script>
 <script src="/assets/js/auth.js"></script>
 <script>
-(function(){
-  const Auth=window.NuminationAuth;
-  const $=id=>document.getElementById(id);
-  function show(name){['entry','password','signup'].forEach(v=>$(v).hidden=v!==name);}
-  function isEmail(s){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(s||'').trim());}
-  function msg(e){
-    const m=(e&&e.message)||'';
-    if(/invalid api key/i.test(m)) return 'API key inválida. Revisa deploy.';
-    if(/invalid login|invalid_credentials/i.test(m)) return 'Correo o contraseña incorrectos';
-    if(/email not confirmed/i.test(m)) return 'Confirma tu correo primero';
-    return m||'Error';
+(function () {
+  'use strict';
+  const Auth = window.NuminationAuth;
+  const $ = (id) => document.getElementById(id);
+
+  function showView(name) {
+    ['entry', 'password', 'signup'].forEach(function (k) {
+      $('view-' + k).hidden = k !== name;
+    });
   }
-  let pending='';
-  (async()=>{try{const s=await Auth.getSession();if(s)location.replace('/chat');}catch(_){}})();
-  $('form-entry').onsubmit=e=>{e.preventDefault();const email=$('entry-email').value.trim();if(!isEmail(email)){$('entry-error').textContent='Correo inválido';return;}$('entry-error').textContent='';pending=email;$('pw-email').textContent=email;$('pw-input').value='';$('pw-error').textContent='';show('password');$('pw-input').focus();};
-  $('back-pw').onclick=()=>show('entry');
-  $('back-su').onclick=()=>show('entry');
-  $('btn-signup').onclick=()=>{$('su-error').textContent='';show('signup');};
-  $('form-pw').onsubmit=async e=>{e.preventDefault();const btn=$('btn-login');btn.disabled=true;try{await Auth.signInWithPassword(pending,$('pw-input').value);location.replace('/chat');}catch(ex){$('pw-error').textContent=msg(ex);}finally{btn.disabled=false;}};
-  $('form-su').onsubmit=async e=>{e.preventDefault();const email=$('su-email').value.trim(),pw=$('su-pw').value;if(!isEmail(email)){$('su-error').textContent='Correo inválido';return;}if(!pw||pw.length<6){$('su-error').textContent='Mínimo 6 caracteres';return;}try{await Auth.signUp(email,pw);alert('Revisa tu correo para confirmar');show('entry');}catch(ex){$('su-error').textContent=msg(ex);}};
-  $('btn-google').onclick=async()=>{try{await Auth.signInWithOAuth('google');}catch(ex){alert(msg(ex));}};
-  $('btn-github').onclick=async()=>{try{await Auth.signInWithOAuth('github');}catch(ex){alert(msg(ex));}};
+
+  function setLoading(btn, on) {
+    if (!btn) return;
+    btn.disabled = !!on;
+    btn.classList.toggle('is-loading', !!on);
+  }
+
+  function isEmail(s) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(s || '').trim());
+  }
+
+  function friendly(ex) {
+    var m = (ex && (ex.message || ex.error_description)) || '';
+    if (/invalid api key/i.test(m)) return 'API key inválida. Espera el deploy o recarga forzada.';
+    if (/invalid login|invalid_credentials/i.test(m)) return 'Correo o contraseña incorrectos';
+    if (/email not confirmed/i.test(m)) return 'Confirma tu correo antes de entrar';
+    return m || 'No se pudo iniciar sesión';
+  }
+
+  // No colgar: timeout 4s en check de sesión
+  (async function boot() {
+    try {
+      if (!Auth) return;
+      var session = await Promise.race([
+        Auth.getSession(),
+        new Promise(function (resolve) { setTimeout(function () { resolve(null); }, 4000); }),
+      ]);
+      if (session) location.replace('/chat');
+    } catch (_) {}
+  })();
+
+  var pendingEmail = '';
+
+  $('form-entry').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var email = $('entry-email').value.trim();
+    var err = $('entry-error');
+    if (!isEmail(email)) {
+      err.textContent = 'Ingresa un correo válido';
+      return;
+    }
+    err.textContent = '';
+    pendingEmail = email;
+    $('password-email-label').textContent = email;
+    $('password-input').value = '';
+    $('password-error').textContent = '';
+    showView('password');
+    $('password-input').focus();
+  });
+
+  $('btn-back-password').onclick = function () { showView('entry'); };
+  $('btn-back-signup').onclick = function () { showView('entry'); };
+  $('btn-signup').onclick = function () {
+    $('signup-error').textContent = '';
+    showView('signup');
+  };
+
+  $('form-password').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var btn = $('btn-login');
+    var err = $('password-error');
+    var password = $('password-input').value;
+    err.textContent = '';
+    if (!password) {
+      err.textContent = 'Ingresa tu contraseña';
+      return;
+    }
+    setLoading(btn, true);
+    try {
+      await Auth.signInWithPassword(pendingEmail, password);
+      location.replace('/chat');
+    } catch (ex) {
+      err.textContent = friendly(ex);
+    } finally {
+      setLoading(btn, false);
+    }
+  });
+
+  $('form-signup').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var btn = $('btn-create');
+    var err = $('signup-error');
+    var email = $('signup-email').value.trim();
+    var password = $('signup-password').value;
+    err.textContent = '';
+    if (!isEmail(email)) {
+      err.textContent = 'Ingresa un correo válido';
+      return;
+    }
+    if (!password || password.length < 6) {
+      err.textContent = 'La contraseña debe tener al menos 6 caracteres';
+      return;
+    }
+    setLoading(btn, true);
+    try {
+      await Auth.signUp(email, password);
+      err.style.color = '#0f5132';
+      err.textContent = 'Revisa tu correo para confirmar la cuenta';
+      setTimeout(function () { showView('entry'); }, 1200);
+    } catch (ex) {
+      err.style.color = '';
+      err.textContent = friendly(ex);
+    } finally {
+      setLoading(btn, false);
+    }
+  });
+
+  $('btn-google').addEventListener('click', async function () {
+    try {
+      setLoading($('btn-continue'), true);
+      await Auth.signInWithOAuth('google');
+    } catch (ex) {
+      $('entry-error').textContent = friendly(ex);
+      setLoading($('btn-continue'), false);
+    }
+  });
+
+  $('btn-github').addEventListener('click', async function () {
+    try {
+      setLoading($('btn-continue'), true);
+      await Auth.signInWithOAuth('github');
+    } catch (ex) {
+      $('entry-error').textContent = friendly(ex);
+      setLoading($('btn-continue'), false);
+    }
+  });
 })();
 </script>
 </body>

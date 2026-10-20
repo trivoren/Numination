@@ -37,7 +37,7 @@
 
   function headers(extra) {
     var h = new Headers(extra || {});
-    h.set('Accept', 'application/json');
+    if (!h.has('Accept')) h.set('Accept', 'application/json');
     if (!h.has('Content-Type')) h.set('Content-Type', 'application/json');
     var token = getToken();
     if (token) h.set('Authorization', 'Bearer ' + token);
@@ -70,8 +70,11 @@
       }
       if (!res.ok) {
         var msg = data.error || data.message || res.statusText || 'Error';
-        if (data.issues || data.errors) {
-          try { msg = (typeof msg === 'string' ? msg + ' ' : '') + JSON.stringify(data.issues || data.errors); } catch (_) {}
+        if (typeof msg !== 'string') {
+          try { msg = JSON.stringify(msg); } catch (_) { msg = 'Error'; }
+        }
+        if (data.issues) {
+          try { msg = msg + ' ' + JSON.stringify(data.issues); } catch (_) {}
         }
         throw ApiException(res.status, String(msg), data.code);
       }
@@ -84,30 +87,41 @@
     }
   }
 
-  /** Body canónico Flutter: { prompt, mode, chatId } */
+  /** Body canónico Flutter: { prompt, mode, chatId? } */
   function normalizeChatBody(body) {
     body = body || {};
-    var prompt = body.prompt != null ? body.prompt : body.message;
-    return {
-      prompt: prompt == null ? '' : String(prompt),
-      mode: body.mode || 'chat',
-      chatId: body.chatId || body.id || undefined,
+    var prompt = body.prompt;
+    if (prompt == null || prompt === '') prompt = body.message;
+    if (prompt == null || prompt === '') prompt = body.text;
+    if (prompt == null || prompt === '') prompt = body.content;
+    var out = {
+      prompt: String(prompt == null ? '' : prompt),
+      mode: String(body.mode || 'chat'),
     };
+    var cid = body.chatId || body.id || body.chat_id;
+    if (cid != null && cid !== '') out.chatId = String(cid);
+    return out;
   }
 
   async function* chatStream(body) {
     var payload = normalizeChatBody(body);
+    if (!payload.prompt) {
+      throw ApiException(400, 'prompt vacío');
+    }
     var res = await fetch(uri('/ai/chat/stream'), {
       method: 'POST',
-      headers: headers({ Accept: 'text/event-stream' }),
+      headers: headers({ Accept: 'text/event-stream', 'Content-Type': 'application/json' }),
       body: JSON.stringify(payload),
     });
     if (!res.ok) {
       var data = {};
       try { data = await res.json(); } catch (_) {}
       var msg = data.error || data.message || res.statusText;
-      if (Array.isArray(data) || data.issues) {
-        try { msg = JSON.stringify(data.issues || data); } catch (_) {}
+      if (typeof msg !== 'string') {
+        try { msg = JSON.stringify(msg); } catch (_) { msg = 'Error'; }
+      }
+      if (data.issues) {
+        try { msg = msg + ' ' + JSON.stringify(data.issues); } catch (_) {}
       }
       throw ApiException(res.status, String(msg));
     }
@@ -158,8 +172,8 @@
     chat: function (b) { return request('POST', '/ai/chat', normalizeChatBody(b)); },
     chatStream: chatStream,
     coder: function (b) {
-      var body = b || {};
-      if (body.prompt == null && body.message != null) body = Object.assign({}, body, { prompt: body.message });
+      var body = Object.assign({}, b || {});
+      if (body.prompt == null && body.message != null) body.prompt = body.message;
       return request('POST', '/ai/coder', body);
     },
     modes: function () { return request('GET', '/modes'); },

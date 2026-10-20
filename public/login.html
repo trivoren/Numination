@@ -92,8 +92,11 @@ h2{font-size:26px;font-weight:800;margin-bottom:8px}
     return m||'Error';
   }
   var pending='';
+  // Si ya hay sesión → mismo routing que Flutter (edad / chat)
   if(Auth){
-    Auth.getSession().then(function(s){if(s)location.replace('/chat');}).catch(function(){});
+    Auth.getSession().then(function(s){
+      if(s) Auth.routeAfterAuth(s);
+    }).catch(function(){});
   }
   $('form-entry').onsubmit=function(e){
     e.preventDefault();
@@ -108,18 +111,25 @@ h2{font-size:26px;font-weight:800;margin-bottom:8px}
     e.preventDefault();
     var btn=$('btn-login');btn.disabled=true;
     try{
-      await Auth.signInWithPassword(pending,$('pw-input').value);
-      location.replace('/chat');
-    }catch(ex){$('pw-error').textContent=msg(ex);}
-    finally{btn.disabled=false;}
+      var session=await Auth.signInWithPassword(pending,$('pw-input').value);
+      Auth.routeAfterAuth(session);
+    }catch(ex){$('pw-error').textContent=msg(ex);btn.disabled=false;}
   };
   $('form-su').onsubmit=async function(e){
     e.preventDefault();
     var email=$('su-email').value.trim(),pw=$('su-pw').value;
     if(!isEmail(email)){$('su-error').textContent='Correo inválido';return;}
     if(!pw||pw.length<6){$('su-error').textContent='Mínimo 6 caracteres';return;}
-    try{await Auth.signUp(email,pw);$('su-error').textContent='Revisa tu correo';setTimeout(function(){show('entry');},1200);}
-    catch(ex){$('su-error').textContent=msg(ex);}
+    try{
+      var session=await Auth.signUp(email,pw);
+      // Si el signup devuelve sesión (email autoconfirm), respeta edad; si no, pide verificar correo
+      if(session&&session.user){
+        Auth.routeAfterAuth(session);
+      }else{
+        $('su-error').textContent='Revisa tu correo para confirmar';
+        setTimeout(function(){show('entry');},1500);
+      }
+    }catch(ex){$('su-error').textContent=msg(ex);}
   };
   $('btn-google').onclick=async function(){try{await Auth.signInWithOAuth('google');}catch(ex){$('entry-error').textContent=msg(ex);}};
   $('btn-github').onclick=async function(){try{await Auth.signInWithOAuth('github');}catch(ex){$('entry-error').textContent=msg(ex);}};

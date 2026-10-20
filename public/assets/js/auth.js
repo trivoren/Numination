@@ -22,6 +22,34 @@
     return supabase;
   }
 
+  function userMeta(user) {
+    if (!user) return {};
+    return user.user_metadata || user.userMetadata || {};
+  }
+
+  function isAgeConfirmed(user) {
+    var m = userMeta(user);
+    return m.age_14_plus === true || m.age_14_plus === 'true';
+  }
+
+  function isBannedUnderage(user) {
+    var m = userMeta(user);
+    return m.banned_underage === true || m.banned_underage === 'true';
+  }
+
+  /** Ruta post-login igual que nextScreenAfterAuth en Flutter */
+  function routeAfterAuth(session) {
+    if (!session || !session.user) {
+      location.replace('/login');
+      return;
+    }
+    if (isBannedUnderage(session.user) || !isAgeConfirmed(session.user)) {
+      location.replace('/confirm-age');
+      return;
+    }
+    location.replace('/chat');
+  }
+
   async function syncTokenFromSession(session) {
     if (session && session.access_token) {
       Api.setToken(session.access_token);
@@ -84,5 +112,8 @@
     signUp: signUp,
     signInWithOAuth: signInWithOAuth,
     signOut: signOut,
+    isAgeConfirmed: isAgeConfirmed,
+    isBannedUnderage: isBannedUnderage,
+    routeAfterAuth: routeAfterAuth,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

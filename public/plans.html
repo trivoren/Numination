@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es-CO" data-theme="gray">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Planes · Numination</title>
+<meta name="supabase-publishable-key" content="sb_publishable_mrKTw0QGiuikjTb6SY0Hgg_Nak0QLk7" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/css/themes.css" />
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text-primary);min-height:100dvh}
+.bar{display:flex;align-items:center;gap:8px;padding:12px;border-bottom:1px solid var(--border)}
+.bar a{width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;color:inherit;text-decoration:none}
+.body{max-width:640px;margin:0 auto;padding:16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:40px;padding:0 16px;border:none;border-radius:12px;background:var(--accent);color:#fff;font-weight:600;cursor:pointer}
+.muted{color:var(--text-secondary);font-size:13px}
+</style>
+</head>
+<body>
+<header class="bar"><a href="/credits">←</a><strong>Planes</strong></header>
+<main class="body" id="list">Cargando…</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/assets/js/config.js"></script>
+<script src="/assets/js/api.js"></script>
+<script src="/assets/js/auth.js"></script>
+<script>
+(async function(){
+  try{var t=localStorage.getItem('numination-theme');document.documentElement.dataset.theme=t||'gray';}catch(_){}
+  if(!(await NuminationAuth.getSession())){location.replace('/login');return;}
+  try{
+    var plans=await NuminationApi.paymentPlans();
+    var list=Array.isArray(plans)?plans:(plans.plans||plans.items||[]);
+    var el=document.getElementById('list');
+    if(!list.length){el.innerHTML='<div class="muted">No hay planes disponibles.</div>';return;}
+    el.innerHTML=list.map(function(p){
+      return '<div class="card"><h2>'+(p.name||p.title||'Plan')+'</h2><p class="muted">'+(p.description||'')+'</p><div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center"><strong>'+(p.priceLabel||p.price||'')+'</strong><button class="btn" data-id="'+(p.id||'')+'">Elegir</button></div></div>';
+    }).join('');
+    el.querySelectorAll('[data-id]').forEach(function(b){
+      b.onclick=async function(){
+        try{
+          var res=await NuminationApi.createPayment({planId:b.getAttribute('data-id')});
+          if(res.url||res.approvalUrl) location.href=res.url||res.approvalUrl;
+          else alert('Plan seleccionado');
+        }catch(e){alert(e.message||'Error');}
+      };
+    });
+  }catch(e){document.getElementById('list').textContent=e.message||'Error';}
+})();
+</script>
+</body>
+</html>

@@ -68,7 +68,13 @@
         var text = await res.text();
         try { data = text ? JSON.parse(text) : {}; } catch (_) { data = { raw: text }; }
       }
-      if (!res.ok) throw ApiException(res.status, String(data.error || data.message || res.statusText || 'Error'), data.code);
+      if (!res.ok) {
+        var msg = data.error || data.message || res.statusText || 'Error';
+        if (data.issues || data.errors) {
+          try { msg = (typeof msg === 'string' ? msg + ' ' : '') + JSON.stringify(data.issues || data.errors); } catch (_) {}
+        }
+        throw ApiException(res.status, String(msg), data.code);
+      }
       return data;
     } catch (e) {
       clearTimeout(timer);
@@ -78,16 +84,32 @@
     }
   }
 
+  /** Body canónico Flutter: { prompt, mode, chatId } */
+  function normalizeChatBody(body) {
+    body = body || {};
+    var prompt = body.prompt != null ? body.prompt : body.message;
+    return {
+      prompt: prompt == null ? '' : String(prompt),
+      mode: body.mode || 'chat',
+      chatId: body.chatId || body.id || undefined,
+    };
+  }
+
   async function* chatStream(body) {
+    var payload = normalizeChatBody(body);
     var res = await fetch(uri('/ai/chat/stream'), {
       method: 'POST',
       headers: headers({ Accept: 'text/event-stream' }),
-      body: JSON.stringify(body),
+      body: JSON.stringify(payload),
     });
     if (!res.ok) {
       var data = {};
       try { data = await res.json(); } catch (_) {}
-      throw ApiException(res.status, String(data.error || data.message || res.statusText));
+      var msg = data.error || data.message || res.statusText;
+      if (Array.isArray(data) || data.issues) {
+        try { msg = JSON.stringify(data.issues || data); } catch (_) {}
+      }
+      throw ApiException(res.status, String(msg));
     }
     var reader = res.body.getReader();
     var decoder = new TextDecoder();
@@ -105,9 +127,9 @@
         if (line === '') {
           if (dataLines.length) {
             var raw = dataLines.join('\n');
-            var payload;
-            try { payload = JSON.parse(raw); } catch (_) { payload = { raw: raw }; }
-            yield { event: eventName, data: payload };
+            var payload2;
+            try { payload2 = JSON.parse(raw); } catch (_) { payload2 = { raw: raw }; }
+            yield { event: eventName, data: payload2 };
           }
           eventName = 'message';
           dataLines = [];
@@ -124,11 +146,8 @@
     getToken: getToken,
     clearSession: clearSession,
     request: request,
-    // Auth profile
     me: function () { return request('GET', '/auth/me'); },
     updateMe: function (b) { return request('PATCH', '/auth/me', b); },
-    confirmAge: function (b) { return request('POST', '/auth/confirm-age', b); },
-    // Chats
     listChats: function () { return request('GET', '/chats'); },
     createChat: function (b) { return request('POST', '/chats', b || {}); },
     getChat: function (id) { return request('GET', '/chats/' + encodeURIComponent(id)); },
@@ -136,37 +155,33 @@
     deleteChat: function (id) { return request('DELETE', '/chats/' + encodeURIComponent(id)); },
     getMessages: function (id) { return request('GET', '/chats/' + encodeURIComponent(id) + '/messages'); },
     saveMessage: function (id, b) { return request('POST', '/chats/' + encodeURIComponent(id) + '/messages', b); },
-    // AI
-    chat: function (b) { return request('POST', '/ai/chat', b); },
+    chat: function (b) { return request('POST', '/ai/chat', normalizeChatBody(b)); },
     chatStream: chatStream,
-    coder: function (b) { return request('POST', '/ai/coder', b); },
+    coder: function (b) {
+      var body = b || {};
+      if (body.prompt == null && body.message != null) body = Object.assign({}, body, { prompt: body.message });
+      return request('POST', '/ai/coder', body);
+    },
     modes: function () { return request('GET', '/modes'); },
-    // Projects
     listProjects: function () { return request('GET', '/projects'); },
     createProject: function (b) { return request('POST', '/projects', b); },
     projectPreview: function (id) { return request('GET', '/projects/' + encodeURIComponent(id) + '/preview-link'); },
     projectDownload: function (id) { return request('GET', '/projects/' + encodeURIComponent(id) + '/download'); },
     projectUndo: function (id) { return request('POST', '/projects/' + encodeURIComponent(id) + '/undo'); },
     projectFiles: function (id) { return request('GET', '/projects/' + encodeURIComponent(id) + '/files'); },
-    // Credits / payments
     credits: function () { return request('GET', '/credits'); },
     creditsHistory: function () { return request('GET', '/credits/history'); },
     paymentPlans: function () { return request('GET', '/payments/plans'); },
     createPayment: function (b) { return request('POST', '/payments/create', b); },
-    // Memory
     memory: function () { return request('GET', '/memory'); },
     saveMemory: function (b) { return request('POST', '/memory', b); },
     deleteMemory: function (id) { return request('DELETE', '/memory/' + encodeURIComponent(id)); },
-    // Notifications
     notifications: function () { return request('GET', '/notifications'); },
     markNotifications: function (b) { return request('POST', '/notifications', b); },
-    // Integrations / connectors
     integrations: function () { return request('GET', '/integrations'); },
     startIntegration: function (b) { return request('POST', '/integrations/start', b); },
     disconnectIntegration: function (b) { return request('POST', '/integrations/disconnect', b); },
-    // Artifacts
     artifacts: function () { return request('GET', '/artifacts'); },
-    // Health
     health: function () { return request('GET', '/health'); },
   };
 })(typeof window !== 'undefined' ? window : globalThis);

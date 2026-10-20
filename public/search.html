@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es-CO" data-theme="gray">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Buscar chats · Numination</title>
+<meta name="supabase-publishable-key" content="sb_publishable_mrKTw0QGiuikjTb6SY0Hgg_Nak0QLk7" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/css/themes.css" />
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text-primary);min-height:100dvh}
+.bar{display:flex;align-items:center;gap:8px;padding:10px 12px}
+.bar a{width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;color:inherit;text-decoration:none}
+.bar a:hover{background:var(--surface-alt)}
+.search{flex:1;height:44px;border-radius:22px;border:1px solid var(--border);background:var(--surface);padding:0 16px;font:inherit;color:inherit;outline:none}
+.list{padding:8px 12px 24px}
+.item{display:flex;align-items:center;gap:12px;padding:14px 12px;border-radius:12px;text-decoration:none;color:inherit}
+.item:hover{background:var(--surface-alt)}
+.item svg{width:20px;height:20px;stroke:var(--accent);fill:none;stroke-width:1.8;flex-shrink:0}
+.empty{text-align:center;padding:48px 16px;color:var(--text-secondary)}
+</style>
+</head>
+<body>
+<header class="bar">
+  <a href="/chat" aria-label="Volver">←</a>
+  <input class="search" id="q" type="search" placeholder="Buscar chats…" autofocus />
+</header>
+<main class="list" id="list"><p class="empty">Cargando…</p></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/assets/js/config.js"></script>
+<script src="/assets/js/api.js"></script>
+<script src="/assets/js/auth.js"></script>
+<script>
+(async function(){
+  try{var t=localStorage.getItem('numination-theme');document.documentElement.dataset.theme=t||'gray';}catch(_){document.documentElement.dataset.theme='gray';}
+  if(!window.NuminationAuth){location.replace('/login');return;}
+  var session=null;
+  try{session=await NuminationAuth.getSession();}catch(_){}
+  if(!session){location.replace('/login');return;}
+
+  var chats=[];
+  try{
+    var d=await NuminationApi.listChats();
+    chats=Array.isArray(d)?d:(d.chats||[]);
+  }catch(_){chats=[];}
+
+  function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+  function render(q){
+    q=(q||'').toLowerCase().trim();
+    var f=chats.filter(function(c){
+      var title=((c.title||c.name||'')+'').toLowerCase();
+      return !q||title.indexOf(q)!==-1;
+    });
+    var el=document.getElementById('list');
+    if(!f.length){el.innerHTML='<p class="empty">Sin resultados</p>';return;}
+    el.innerHTML=f.map(function(c){
+      var title=c.title||c.name||'Chat';
+      return '<a class="item" href="/chat?id='+encodeURIComponent(c.id)+'">'+'
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'+
+        '<span>'+esc(title)+'</span></a>';
+    }).join('');
+  }
+  document.getElementById('q').oninput=function(e){render(e.target.value);};
+  render('');
+})();
+</script>
+</body>
+</html>

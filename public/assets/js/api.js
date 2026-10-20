@@ -1,28 +1,17 @@
 (function (global) {
   'use strict';
-  const CFG = global.NuminationConfig;
+  var CFG = global.NuminationConfig;
   if (!CFG) { console.error('[api] falta config.js'); return; }
 
-  class ApiException extends Error {
-    constructor(statusCode, message, code) {
-      super(message);
-      this.name = 'ApiException';
-      this.statusCode = statusCode;
-      this.code = code || null;
-    }
-  }
-  class ApiRequestCancelled extends Error {
-    constructor() { super('ApiRequestCancelled'); this.name = 'ApiRequestCancelled'; }
-  }
-  class ApiCancelToken {
-    constructor() { this._cancelled = false; this._controller = null; }
-    get isCancelled() { return this._cancelled; }
-    cancel() { if (this._cancelled) return; this._cancelled = true; if (this._controller) this._controller.abort(); this._controller = null; }
-    attach(c) { if (this._cancelled) c.abort(); else this._controller = c; }
-    detach(c) { if (this._controller === c) this._controller = null; }
+  function ApiException(statusCode, message, code) {
+    var e = new Error(message);
+    e.name = 'ApiException';
+    e.statusCode = statusCode;
+    e.code = code || null;
+    return e;
   }
 
-  let accessToken = null;
+  var accessToken = null;
 
   function setToken(t) {
     accessToken = t && String(t).trim() ? String(t).trim() : null;
@@ -35,7 +24,7 @@
   function getToken() {
     if (accessToken) return accessToken;
     try {
-      const t = localStorage.getItem(CFG.storageKeys.apiToken);
+      var t = localStorage.getItem(CFG.storageKeys.apiToken);
       if (t) accessToken = t;
       return t;
     } catch (_) { return null; }
@@ -47,135 +36,137 @@
   }
 
   function headers(extra) {
-    const h = new Headers(extra || {});
+    var h = new Headers(extra || {});
     h.set('Accept', 'application/json');
     if (!h.has('Content-Type')) h.set('Content-Type', 'application/json');
-    const token = getToken();
+    var token = getToken();
     if (token) h.set('Authorization', 'Bearer ' + token);
-    const key = CFG.supabasePublishableKey;
+    var key = CFG.supabasePublishableKey;
     if (key) h.set('apikey', key);
     return h;
   }
 
   function uri(path) {
-    const base = CFG.apiBaseUrl.replace(/\/+$/, '');
-    return base + (path.startsWith('/') ? path : '/' + path);
+    return CFG.apiBaseUrl.replace(/\/+$/, '') + (path.startsWith('/') ? path : '/' + path);
   }
 
   async function request(method, path, body, opts) {
     opts = opts || {};
-    const cancelToken = opts.cancelToken;
-    const timeoutMs = opts.timeoutMs || 25000;
-    const controller = new AbortController();
-    if (cancelToken) cancelToken.attach(controller);
-    const timer = setTimeout(function () { controller.abort(); }, timeoutMs);
+    var timeoutMs = opts.timeoutMs || 30000;
+    var controller = new AbortController();
+    var timer = setTimeout(function () { controller.abort(); }, timeoutMs);
     try {
-      const init = { method: method, headers: headers(), signal: controller.signal };
+      var init = { method: method, headers: headers(), signal: controller.signal };
       if (body !== undefined && method !== 'GET' && method !== 'HEAD') init.body = JSON.stringify(body);
-      const res = await fetch(uri(path), init);
+      var res = await fetch(uri(path), init);
       clearTimeout(timer);
-      if (cancelToken) cancelToken.detach(controller);
-      let data = {};
-      const ct = res.headers.get('content-type') || '';
-      if (ct.indexOf('application/json') !== -1) {
+      var data = {};
+      var ct = res.headers.get('content-type') || '';
+      if (ct.indexOf('json') !== -1) {
         try { data = await res.json(); } catch (_) { data = {}; }
       } else {
-        const text = await res.text();
+        var text = await res.text();
         try { data = text ? JSON.parse(text) : {}; } catch (_) { data = { raw: text }; }
       }
-      if (!res.ok) throw new ApiException(res.status, String(data.error || data.message || res.statusText || 'Error'), data.code || null);
+      if (!res.ok) throw ApiException(res.status, String(data.error || data.message || res.statusText || 'Error'), data.code);
       return data;
     } catch (e) {
       clearTimeout(timer);
-      if (cancelToken) cancelToken.detach(controller);
-      if (e instanceof ApiException) throw e;
-      if (e && e.name === 'AbortError') {
-        if (cancelToken && cancelToken.isCancelled) throw new ApiRequestCancelled();
-        throw new ApiException(504, 'La solicitud tardó demasiado');
-      }
-      throw new ApiException(-1, 'Error de conexión');
+      if (e && e.name === 'ApiException') throw e;
+      if (e && e.name === 'AbortError') throw ApiException(504, 'Timeout');
+      throw ApiException(-1, 'Error de conexión');
     }
   }
 
-  async function* chatStream(body, cancelToken) {
-    const controller = new AbortController();
-    if (cancelToken) cancelToken.attach(controller);
-    try {
-      const res = await fetch(uri('/ai/chat/stream'), {
-        method: 'POST',
-        headers: headers({ Accept: 'text/event-stream' }),
-        body: JSON.stringify(body),
-        signal: controller.signal,
-      });
-      if (!res.ok) {
-        let data = {};
-        try { data = await res.json(); } catch (_) {}
-        throw new ApiException(res.status, String(data.error || data.message || res.statusText), data.code);
-      }
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
-      let eventName = 'message';
-      let dataLines = [];
-      while (true) {
-        const result = await reader.read();
-        if (result.done) break;
-        buffer += decoder.decode(result.value, { stream: true });
-        const lines = buffer.split(/\r?\n/);
-        buffer = lines.pop() || '';
-        for (let i = 0; i < lines.length; i++) {
-          const line = lines[i];
-          if (line === '') {
-            if (dataLines.length) {
-              const raw = dataLines.join('\n');
-              let payload;
-              try { payload = JSON.parse(raw); } catch (_) { payload = { raw: raw }; }
-              yield { event: eventName, data: payload && typeof payload === 'object' && !Array.isArray(payload) ? payload : { value: payload } };
-            }
-            eventName = 'message';
-            dataLines = [];
-            continue;
+  async function* chatStream(body) {
+    var res = await fetch(uri('/ai/chat/stream'), {
+      method: 'POST',
+      headers: headers({ Accept: 'text/event-stream' }),
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      var data = {};
+      try { data = await res.json(); } catch (_) {}
+      throw ApiException(res.status, String(data.error || data.message || res.statusText));
+    }
+    var reader = res.body.getReader();
+    var decoder = new TextDecoder();
+    var buffer = '';
+    var eventName = 'message';
+    var dataLines = [];
+    while (true) {
+      var result = await reader.read();
+      if (result.done) break;
+      buffer += decoder.decode(result.value, { stream: true });
+      var lines = buffer.split(/\r?\n/);
+      buffer = lines.pop() || '';
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i];
+        if (line === '') {
+          if (dataLines.length) {
+            var raw = dataLines.join('\n');
+            var payload;
+            try { payload = JSON.parse(raw); } catch (_) { payload = { raw: raw }; }
+            yield { event: eventName, data: payload };
           }
-          if (line.indexOf('event:') === 0) eventName = line.slice(6).trim();
-          else if (line.indexOf('data:') === 0) dataLines.push(line.slice(5).replace(/^ /, ''));
+          eventName = 'message';
+          dataLines = [];
+          continue;
         }
+        if (line.indexOf('event:') === 0) eventName = line.slice(6).trim();
+        else if (line.indexOf('data:') === 0) dataLines.push(line.slice(5).replace(/^ /, ''));
       }
-    } finally {
-      if (cancelToken) cancelToken.detach(controller);
     }
   }
 
   global.NuminationApi = {
-    ApiException: ApiException,
-    ApiRequestCancelled: ApiRequestCancelled,
-    ApiCancelToken: ApiCancelToken,
     setToken: setToken,
     getToken: getToken,
     clearSession: clearSession,
     request: request,
+    // Auth profile
     me: function () { return request('GET', '/auth/me'); },
     updateMe: function (b) { return request('PATCH', '/auth/me', b); },
+    confirmAge: function (b) { return request('POST', '/auth/confirm-age', b); },
+    // Chats
     listChats: function () { return request('GET', '/chats'); },
     createChat: function (b) { return request('POST', '/chats', b || {}); },
+    getChat: function (id) { return request('GET', '/chats/' + encodeURIComponent(id)); },
     updateChat: function (id, b) { return request('PATCH', '/chats/' + encodeURIComponent(id), b); },
     deleteChat: function (id) { return request('DELETE', '/chats/' + encodeURIComponent(id)); },
     getMessages: function (id) { return request('GET', '/chats/' + encodeURIComponent(id) + '/messages'); },
     saveMessage: function (id, b) { return request('POST', '/chats/' + encodeURIComponent(id) + '/messages', b); },
+    // AI
     chat: function (b) { return request('POST', '/ai/chat', b); },
     chatStream: chatStream,
     coder: function (b) { return request('POST', '/ai/coder', b); },
+    modes: function () { return request('GET', '/modes'); },
+    // Projects
     listProjects: function () { return request('GET', '/projects'); },
     createProject: function (b) { return request('POST', '/projects', b); },
+    projectPreview: function (id) { return request('GET', '/projects/' + encodeURIComponent(id) + '/preview-link'); },
+    projectDownload: function (id) { return request('GET', '/projects/' + encodeURIComponent(id) + '/download'); },
+    projectUndo: function (id) { return request('POST', '/projects/' + encodeURIComponent(id) + '/undo'); },
     projectFiles: function (id) { return request('GET', '/projects/' + encodeURIComponent(id) + '/files'); },
+    // Credits / payments
     credits: function () { return request('GET', '/credits'); },
+    creditsHistory: function () { return request('GET', '/credits/history'); },
     paymentPlans: function () { return request('GET', '/payments/plans'); },
     createPayment: function (b) { return request('POST', '/payments/create', b); },
-    creditsHistory: function () { return request('GET', '/credits/history'); },
+    // Memory
     memory: function () { return request('GET', '/memory'); },
     saveMemory: function (b) { return request('POST', '/memory', b); },
+    deleteMemory: function (id) { return request('DELETE', '/memory/' + encodeURIComponent(id)); },
+    // Notifications
     notifications: function () { return request('GET', '/notifications'); },
+    markNotifications: function (b) { return request('POST', '/notifications', b); },
+    // Integrations / connectors
     integrations: function () { return request('GET', '/integrations'); },
+    startIntegration: function (b) { return request('POST', '/integrations/start', b); },
+    disconnectIntegration: function (b) { return request('POST', '/integrations/disconnect', b); },
+    // Artifacts
     artifacts: function () { return request('GET', '/artifacts'); },
+    // Health
     health: function () { return request('GET', '/health'); },
   };
 })(typeof window !== 'undefined' ? window : globalThis);

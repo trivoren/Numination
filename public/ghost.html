@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es-CO" data-theme="gray">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ghost · Numination</title>
+<meta name="supabase-publishable-key" content="sb_publishable_mrKTw0QGiuikjTb6SY0Hgg_Nak0QLk7" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/css/themes.css" />
+<style id="s"></style>
+<style>
+.thread{padding:16px;display:flex;flex-direction:column;gap:10px;min-height:50vh}
+.user{align-self:flex-end;max-width:88%;padding:12px 16px;border-radius:18px;background:color-mix(in srgb,var(--accent) 12%,var(--surface));border:1px solid var(--border)}
+.ai{line-height:1.55}
+.composer{position:sticky;bottom:0;padding:12px;background:var(--bg);display:flex;gap:8px}
+.composer input{flex:1;height:48px;border-radius:24px;border:1px solid var(--border);background:var(--surface);padding:0 16px;color:inherit;font:inherit}
+.composer button{width:48px;height:48px;border-radius:50%;border:none;background:var(--accent);color:#fff;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="page-bar"><a href="/chat">←</a><h1>Ghost</h1></header>
+  <p class="muted" style="padding:0 16px 8px">Modo incógnito: no se guarda en el historial.</p>
+  <div class="thread" id="thread"></div>
+  <div class="composer"><input id="input" placeholder="Pregunta en privado…" /><button id="send" type="button">→</button></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/assets/js/config.js"></script>
+<script src="/assets/js/api.js"></script>
+<script src="/assets/js/auth.js"></script>
+<script src="/assets/js/shell.js"></script>
+<script>
+(async function(){
+  document.getElementById('s').textContent=NuminationShell.pageStyles();
+  NuminationShell.initTheme();
+  if(!(await NuminationShell.requireSession()))return;
+  var thread=document.getElementById('thread');
+  document.getElementById('send').onclick=async function(){
+    var input=document.getElementById('input');
+    var text=input.value.trim();if(!text)return;
+    var u=document.createElement('div');u.className='user';u.textContent=text;thread.appendChild(u);input.value='';
+    var a=document.createElement('div');a.className='ai';a.textContent='…';thread.appendChild(a);
+    try{
+      var res=await NuminationApi.chat({message:text,mode:'chat',ghost:true});
+      a.textContent=res.content||res.message||res.reply||'Sin respuesta';
+    }catch(e){a.textContent=e.message||'Error';}
+  };
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es-CO" data-theme="gray">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Perfil · Numination</title>
+<meta name="supabase-publishable-key" content="sb_publishable_mrKTw0QGiuikjTb6SY0Hgg_Nak0QLk7" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/css/themes.css" />
+<style id="s"></style>
+<style>input.f{width:100%;height:44px;border-radius:12px;border:1px solid var(--border);background:var(--surface);padding:0 12px;margin:6px 0 12px;font:inherit;color:inherit}</style>
+</head>
+<body>
+<div class="page">
+  <header class="page-bar"><a href="/settings">←</a><h1>Perfil</h1></header>
+  <main class="page-body">
+    <div class="card">
+      <p class="muted" id="email">—</p>
+      <label class="muted">Nombre</label>
+      <input class="f" id="name" />
+      <button class="btn" id="save" style="width:100%">Guardar</button>
+    </div>
+  </main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/assets/js/config.js"></script>
+<script src="/assets/js/api.js"></script>
+<script src="/assets/js/auth.js"></script>
+<script src="/assets/js/shell.js"></script>
+<script>
+(async function(){
+  document.getElementById('s').textContent=NuminationShell.pageStyles();
+  NuminationShell.initTheme();
+  var session=await NuminationShell.requireSession();
+  if(!session)return;
+  document.getElementById('email').textContent=(session.user&&session.user.email)||'';
+  try{
+    var me=await NuminationApi.me();
+    var u=me.user||me.profile||{};
+    document.getElementById('name').value=u.displayName||u.name||'';
+  }catch(_){}
+  document.getElementById('save').onclick=async function(){
+    try{
+      await NuminationApi.updateMe({displayName:document.getElementById('name').value});
+      alert('Guardado');
+    }catch(e){alert(e.message||'Error');}
+  };
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es-CO" data-theme="gray">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Memoria · Numination</title>
+<meta name="supabase-publishable-key" content="sb_publishable_mrKTw0QGiuikjTb6SY0Hgg_Nak0QLk7" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/css/themes.css" />
+<style id="s"></style>
+</head>
+<body>
+<div class="page">
+  <header class="page-bar"><a href="/settings">←</a><h1>Memoria</h1></header>
+  <main class="page-body" id="list"><p class="muted">Cargando…</p></main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/assets/js/config.js"></script>
+<script src="/assets/js/api.js"></script>
+<script src="/assets/js/auth.js"></script>
+<script src="/assets/js/shell.js"></script>
+<script>
+(async function(){
+  document.getElementById('s').textContent=NuminationShell.pageStyles();
+  NuminationShell.initTheme();
+  if(!(await NuminationShell.requireSession()))return;
+  try{
+    var d=await NuminationApi.memory();
+    var list=d.memories||d.items||(Array.isArray(d)?d:[]);
+    document.getElementById('list').innerHTML=list.length?list.map(function(m){
+      return '<div class="card"><div>'+(m.content||m.text||m.summary||JSON.stringify(m))+'</div><p class="muted">'+(m.createdAt||m.created_at||'')+'</p></div>';
+    }).join(''):'<div class="empty">Sin memorias todavía.</div>';
+  }catch(e){document.getElementById('list').innerHTML='<p class="muted">'+(e.message||'Error')+'</p>';}
+})();
+</script>
+</body>
+</html>

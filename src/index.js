@@ -52,6 +52,28 @@ import { mountMemoryRoutes } from './memories.js';
 import { mountSkillsRoutes } from './skills.js';
 import { mountConnectorRoutes } from './connectors.js';
 import { mountEmailRoutes } from './email.js';
+import { mountCoderRoutes } from './coder.js';
+import { mountPaymentRoutes } from './payments/routes.js';
+import { mountAllRoutes } from './routes/index.js';
+
+/* ═══════════════════════════════════════════════════════════════════════
+   GUARDIA DE SEGURIDAD · Fase 3 (middleware)
+   ═══════════════════════════════════════════════════════════════════════ */
+import { rateLimiter } from './middleware/rate-limiter.js';
+import { ipBlocker } from './middleware/ip-blocker.js';
+import { banGuard, connectSpamFilter } from './middleware/ban-manager.js';
+import { spamFilterMiddleware } from './services/spam-filter.js';
+import { auditMiddleware } from './services/audit-logger.js';
+import { affiliateTracker } from './services/affiliate-tracker.js';
+
+/* ═══════════════════════════════════════════════════════════════════════
+   WORKERS EN BACKGROUND · Fase 1
+   ═══════════════════════════════════════════════════════════════════════ */
+import { startAnalyzerWorker } from './services/chat-analyzer.js';
+import { startCreditAlertCron } from './services/credit-alerts.js';
+import { startBackupRobot } from './services/backup-robot.js';
+import { connectPaymentEvents } from './services/invoice-generator.js';
+import { mountWebVitalsRoutes } from './services/web-vitals.js';
 
 /* â•â•â• NUMINATION LIBS â•â•â• */
 import { ipGuard, rateLimit as ipRateLimit, blockCountries } from './middleware/ip-guard.js';
@@ -604,11 +626,14 @@ app.use(requestIdMiddleware());
 
 const CSP = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://accounts.google.com",
-  "style-src 'self' 'unsafe-inline'",
+  // PayPal carga el SDK desde su dominio y abre sus iframes de checkout.
+  // jsDelivr sirve Chart.js para el panel de administración.
+  "script-src 'self' 'unsafe-inline' https://accounts.google.com https://www.paypal.com https://www.sandbox.paypal.com https://cdn.jsdelivr.net",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com data:",
   "img-src 'self' data: https:",
-  "connect-src 'self' https://*.supabase.co https://api.groq.com https://generativelanguage.googleapis.com",
-  "frame-src https://accounts.google.com",
+  "connect-src 'self' https://*.supabase.co https://api.groq.com https://generativelanguage.googleapis.com https://www.paypal.com https://api-m.sandbox.paypal.com https://api-m.paypal.com https://api.openai.com https://api.tavily.com https://google.serper.dev",
+  "frame-src https://accounts.google.com https://www.paypal.com https://www.sandbox.paypal.com https://www.paypalobjects.com",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
@@ -663,7 +688,22 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json({ limit: CFG.jsonLimit }));
+// El body crudo solo se conserva para el webhook de PayPal: la firma se
+// calcula sobre los bytes EXACTOS que envió PayPal, así que no puede
+// re-serializarse el JSON ya parseado.
+app.use(express.json({
+  limit: CFG.jsonLimit,
+  verify: (req, _res, buf) => {
+    try {
+      const url = req.originalUrl || req.url || '';
+      if (url.startsWith('/api/payments/webhook')) {
+        req.rawBody = Buffer.from(buf);
+      }
+    } catch {
+      // Nunca romper el parseo por el capturador del body crudo.
+    }
+  },
+}));
 app.use(express.urlencoded({ extended: false, limit: CFG.urlencodedLimit }));
 app.use(cookieParser());
 
@@ -677,12 +717,45 @@ if (process.env.IP_GUARD !== 'false') {
   }));
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   GUARDIA DE SEGURIDAD · Fase 3
+   -----------------------------------------------------------------------
+   Orden (importante):
+     1 · IP blocker        → descarta traffic de datacenters/VPN.
+     2 · Rate limiter     → 60 req/min por IP (JSON 429 descriptivo).
+     3 · Affiliate tracker→ registra ?ref= antes de que el usuario entre.
+     4 · attachUser       → resuelve la sesión.
+     5 · banGuard         → corta cuentas baneadas/suspendidas.
+     6 · Spam filter     → puntúa el body (el ban-manager reacciona).
+     7 · Audit logger     → registra la acción al terminar la request.
+   ═══════════════════════════════════════════════════════════════════════ */
+app.use(ipBlocker());
+app.use(rateLimiter);
+app.use(affiliateTracker());
+
 app.use(attachUser);
 app.use(notificationsMiddleware());
 app.use(analyticsMiddleware({ sampleHttp: 1, ignore4xx: false }));
+app.use(banGuard());
 
 app.use(rateLimitUser({
   skipPaths: ['/api/health', '/api/version', '/api/ping'],
+}));
+
+// Filtro de spam: evalúa los cuerpos de escritura ANTES de que los
+// routers los atiendan (si se montara después, Express ya habría
+// respondido y el middleware no se ejecutaría nunca).
+//
+// OJO: no se revisa el campo "code": en el Coder es legítimo pegar
+// <script> o "ignore previous instructions" dentro de un archivo.
+app.use(spamFilterMiddleware({ fields: ['message', 'prompt', 'content'] }));
+
+// Auditoría: registra la request al terminar. También debe ir antes de
+// las rutas: usa res.on('finish'), que sólo se dispara si el listener
+// se registró antes de que la respuesta terminara.
+app.use(auditMiddleware({
+  skipPaths: ['/api/health', '/api/version', '/api/ping'],
+  skipStatic: true,
 }));
 
 app.use((req, res, next) => {
@@ -725,6 +798,84 @@ mountMemoryRoutes(app, requireAuth);
 mountSkillsRoutes(app, requireAuth);
 mountConnectorRoutes(app, requireAuth);
 mountEmailRoutes(app, requireAuth);
+mountCoderRoutes(app, requireAuth);
+
+// ═══════════════════════════════════════════════════════════════════════
+// MEGA-PROYECTO · routers nuevos
+// -----------------------------------------------------------------------
+// Un solo punto de montaje (src/routes/index.js) para:
+//   /api/admin/*      panel de administración      (requireAdmin)
+//   /api/rag/*        ingesta RAG + pgvector       (requireAuth)
+//   /api/images/*     generación de imágenes        (requireAuth)
+//   /api/voice/*      STT + TTS                     (requireAuth)
+//   /api/personas/*   CRUD de personas              (requireAuth)
+//   /api/memory*      caja fuerte de memoria        (requireAuth)
+//   /api/sandbox/*    ejecutor de código aislado    (requireAuth)
+//   /api/search/web   búsqueda web (5/min)          (requireAuth)
+//   /api/prompts/*    biblioteca de prompts         (requireAuth)
+//   /api/flags        banderas (lectura)            (requireAuth)
+//   /api/admin/flags  banderas (escritura)          (requireAdmin)
+//   /api/notifications* notificaciones               (requireAuth)
+//   /api/billing/*    historial + facturas PDF      (requireAuth)
+//   /api/ai/*         herramientas de IA            (requireAuth)
+//   /api/gdpr/*       derechos del usuario         (requireAuth)
+// ═══════════════════════════════════════════════════════════════════════
+mountAllRoutes(app);
+
+// Web Vitals (métricas de performance del frontend)
+mountWebVitalsRoutes(app, { requireAuth, requireAdmin });
+
+// ═══════════════════════════════════════════════════════════════════════
+// WORKERS EN BACKGROUND
+// -----------------------------------------------------------------------
+// · chat-analyzer  → detecta uso intenso del Coder y sugiere el Plan.
+// · credit-alerts  → cron diario con los usuarios que están sin créditos.
+// · backup-robot   → pg_dump diario a /backups.
+// · ban-manager    → conecta el filtro de spam con las sanciones.
+// · invoice-gen    → genera la factura cuando PayPal confirma el pago.
+// ═══════════════════════════════════════════════════════════════════════
+(async () => {
+  try {
+    await connectSpamFilter();
+    await connectPaymentEvents();
+  } catch (e) {
+    LOG.warn('workers: no se pudieron conectar los eventos', { error: e.message });
+  }
+
+  if (process.env.NODE_ENV !== 'test') {
+    startAnalyzerWorker();
+    startCreditAlertCron();
+    if (process.env.BACKUP_ENABLED === 'true') {
+      startBackupRobot();
+    }
+  }
+})();
+
+// ═══════════════════════════════════════════════════════════════════════
+// PAGOS · PayPal
+// -----------------------------------------------------------------------
+// Monta:
+//   POST /api/payments/create-order   (auth)
+//   POST /api/payments/capture-order  (auth + anti-IDOR)
+//   GET  /api/payments/config|credits|history
+//   POST /api/payments/webhook        (firma criptográfica, sin sesión)
+//
+// Si PayPal no está configurado (faltan PAYPAL_CLIENT_ID /
+// PAYPAL_CLIENT_SECRET / PAYPAL_WEBHOOK_ID) se loguea el error y el módulo
+// queda deshabilitado: el resto de la app sigue funcionando. Con
+// PAYMENTS_STRICT=true (o NODE_ENV=production) el arranque falla duro,
+// porque un checkout mal configurado no debe aceptar cobros a medias.
+// ═══════════════════════════════════════════════════════════════════════
+try {
+  mountPaymentRoutes(app, requireAuth);
+} catch (err) {
+  const paymentsStrict = process.env.PAYMENTS_STRICT === 'true' || process.env.NODE_ENV === 'production';
+  LOG.error('payments.routes.mount_failed', {
+    message: err && err.message,
+    missing: err && Array.isArray(err.missing) ? err.missing : [],
+  });
+  if (paymentsStrict) throw err;
+}
 
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    16 Â· HEALTH Â· VERSION Â· PING

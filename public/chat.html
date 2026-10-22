@@ -1,248 +1,229 @@
-<!DOCTYPE html>
-<html lang="es-CO" data-theme="gray">
+﻿<!DOCTYPE html>
+<html lang="es-CO" data-theme="oscuro">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Numination</title>
-<meta name="supabase-publishable-key" content="sb_publishable_mrKTw0QGiuikjTb6SY0Hgg_Nak0QLk7" />
-<meta http-equiv="Cache-Control" content="no-cache" />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="/assets/css/themes.css?v=5" />
-<style>
-*{box-sizing:border-box;margin:0;padding:0}html,body{height:100%}
-body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text-primary);height:100dvh;display:flex;flex-direction:column;overflow:hidden}
-button,textarea{font:inherit;color:inherit}button{border:none;background:none;cursor:pointer}a{color:inherit;text-decoration:none}
-.top{display:flex;align-items:center;gap:4px;padding:8px 10px}
-.icon-btn{width:42px;height:42px;display:flex;align-items:center;justify-content:center;border-radius:50%}
-.icon-btn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.search-pill{flex:1;height:42px;display:flex;align-items:center;gap:8px;padding:0 14px;border-radius:22px;background:var(--surface);border:1px solid var(--border);color:var(--text-secondary);font-size:14.5px}
-.search-pill svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2}
-.scroll{flex:1;overflow:auto;display:flex;flex-direction:column;min-height:0}
-.empty{margin:auto;text-align:center;padding:24px 28px;max-width:420px}
-.empty h2{font-size:22px;font-weight:700;margin-bottom:8px}
-.empty p{font-size:14.5px;color:var(--text-secondary)}
-.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:8px 16px 12px}
-.chip{display:inline-flex;align-items:center;gap:6px;padding:10px 14px;border-radius:18px;border:1px solid var(--border);background:var(--surface);font-size:13.5px}
-.chip svg{width:16px;height:16px;stroke:var(--accent);fill:none;stroke-width:2}
-.msgs{padding:8px 14px 18px;display:flex;flex-direction:column;gap:10px}
-.bubble-user{align-self:flex-end;max-width:88%;padding:12px 16px;border-radius:18px;background:color-mix(in srgb,var(--accent) 12%,var(--surface));border:1px solid var(--border);font-size:15px}
-.bubble-ai{font-size:15px;line-height:1.6}
-.bubble-ai pre{background:#0f0f10;color:#e8e8e8;padding:12px;border-radius:12px;overflow:auto;font-family:JetBrains Mono,monospace;font-size:12px;margin:8px 0}
-.bottom{padding:6px 12px calc(10px + env(safe-area-inset-bottom));background:var(--bg)}
-.composer{display:flex;align-items:flex-end;gap:6px;min-height:52px;padding:6px;border-radius:28px;background:var(--surface);border:1px solid var(--border)}
-.composer .side{width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;color:var(--text-secondary)}
-.composer .side svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2}
-.composer textarea{flex:1;border:none;outline:none;background:transparent;padding:10px 4px;min-height:40px;max-height:120px;resize:none;font-size:15px}
-.send{width:42px;height:42px;border-radius:50%;background:#1e88c7;color:#fff;display:flex;align-items:center;justify-content:center}
-.send:disabled{opacity:.35}
-.send svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2.2}
-.backdrop{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:40;opacity:0;pointer-events:none}.backdrop.open{opacity:1;pointer-events:auto}
-.drawer{position:fixed;top:0;left:0;bottom:0;width:min(320px,88vw);background:#fff;z-index:50;transform:translateX(-105%);transition:transform .22s;display:flex;flex-direction:column}
-[data-theme="dark"] .drawer,[data-theme="midnight"] .drawer{background:var(--surface)}
-.drawer.open{transform:none}
-.drawer-head{display:flex;align-items:center;gap:12px;padding:18px 16px 12px}
-.avatar-fallback{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#1e88c7,#6ed7ff);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center}
-.drawer-name{font-weight:700;font-size:16px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.drawer-nav{padding:4px 8px;flex:1;overflow:auto}
-.nav-item{display:flex;align-items:center;gap:14px;padding:13px 12px;border-radius:12px;font-size:15.5px;width:100%;text-align:left}
-.nav-item svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8}
-.nav-item .bal{margin-left:auto;color:#1e88c7;font-weight:600}
-.drawer-div{height:1px;background:var(--border);margin:10px 12px}
-.sessions-head{display:flex;justify-content:space-between;padding:4px 12px 8px;font-weight:600;font-size:14px}
-.chat-row{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:12px;width:100%;text-align:left;font-size:14.5px}
-.chat-row.active,.chat-row:hover{background:var(--surface-alt)}
-.chat-row svg{width:20px;height:20px;stroke:#1e88c7;fill:none;stroke-width:1.8}
-.drawer-fab{position:absolute;right:16px;bottom:20px;width:52px;height:52px;border-radius:50%;background:#1e88c7;color:#fff;display:flex;align-items:center;justify-content:center}
-.gate{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:100;color:var(--text-secondary)}
-.gate[hidden]{display:none!important}
-</style>
+<title>Chat · Numination</title>
+<meta name="theme-color" content="#0a0a0c" />
+<link rel="icon" href="favicon.ico" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+<!-- Cargamos el CSS y el motor -->
+<link rel="stylesheet" href="/assets/css/chat.css">
+<link rel="stylesheet" href="/assets/css/payments.css">
+<script src="/assets/js/escritura.js"></script>
 </head>
 <body>
-<div class="gate" id="gate">Cargando…</div>
-<div class="backdrop" id="backdrop"></div>
-<aside class="drawer" id="drawer">
-  <div class="drawer-head">
-    <div class="avatar-fallback" id="avatar">U</div>
-    <div class="drawer-name" id="uname">Usuario</div>
-    <button type="button" class="icon-btn" id="logout" aria-label="Salir"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
-  </div>
-  <nav class="drawer-nav">
-    <a class="nav-item" href="/projects"><svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Proyectos</a>
-    <a class="nav-item" href="/artifacts"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Artefactos</a>
-    <a class="nav-item" href="/connectors"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Conectores</a>
-    <a class="nav-item" href="/notifications"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Notificaciones</a>
-    <a class="nav-item" href="/credits"><svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Créditos<span class="bal" id="bal">—</span></a>
-    <div class="drawer-div"></div>
-    <div class="sessions-head"><span>Sesiones</span><span>Chat</span></div>
-    <div id="chat-list"></div>
-  </nav>
-  <button type="button" class="drawer-fab" id="new-chat" aria-label="Nuevo"><svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
-</aside>
-<header class="top">
-  <button type="button" class="icon-btn" id="menu" aria-label="Menú"><svg viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
-  <a class="search-pill" href="/search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Buscar chats</a>
-  <a class="icon-btn" href="/ghost" aria-label="Ghost"><svg viewBox="0 0 24 24"><path d="M9 10h.01"/><path d="M15 10h.01"/><path d="M12 2a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 19l2.5 2.5L17 19l3 3V10a8 8 0 0 0-8-8z"/></svg></a>
-</header>
-<div class="scroll" id="scroll">
-  <div class="empty" id="empty"><h2>¿Qué vamos a resolver hoy?</h2><p>Escribe una pregunta o empieza con una idea.</p></div>
-  <div class="msgs" id="msgs" hidden></div>
-</div>
-<div class="chips" id="chips">
-  <button type="button" class="chip" data-prompt="Ayúdame a escribir código"><svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>Escribir código</button>
-  <button type="button" class="chip" data-prompt="Explícame un concepto de programación"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Explicar un concepto</button>
-</div>
-<footer class="bottom">
-  <div class="composer">
-    <button type="button" class="side" aria-label="+"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
-    <textarea id="input" rows="1" placeholder="Resume este tema sin perder lo importante."></textarea>
-    <button type="button" class="side" aria-label="mic"><svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></button>
-    <button type="button" class="send" id="send" disabled aria-label="Enviar"><svg viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></button>
-  </div>
-</footer>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="/assets/js/config.js?v=5"></script>
-<script src="/assets/js/api.js?v=5"></script>
-<script src="/assets/js/auth.js?v=5"></script>
-<script>
-(function(){
-  try{document.documentElement.dataset.theme=localStorage.getItem('numination-theme')||'gray';}catch(_){document.documentElement.dataset.theme='gray';}
-  try{localStorage.removeItem('numination-supabase-session');}catch(_){}
-  var gate=document.getElementById('gate');
-  var forced=setTimeout(function(){
-    var tok=null;try{tok=localStorage.getItem('numination-api-token');}catch(_){}
-    if(tok)gate.hidden=true;else location.replace('/login');
-  },2500);
 
-  function boot(){
-    var Auth=window.NuminationAuth,Api=window.NuminationApi;
-    if(!Auth||!Api){location.replace('/login');return;}
-    Auth.getSession().then(function(session){
-      clearTimeout(forced);
-      if(!session){location.replace('/login');return;}
-      if(Auth.isAgeConfirmed&&!Auth.isAgeConfirmed(session.user)){location.replace('/confirm-age');return;}
-      gate.hidden=true;startApp(session,Auth,Api);
-    }).catch(function(){
-      clearTimeout(forced);
-      var tok=null;try{tok=localStorage.getItem('numination-api-token');}catch(_){}
-      if(tok){gate.hidden=true;startApp({user:{email:'usuario'}},Auth,Api);}else location.replace('/login');
-    });
+<aside class="sidebar">
+  <div class="sidebar__head" onclick="document.querySelector('[data-settings-page]').hidden=false">
+    <div class="sidebar__avatar" data-user-avatar>U</div>
+    <div class="sidebar__name" data-user-name>Usuario</div>
+  </div>
+  <nav class="sidebar__nav">
+    <a href="/coder" class="nav-item"><svg viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg><span class="nav-item__text">Proyectos</span></a>
+    <a href="/prompts" class="nav-item"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span class="nav-item__text">Prompts</span></a>
+    <button class="nav-item" onclick="document.querySelector('[data-connectors-page]').hidden=false"><svg viewBox="0 0 24 24"><path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 0 1 0 10h-2"/><line x1="8" y1="12" x2="16" y2="12"/></svg><span class="nav-item__text">Conectores</span></button>
+    <button class="nav-item" type="button" data-open-payments><svg viewBox="0 0 24 24"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span class="nav-item__text">Planes</span></button>
+  </nav>
+</aside>
+
+<main class="main">
+  <header class="topbar"><h1 class="topbar__title">Chat</h1></header>
+  <div class="chat-scroll" id="chat-scroll">
+    <div class="welcome" id="welcome">
+      <h1>¿Por dónde empezamos?</h1>
+      <p>Escribe una pregunta o empieza con una idea.</p>
+    </div>
+    <div class="thread" id="thread" hidden></div>
+  </div>
+  <div class="composer-area">
+    <form class="composer" id="chat-form">
+      <input type="text" class="composer__field" id="chat-input" placeholder="Pregunta a Numination" autocomplete="off" />
+      <button type="submit" class="composer__send" id="chat-send" disabled><svg viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></button>
+    </form>
+  </div>
+</main>
+
+<!-- OVERLAY CONECTORES -->
+<div class="page-overlay" data-connectors-page hidden>
+  <header class="page-header">
+    <button class="page-back" onclick="document.querySelector('[data-connectors-page]').hidden=true"><svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+    <h1 class="page-title">Conectores</h1>
+  </header>
+  <div style="padding:24px;max-width:600px;margin:0 auto;width:100%;">
+    <div class="connector-card">
+      <div class="connector-head">
+        <div class="connector-logo"><svg viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg></div>
+        <div><div class="connector-name">Google Workspace</div><div class="connector-desc">Gmail, Drive y Calendar</div></div>
+      </div>
+      <div class="connector-action" onclick="alert('Redirigiendo a OAuth...')">Conectar</div>
+    </div>
+    <div class="connector-card">
+      <div class="connector-head">
+        <div class="connector-logo"><svg viewBox="0 0 24 24"><path fill="#f25022" d="M1 1h10v10H1z"/><path fill="#7fba00" d="M13 1h10v10H13z"/><path fill="#00a4ef" d="M1 13h10v10H1z"/><path fill="#ffb900" d="M13 13h10v10H13z"/></svg></div>
+        <div><div class="connector-name">Microsoft 365</div><div class="connector-desc">Outlook, Calendar y OneDrive</div></div>
+      </div>
+      <div class="connector-action" onclick="alert('Redirigiendo a OAuth...')">Configurar OAuth</div>
+    </div>
+  </div>
+</div>
+
+<!-- OVERLAY AJUSTES -->
+<div class="page-overlay" data-settings-page hidden>
+  <header class="page-header">
+    <button class="page-back" onclick="document.querySelector('[data-settings-page]').hidden=true"><svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+    <h1 class="page-title">Ajustes</h1>
+  </header>
+  <div style="padding:24px;max-width:600px;margin:0 auto;width:100%;">
+    <div class="settings-row"><div class="settings-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><div><div class="settings-label">Perfil</div><div class="settings-sub" data-settings-email>cargando...</div></div></div>
+    <div class="settings-row" onclick="if(confirm('Cerrar sesión?')) window.location.href='/api/auth/logout'"><div class="settings-icon" style="color:var(--c-danger)"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div><div><div class="settings-label" style="color:var(--c-danger)">Cerrar sesión</div></div></div>
+  </div>
+</div>
+
+<script>
+window.__nm = window.__nm || {};
+__nm.esc = function(s){ var d = document.createElement('div'); d.textContent = String(s == null ? '' : s); return d.innerHTML; };
+
+// FIX bucle infinito de autenticación: el backend expone /api/auth/me.
+// Antes se llamaba a /api/auth/session, que no existe en este flujo y dejaba
+// al frontend en un ciclo de redirección sin resolver.
+fetch('/api/auth/me', { credentials: 'include' })
+  .then(r => r.json())
+  .then(data => {
+    // Blindaje: se redirige SOLO cuando la respuesta es definitivamente
+    // inválida (sin ok, o sin usuario). Una respuesta ambigua (error de red,
+    // cuerpo roto, timeout) NO redirige: el middleware del servidor ya
+    // protege /chat cuando no hay sesión.
+    if (!data || !data.ok || !data.user) { window.location.href = '/login'; return; }
+    var user = data.user;
+    var name = user.name || user.email || 'Usuario';
+    document.querySelectorAll('[data-user-name]').forEach(el => el.textContent = name);
+    document.querySelectorAll('[data-settings-email]').forEach(el => el.textContent = user.email || '');
+    var pic = user.picture || user.avatar;
+    var av = document.querySelector('[data-user-avatar]');
+    if (av) { if(pic) av.innerHTML = `<img src="${pic}">`; else av.textContent = name.charAt(0).toUpperCase(); }
+  }).catch(() => {
+    // Respuesta ambigua (red caída / JSON inválido): NO se redirige.
+    console.warn('[chat] no se pudo confirmar la sesión');
+  });
+
+var input = document.getElementById('chat-input');
+var sendBtn = document.getElementById('chat-send');
+var form = document.getElementById('chat-form');
+var thread = document.getElementById('thread');
+var welcome = document.getElementById('welcome');
+var scroll = document.getElementById('chat-scroll');
+
+let currentChatId = null;
+let chatHistory = [];
+
+// Cargar historial de Supabase
+fetch('/api/chats', { credentials: 'include' }).then(r=>r.json()).then(async data => {
+    if (data.ok && data.chats && data.chats.length > 0) {
+        currentChatId = data.chats[0].id;
+        const res = await fetch(`/api/chats/${currentChatId}`, { credentials: 'include' });
+        const msgData = await res.json();
+        if (msgData.ok && msgData.chat && msgData.chat.messages) {
+            welcome.hidden = true; thread.hidden = false;
+            msgData.chat.messages.forEach(msg => {
+                var role = msg.role === 'user' ? 'user' : 'assistant';
+                appendMessage(role, msg.content, false);
+                chatHistory.push({ role: role, content: msg.content });
+            });
+            scroll.scrollTop = scroll.scrollHeight;
+        }
+    }
+}).catch(()=>{});
+
+input.addEventListener('input', () => sendBtn.disabled = !input.value.trim());
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  var text = input.value.trim();
+  if (!text) return;
+  input.value = ''; sendBtn.disabled = true; welcome.hidden = true; thread.hidden = false;
+
+  chatHistory.push({ role: 'user', content: text });
+  appendMessage('user', text, true);
+  
+  var assistantBubble = appendMessage('assistant', '', true);
+  var contentEl = assistantBubble.querySelector('.message__content');
+  contentEl.innerHTML = '<span style="display:inline-block;width:6px;height:6px;background:var(--c-primary);border-radius:50%;animation:pulse 1s infinite"></span>';
+
+  if (!currentChatId) {
+      try {
+          const res = await fetch('/api/chats', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ title: text.slice(0, 40) }) });
+          const d = await res.json();
+          if (d.ok && d.chat) currentChatId = d.chat.id;
+      } catch (err) {}
   }
 
-  function startApp(session,Auth,Api){
-    var email=(session.user&&session.user.email)||'Usuario';
-    var name=email.split('@')[0];
-    document.getElementById('uname').textContent=name;
-    document.getElementById('avatar').textContent=(name[0]||'U').toUpperCase();
-    var state={chats:[],active:null,messages:[],sending:false};
-    var msgs=document.getElementById('msgs');
-    var empty=document.getElementById('empty');
-    var chips=document.getElementById('chips');
-    var input=document.getElementById('input');
-    var send=document.getElementById('send');
+  fetch('/api/chat/stream', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+    body: JSON.stringify({ message: text, history: chatHistory.slice(0, -1), role: 'student', chatId: currentChatId })
+  }).then(res => {
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    var reader = res.body.getReader(); var dec = new TextDecoder(); var buffer = ''; var fullText = '';
+    contentEl.innerHTML = '';
 
-    function openDrawer(o){
-      document.getElementById('drawer').classList.toggle('open',o);
-      document.getElementById('backdrop').classList.toggle('open',o);
-    }
-    document.getElementById('menu').onclick=function(){openDrawer(true);};
-    document.getElementById('backdrop').onclick=function(){openDrawer(false);};
-    document.getElementById('logout').onclick=function(){Auth.signOut().finally(function(){location.replace('/login');});};
-
-    function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');}
-    function md(t){return esc(t).replace(/```([\s\S]*?)```/g,'<pre>$1</pre>').replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\n/g,'<br>');}
-    function renderMsgs(){
-      if(!state.messages.length){empty.hidden=false;chips.hidden=false;msgs.hidden=true;msgs.innerHTML='';return;}
-      empty.hidden=true;chips.hidden=true;msgs.hidden=false;
-      msgs.innerHTML=state.messages.map(function(m){
-        return m.fromUser?'<div class="bubble-user">'+esc(m.text)+'</div>':'<div class="bubble-ai">'+md(m.text)+'</div>';
-      }).join('');
-      document.getElementById('scroll').scrollTop=1e9;
-    }
-    function renderChats(){
-      var icon='<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
-      document.getElementById('chat-list').innerHTML=state.chats.map(function(c){
-        return '<button type="button" class="chat-row'+(c.id===state.active?' active':'')+'" data-id="'+c.id+'">'+icon+'<span>'+esc(c.title||c.name||'Chat')+'</span></button>';
-      }).join('');
-      document.querySelectorAll('#chat-list [data-id]').forEach(function(b){
-        b.onclick=function(){openChat(b.getAttribute('data-id'));};
+    function pump() {
+      return reader.read().then(x => {
+        if (x.done) { chatHistory.push({ role: 'assistant', content: fullText }); return; }
+        buffer += dec.decode(x.value, { stream: true });
+        var parts = buffer.split('\n\n'); buffer = parts.pop() || '';
+        parts.forEach(p => {
+          if (p.indexOf('data: ') !== 0) return;
+          try {
+            var evt = JSON.parse(p.slice(6));
+            if (evt.token) {
+              fullText += evt.token;
+              contentEl.innerHTML = window.Escritura ? Escritura.render(fullText) : __nm.esc(fullText);
+              scroll.scrollTop = scroll.scrollHeight;
+            }
+          } catch(e) {}
+        });
+        return pump();
       });
     }
-    function loadChats(){
-      return Api.listChats().then(function(d){state.chats=Array.isArray(d)?d:(d.chats||[]);renderChats();})
-        .catch(function(){state.chats=[];renderChats();});
-    }
-    function loadCredits(){
-      return Api.credits().then(function(c){document.getElementById('bal').textContent=String(c.balance!=null?c.balance:'—');}).catch(function(){});
-    }
-    function openChat(id){
-      state.active=id;state.messages=[];renderMsgs();renderChats();openDrawer(false);
-      Api.getMessages(id).then(function(d){
-        var list=Array.isArray(d)?d:(d.messages||[]);
-        state.messages=list.map(function(m){return{text:m.content||m.text||'',fromUser:m.role==='user'||m.fromUser===true};});
-        renderMsgs();
-      }).catch(function(){});
-    }
-    document.getElementById('new-chat').onclick=function(){state.active=null;state.messages=[];renderMsgs();renderChats();openDrawer(false);};
-    document.querySelectorAll('.chip').forEach(function(c){
-      c.onclick=function(){input.value=c.getAttribute('data-prompt')||'';updateSend();input.focus();};
-    });
-    function updateSend(){send.disabled=!input.value.trim()||state.sending;}
-    input.oninput=function(){updateSend();input.style.height='auto';input.style.height=Math.min(input.scrollHeight,120)+'px';};
-    input.onkeydown=function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();go();}};
-    send.onclick=go;
+    return pump();
+  }).catch(err => { contentEl.textContent = 'Error: ' + err.message; }).finally(() => { sendBtn.disabled = false; input.focus(); });
+});
 
-    async function go(){
-      var text=input.value.trim();
-      if(!text||state.sending)return;
-      state.messages.push({text:text,fromUser:true});
-      input.value='';input.style.height='auto';updateSend();
-      state.sending=true;renderMsgs();
-      try{
-        if(!state.active){
-          var created=await Api.createChat({});
-          state.active=created.id||created.chatId||(created.chat&&created.chat.id)||null;
-          await loadChats();
-        }
-        // EXACTO Flutter: { prompt, mode, chatId }
-        var aiBody={prompt:String(text),mode:'chat'};
-        if(state.active)aiBody.chatId=String(state.active);
-        try{if(state.active)await Api.saveMessage(state.active,{role:'user',content:text});}catch(_){}
-        state.messages.push({text:'',fromUser:false});
-        var idx=state.messages.length-1;
-        var out='';
-        try{
-          for await(var ev of Api.chatStream(aiBody)){
-            var d=ev.data||{};
-            var chunk=d.delta||d.content||d.text||d.token||'';
-            if(typeof chunk==='string'&&chunk){out+=chunk;state.messages[idx].text=out;renderMsgs();}
-          }
-        }catch(streamErr){
-          try{
-            var res=await Api.chat(aiBody);
-            out=res.content||res.message||res.reply||'';
-            state.messages[idx].text=out||(streamErr&&streamErr.message)||'Sin respuesta';
-          }catch(e2){
-            state.messages[idx].text=(e2&&e2.message)||(streamErr&&streamErr.message)||'Error';
-          }
-        }
-        if(!state.messages[idx].text)state.messages[idx].text=out||'Sin respuesta';
-      }catch(e){
-        state.messages.push({text:(e&&e.message)||'Error',fromUser:false});
-      }finally{
-        state.sending=false;renderMsgs();updateSend();loadCredits();loadChats();
-      }
-    }
-
-    var qid=new URLSearchParams(location.search).get('id');
-    Promise.all([loadChats(),loadCredits()]).then(function(){
-      if(qid)openChat(qid);
-      renderMsgs();updateSend();
-    });
-  }
-
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);
-  else boot();
-})();
+function appendMessage(role, text, doScroll) {
+  var div = document.createElement('div');
+  div.className = 'message message--' + role;
+  div.innerHTML = `${role === 'assistant' ? '<div class="message__avatar">N</div>' : ''}<div class="message__content">${role === 'assistant' ? (window.Escritura ? Escritura.render(text) : __nm.esc(text)) : __nm.esc(text)}</div>`;
+  thread.appendChild(div);
+  if (doScroll !== false) scroll.scrollTop = scroll.scrollHeight;
+  return div;
+}
 </script>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     CHECKOUT DE PAGOS · PayPal
+     · #nm-pay-root es el punto de montaje donde payments-ui.js genera el
+       modal con las dos tarjetas de plan (Pro 30.000 COP / USD 7.50 y
+       Ultimate 45.000 COP / USD 11.00).
+     · El orden importa: primero payments-client.js (wrapper de fetch con
+       retry exponencial + showToast) y después payments-ui.js (modal + SDK).
+     ══════════════════════════════════════════════════════════════════════ -->
+<div id="nm-pay-root" class="nm-pay" aria-live="polite"></div>
+
+<script src="/assets/js/payments-client.js"></script>
+<script src="/assets/js/payments-ui.js"></script>
+
+<!-- ══════════ FASE 1 + FASE 4 · UX global del chat ══════════
+     gestor de toasts (cola, 3 visibles, auto-destrucción) · skeletons
+     · efectos de sonido · modo offline · instalador PWA · detector de
+     idioma (inyecta "Responde en español" en el system prompt) -->
+<script src="/assets/js/toast-manager.js"></script>
+<script src="/assets/js/loading-skeletons.js"></script>
+<script src="/assets/js/sound-effects.js"></script>
+<script src="/assets/js/offline-mode.js"></script>
+<script src="/assets/js/pwa-installer.js"></script>
+<script src="/assets/js/language-detector.js"></script>
 </body>
 </html>

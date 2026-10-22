@@ -5,7 +5,12 @@
   "redirects": [
     { "source": "/", "destination": "/login", "permanent": false }
   ],
-  "rewrites": [],
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",

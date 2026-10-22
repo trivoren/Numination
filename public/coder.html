@@ -1,72 +1,206 @@
 <!DOCTYPE html>
-<html lang="es-CO" data-theme="gray">
+<html lang="es">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Coder · Numination</title>
-<meta name="supabase-publishable-key" content="sb_publishable_mrKTw0QGiuikjTb6SY0Hgg_Nak0QLk7" />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="/assets/css/themes.css" />
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text-primary);height:100dvh;display:flex;flex-direction:column}
-.bar{display:flex;gap:10px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border)}
-.bar a{color:inherit;text-decoration:none}
-.main{flex:1;min-height:0;display:grid;grid-template-columns:220px 1fr}
-@media(max-width:720px){.main{grid-template-columns:1fr}.files{display:none}}
-.files{border-right:1px solid var(--border);padding:10px;overflow:auto;background:var(--surface)}
-select{width:100%;padding:8px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:inherit;margin-bottom:8px}
-.thread{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
-.user{align-self:flex-end;max-width:90%;padding:12px 14px;border-radius:16px;background:color-mix(in srgb,var(--accent) 14%,transparent);border:1px solid color-mix(in srgb,var(--accent) 25%,transparent)}
-.ai{line-height:1.55}
-.composer{padding:12px;border-top:1px solid var(--border)}
-.box{display:flex;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:6px}
-textarea{flex:1;border:none;outline:none;background:transparent;padding:10px;min-height:44px;resize:none;color:inherit;font:inherit}
-button.send{width:42px;height:42px;border-radius:50%;border:none;background:var(--text-primary);color:var(--bg);cursor:pointer}
-.work{display:flex;flex-direction:column;min-height:0}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Numination · Modo Coder</title>
+  <meta name="description" content="IDE basado en web con asistente de IA integrado." />
+  <link rel="icon" href="favicon.ico" />
+
+  <!-- Tipografías del sistema de diseño (Sora UI / JetBrains Mono código) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- xterm.js (terminal embebida) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.min.css" />
+
+  <link rel="stylesheet" href="assets/css/coder.css" />
+
+  <!-- Monaco AMD loader: anclado a CDN para que Vercel no empaquete megas inútiles -->
+  <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
+  <script>
+    /* Configuración del loader de Monaco en hosting cross-origin.
+       Vercel sirve la página pero el bundle de Monaco vive en el CDN,
+       así que el worker se proxya vía Blob para ejecutar en misma origen. */
+    require.config({
+      paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' }
+    });
+    window.MonacoEnvironment = {
+      getWorkerUrl: function () {
+        var proxy = 'self.MonacoEnvironment={baseUrl:"https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/"};' +
+          'importScripts("https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/base/worker/workerMain.js");';
+        return URL.createObjectURL(new Blob([proxy], { type: 'text/javascript' }));
+      }
+    };
+  </script>
 </head>
 <body>
-<header class="bar"><a href="/chat">← Chat</a><strong style="flex:1">Coder</strong><a href="/projects">Proyectos</a></header>
-<div class="main">
-  <aside class="files"><select id="project"></select><div id="file-list"></div></aside>
-  <section class="work">
-    <div class="thread" id="thread"></div>
-    <div class="composer"><div class="box"><textarea id="input" placeholder="Pide cambios al proyecto…"></textarea><button class="send" id="send">→</button></div></div>
-  </section>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="/assets/js/config.js"></script>
-<script src="/assets/js/api.js"></script>
-<script src="/assets/js/auth.js"></script>
-<script>
-(async function(){
-  try{const t=localStorage.getItem('numination-theme');if(t)document.documentElement.dataset.theme=t;}catch(_){}
-  if(!(await NuminationAuth.getSession())){location.replace('/login');return;}
-  let projectId=new URLSearchParams(location.search).get('projectId')||'';
-  const sel=document.getElementById('project');
-  const thread=document.getElementById('thread');
-  try{
-    const projects=await NuminationApi.listProjects();
-    const list=Array.isArray(projects)?projects:(projects.projects||[]);
-    sel.innerHTML=list.map(p=>'<option value="'+p.id+'">'+(p.name||p.id)+'</option>').join('')||'<option value="">Sin proyectos</option>';
-    if(!projectId&&list[0])projectId=list[0].id;
-    if(projectId)sel.value=projectId;
-  }catch(e){sel.innerHTML='<option>Error</option>';}
-  async function loadFiles(){
-    const el=document.getElementById('file-list');
-    if(!projectId){el.textContent='';return;}
-    try{const f=await NuminationApi.projectFiles(projectId);const list=Array.isArray(f)?f:(f.files||[]);el.innerHTML=list.map(x=>'<div style="padding:8px;font-family:JetBrains Mono,monospace;font-size:12px">'+(x.name||x.path)+'</div>').join('')||'<div style="padding:8px;color:var(--text-secondary)">Sin archivos</div>';}catch(e){el.textContent=e.message;}
-  }
-  sel.onchange=()=>{projectId=sel.value;history.replaceState(null,'','/coder?projectId='+encodeURIComponent(projectId));loadFiles();};
-  await loadFiles();
-  document.getElementById('send').onclick=async()=>{
-    const input=document.getElementById('input');const text=input.value.trim();if(!text||!projectId)return;
-    const u=document.createElement('div');u.className='user';u.textContent=text;thread.appendChild(u);input.value='';
-    const a=document.createElement('div');a.className='ai';a.textContent='…';thread.appendChild(a);
-    try{const res=await NuminationApi.coder({projectId,message:text,prompt:text});a.textContent=res.message||res.content||res.summary||JSON.stringify(res).slice(0,1500);await loadFiles();}catch(e){a.textContent=e.message||'Error';}
-  };
-})();
-</script>
+  <main class="coder-app" id="coder-app" aria-label="Entorno de desarrollo Numination">
+
+    <!-- ══════════ COLUMNA 1: EXPLORADOR DE ARCHIVOS ══════════ -->
+    <aside class="explorer" aria-label="Explorador de archivos" id="explorer">
+      <header class="explorer__header">
+        <span class="explorer__brand" aria-hidden="true"></span>
+        <h1 class="explorer__title">Numination</h1>
+        <span class="explorer__mode">Coder</span>
+      </header>
+      <div class="explorer__actions">
+        <button type="button" class="btn btn--ghost btn--sm" id="btn-refresh-tree" aria-label="Recargar árbol de archivos">
+          Recargar
+        </button>
+      </div>
+      <nav id="file-tree" class="file-tree" role="tree" aria-label="Proyecto" aria-busy="true">
+        <!-- file-tree.js renderiza aquí -->
+      </nav>
+      <footer class="explorer__footer">
+        <div class="explorer__user" id="explorer-user" title="Sesión activa">
+          <span class="explorer__avatar" aria-hidden="true">N</span>
+          <span class="explorer__username">Cargando sesión…</span>
+        </div>
+      </footer>
+    </aside>
+
+    <!-- ══════════ COLUMNA 2: EDITOR (MONACO) ══════════ -->
+    <section class="editor-column" aria-label="Editor de código">
+      <header class="editor-bar">
+        <div class="editor-bar__tabs" id="editor-tabs" role="tablist" aria-label="Archivos abiertos"></div>
+        <div class="editor-bar__actions">
+          <button type="button" class="btn btn--accent btn--sm" id="btn-save" aria-label="Guardar archivo actual (Ctrl+S)">
+            Guardar
+          </button>
+        </div>
+      </header>
+      <div class="editor-surface">
+        <div id="monaco-container" class="monaco-container" role="code" aria-label="Área de código"></div>
+        <div class="editor-loading" id="editor-loading" aria-live="polite">
+          <span class="editor-loading__ring" aria-hidden="true"></span>
+          <span class="editor-loading__text">Cargando entorno de edición…</span>
+        </div>
+      </div>
+      <footer class="editor-status" id="editor-status">
+        <span id="status-file">—</span>
+        <span id="status-dirty"></span>
+        <span class="editor-status__spacer" aria-hidden="true"></span>
+        <span id="status-language">plaintext</span>
+      </footer>
+    </section>
+
+    <!-- ══════════ COLUMNA 3: CHAT IA + TERMINAL ══════════ -->
+    <section class="assistant-column" id="assistant-column" aria-label="Asistente y terminal">
+      <header class="assistant-tabs" role="tablist" aria-label="Paneles">
+        <button type="button" class="assistant-tabs__tab is-active" id="tab-chat" role="tab" aria-selected="true" aria-controls="panel-chat">
+          Chat IA
+        </button>
+        <button type="button" class="assistant-tabs__tab" id="tab-terminal" role="tab" aria-selected="false" aria-controls="panel-terminal">
+          Terminal
+        </button>
+      </header>
+
+      <div class="assistant-panel" id="panel-chat" role="tabpanel" aria-labelledby="tab-chat">
+        <div class="chat-stream" id="chat-stream" aria-live="polite" aria-label="Conversación con la IA">
+          <!-- agent-chat.js renderiza aquí (Lote 3) -->
+        </div>
+        <form class="chat-composer" id="chat-form" autocomplete="off">
+          <textarea id="chat-input" class="chat-composer__input" rows="3"
+            placeholder="Pide un cambio: “añade validación al formulario”… (Enter envía · Shift+Enter salto)"
+            aria-label="Mensaje para la IA"></textarea>
+          <button type="submit" class="btn btn--accent" id="btn-send" aria-label="Enviar mensaje a la IA">
+            Enviar
+          </button>
+        </form>
+      </div>
+
+      <div class="assistant-panel" id="panel-terminal" role="tabpanel" aria-labelledby="tab-terminal" hidden>
+        <div id="terminal-mount" class="terminal-mount" aria-label="Terminal"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ══════════ MODAL: DIFF VIEWER ══════════ -->
+  <div class="modal" id="diff-modal" role="dialog" aria-modal="true" aria-labelledby="diff-modal-title" hidden>
+    <div class="modal__backdrop" data-diff-close></div>
+    <div class="modal__card" role="document">
+      <header class="modal__header">
+        <h2 class="modal__title" id="diff-modal-title">Cambios propuestos por la IA</h2>
+        <div class="diff-stats" id="diff-stats">
+          <span class="diff-stats__add" id="diff-stat-add">+0</span>
+          <span class="diff-stats__del" id="diff-stat-del">−0</span>
+        </div>
+        <button type="button" class="btn btn--ghost btn--sm" data-diff-close aria-label="Cerrar revisión de cambios">✕</button>
+      </header>
+      <div class="modal__body" id="diff-body">
+        <!-- diff-viewer.js inyecta las columnas antes/después (Lote 3) -->
+      </div>
+      <footer class="modal__footer">
+        <button type="button" class="btn btn--ghost" data-diff-action="discard">Descartar</button>
+        <button type="button" class="btn btn--accent" data-diff-action="apply">Aplicar cambios</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- ══════════ TOASTS ══════════ -->
+  <div class="toast-stack" id="toast-stack" role="status" aria-live="polite" aria-relevant="additions text"></div>
+
+  <!-- ══════════ NÚCLEO: bus de eventos, toasts, cliente HTTP ══════════ -->
+  <!-- ide-events.js debe ir PRIMERO: numination-boot.js sólo crea su bus de
+       respaldo si window.eventBus aún no existe. -->
+  <script src="assets/js/ide-events.js"></script>
+  <script src="assets/js/numination-boot.js"></script>
+  <script src="assets/js/api-client.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.min.js"></script>
+
+  <!-- ══════════ EDITOR, ÁRBOL, DIFF, CHAT Y TERMINAL ══════════ -->
+  <script src="assets/js/editor-core.js"></script>
+  <script src="assets/js/file-tree.js"></script>
+  <script src="assets/js/diff-viewer.js"></script>
+  <script src="assets/js/agent-chat.js"></script>
+  <script src="assets/js/terminal.js"></script>
+
+  <!-- ══════════ SUPER-EDITOR · Fase 2 ══════════
+       autocomplete IA · búsqueda de archivos (Ctrl+P) · búsqueda global
+       (Ctrl+Shift+F) · formateo (Shift+Alt+F) · buscar/reemplazar (Ctrl+H)
+       · drag & drop · vista previa en vivo · terminal con historial
+       · sound effects · skeletons · offline · instalador PWA -->
+  <script src="assets/js/loading-skeletons.js"></script>
+  <script src="assets/js/toast-manager.js"></script>
+  <script src="assets/js/sound-effects.js"></script>
+  <script src="assets/js/terminal-history.js"></script>
+  <script src="assets/js/code-explainer.js"></script>
+  <script src="assets/js/code-autocomplete.js"></script>
+  <script src="assets/js/file-search.js"></script>
+  <script src="assets/js/code-search.js"></script>
+  <script src="assets/js/drag-drop-files.js"></script>
+  <script src="assets/js/format-code.js"></script>
+  <script src="assets/js/find-and-replace.js"></script>
+  <script src="assets/js/live-preview.js"></script>
+  <script src="assets/js/offline-mode.js"></script>
+  <script src="assets/js/pwa-installer.js"></script>
+
+  <!-- Lote 3: api-client.js · diff-viewer.js · agent-chat.js · ide-events.js
+       (los tab buttons ya funcionan con este listener mínimo temporal) -->
+  <script>
+    /* Cambio de pestañas Chat/Terminal con semántica ARIA. agent-chat.js y
+       terminal.js añaden su propia lógica al activarse. */
+    (function () {
+      var tabs = [
+        { btn: document.getElementById('tab-chat'), panel: document.getElementById('panel-chat') },
+        { btn: document.getElementById('tab-terminal'), panel: document.getElementById('panel-terminal') }
+      ];
+      function select(active) {
+        tabs.forEach(function (t) {
+          var isActive = t.btn === active.btn;
+          t.btn.classList.toggle('is-active', isActive);
+          t.btn.setAttribute('aria-selected', String(isActive));
+          t.panel.hidden = !isActive;
+        });
+      }
+      tabs.forEach(function (t) { t.btn.addEventListener('click', function () { select(t); }); });
+    })();
+  </script>
 </body>
 </html>

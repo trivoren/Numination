@@ -5,6 +5,7 @@
 # ─── Dependencias ───
 node_modules/
 package-lock.json
+.opencode/
 
 # ─── Secretos y API keys (¡NUNCA SUBIR!) ───
 env.local.js

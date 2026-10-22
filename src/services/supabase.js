@@ -39,6 +39,7 @@ const CONFIG = Object.freeze({
 
 let sql = null;
 let sqlError = null;
+let realSql = null;   // el cliente real, para poder restaurarlo tras un mock
 
 if (DATABASE_URL) {
   try {
@@ -51,6 +52,7 @@ if (DATABASE_URL) {
       max_lifetime: CONFIG.max_lifetime,
       onnotice: () => {},
     });
+    realSql = sql;
   } catch (e) {
     sqlError = e;
     console.warn('[sb] no se pudo crear el cliente:', e.message);
@@ -62,6 +64,34 @@ if (DATABASE_URL) {
 
 export function supabaseDisponible() { return Boolean(sql); }
 export { sql };
+
+/**
+ * 🧪 Inyecta un cliente de base de datos alternativo (mock en tests).
+ *
+ * `sql` es un binding vivo: al reasignarlo, TODOS los módulos que
+ * hicieron `import { sql } from './supabase.js'` pasan a usar el mock
+ * sin tocar una sola línea de sus consultas.
+ *
+ * @param {Function|null} client  Cliente compatible con postgres.js
+ */
+export function setSqlClient(client) {
+  sql = client || null;
+  return sql;
+}
+
+/**
+ * Restaura el cliente real (o deja la base como "no disponible").
+ * @returns {Function|null} el cliente real
+ */
+export function resetSqlClient() {
+  sql = realSql;
+  return sql;
+}
+
+/** El cliente real, aunque ahora haya un mock instalado. */
+export function getRealSqlClient() {
+  return realSql;
+}
 
 /* ═══════════════════════════════════════════════════════════════════════
    2 · UTILIDADES

@@ -1728,7 +1728,9 @@ function banner() {
 }
 
 // ðŸ‘ˆ AJUSTE VERCEL: Si estamos en Vercel, NO hacer app.listen()
-if (!IS_VERCEL) {
+const SHOULD_LISTEN = !IS_VERCEL && process.env.NODE_ENV !== 'test' && !process.env.NO_LISTEN;
+
+if (SHOULD_LISTEN) {
   server = app.listen(PORT, () => banner());
   server.keepAliveTimeout = CFG.keepAliveTimeout;
   server.headersTimeout = CFG.headersTimeout;

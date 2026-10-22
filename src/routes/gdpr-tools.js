@@ -191,6 +191,7 @@ export function mountGdprRoutes(app) {
     ]);
 
     const payload = {
+      ok: true,
       export: {
         format: 'numination-user-export',
         version: 1,

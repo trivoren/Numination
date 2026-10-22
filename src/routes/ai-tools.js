@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   NUMINATION · routes/ai-tools.js · v1.0
+   NUMINATION · routes/ai-tools.js · v1.1
    ───────────────────────────────────────────────────────────────────────────
    Router de las herramientas de IA y de las integraciones del mega-proyecto.
 
@@ -15,21 +15,18 @@
        GET  /api/referrals/mine      datos del programa de referidos
        POST /api/referrals/apply     canjea un código
        POST /api/referrals/generate  genera un código
+       GET  /api/referrals/validate/:code
        GET  /api/coder/git/status    estado del conector de GitHub
+       GET  /api/coder/git/connections
        POST /api/coder/git/connect   conecta un repositorio
        POST /api/coder/git/commit    commit + push
        GET  /api/theme               tema del usuario
        PUT  /api/theme               cambia el tema
 
-   POR QUÉ UN SOLO ARCHIVO
-     Todas estas rutas comparten la misma plumbing (LLM + auth + rate
-     limit). Separarlas en 8 archivos sería 8 archivos con el mismo
-     boilerplate. Este router es el cableado de la Fase 1 y la Fase 2.
-
    LLM COMPARTIDO
-     `callLLM()` habla con Groq y, si falla, con Gemini. Si no hay
-     ninguna key, devuelve `null` y cada endpoint usa su fallback local
-     (nunca se devuelve 500 por falta de credenciales).
+     La cascada Groq → Gemini vive en `services/ai-orchestrator.js`, que
+     permite inyectar `fetch` y el orden de proveedores: los tests
+     verifican el fallback sin gastar tokens.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 import express from 'express';
@@ -38,16 +35,15 @@ import { asyncHandler, ValidationError, RateLimitError } from '../middleware/err
 import { LOG } from '../lib/logger.js';
 import { sql, supabaseDisponible } from '../services/supabase.js';
 
-import { summarizeHistory, compressHistory, injectSummary } from '../services/ai-summarizer.js';
+import { summarizeHistory, injectSummary } from '../services/ai-summarizer.js';
 import { enhancePrompt } from '../services/prompt-enhancer.js';
 import { generateTests, getTestCommand } from '../services/unit-test-writer.js';
-import { enhanceImagePrompt, buildPollinationsUrl, prepareImage } from '../services/dall-e-prompter.js';
+import { enhanceImagePrompt, prepareImage } from '../services/dall-e-prompter.js';
 import {
   generateReferralCode,
   applyReferralCode,
   validateCode,
   getReferralStats,
-  normalizeCode,
 } from '../services/referral-program.js';
 import {
   connectRepository,
@@ -57,132 +53,10 @@ import {
 } from '../services/git-connector.js';
 import { getTheme, setTheme, getThemePayload } from '../services/theme-manager.js';
 import { recordUsage, FEATURES } from '../services/chat-analyzer.js';
+import { callLLM as orchestrate } from '../services/ai-orchestrator.js';
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   01 · LLM COMPARTIDO
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-/* Las claves pueden venir de .env.local o del archivo env.local.js
-   (así lo carga el resto del proyecto). */
-let FILE_KEYS = {};
-try {
-  const mod = await import('../../env.local.js');
-  FILE_KEYS = mod.TEST_KEYS ?? {};
-} catch { /* archivo opcional */ }
-
-/** Modelos de Groq disponibles para esta cuenta (configurables). */
-const GROQ_MODELS = (() => {
-  const configured = process.env.GROQ_MODEL || FILE_KEYS.GROQ_MODEL;
-  return [configured, 'openai/gpt-oss-120b', 'llama-3.1-8b-instant']
-    .filter(Boolean)
-    .filter((m, i, arr) => arr.indexOf(m) === i);
-})();
-
-/** Modelo de chat de Gemini. */
-const GEMINI_MODEL = process.env.GEMINI_MODEL || FILE_KEYS.GEMINI_MODEL || 'gemini-3.6-flash';
-
-const LLM = Object.freeze({
-  groqUrl: 'https://api.groq.com/openai/v1/chat/completions',
-  groqModels: GROQ_MODELS,
-  geminiUrl: 'https://generativelanguage.googleapis.com/v1beta/models',
-  timeoutMs: 25_000,
-});
-
-
-
-function groqKey() {
-  return process.env.GROQ_API_KEY || FILE_KEYS.GROQ_API_KEY || null;
-}
-
-function geminiKey() {
-  return process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY_2 || process.env.GEMINI_API_KEY_3 || FILE_KEYS.GEMINI_API_KEY || null;
-}
-
-/**
- * Llama a un LLM y devuelve el texto.
- *
- * @param {object} params
- * @param {string} params.system
- * @param {string} params.user
- * @param {number} [params.maxTokens]
- * @param {number} [params.temperature]
- * @param {boolean}[params.json]  Pedir salida en JSON
- * @returns {Promise<{text:string, provider:string, model:string}|null>}
- */
-async function callLLM(params = {}) {
-  const { system = '', user = '', maxTokens = 900, temperature = 0.3, json = false } = params;
-
-  if (groqKey()) {
-    for (const model of LLM.groqModels) {
-      try {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), LLM.timeoutMs);
-
-        const res = await fetch(LLM.groqUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${groqKey()}` },
-          body: JSON.stringify({
-            model,
-            messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
-            temperature,
-            max_tokens: maxTokens,
-            response_format: json ? { type: 'json_object' } : undefined,
-          }),
-          signal: controller.signal,
-        });
-
-        clearTimeout(timer);
-
-        if (!res.ok) {
-          const body = await res.text().catch(() => '');
-          throw new Error(`Groq ${res.status}: ${body.slice(0, 160)}`);
-        }
-
-        const data = await res.json();
-        const text = String(data?.choices?.[0]?.message?.content || '').trim();
-        if (text) return { text, provider: 'groq', model };
-      } catch (e) {
-        LOG.warn('ai-tools: Groq falló', { model, error: e.message });
-      }
-    }
-  }
-
-  if (geminiKey()) {
-    try {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), LLM.timeoutMs);
-
-      const res = await fetch(`${LLM.geminiUrl}/GEMINI_MODEL:generateContent?key=${encodeURIComponent(geminiKey())}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: system }] },
-          contents: [{ role: 'user', parts: [{ text: user }] }],
-          generationConfig: { maxOutputTokens: maxTokens, temperature, responseMimeType: json ? 'application/json' : undefined },
-        }),
-        signal: controller.signal,
-      });
-
-      clearTimeout(timer);
-
-      if (!res.ok) {
-        const body = await res.text().catch(() => '');
-        throw new Error(`Gemini ${res.status}: ${body.slice(0, 160)}`);
-      }
-
-      const data = await res.json();
-      const text = String(data?.candidates?.[0]?.content?.parts?.map((p) => p.text).join(' ') || '').trim();
-      if (text) return { text, provider: 'gemini', model: 'GEMINI_MODEL' };
-    } catch (e) {
-      LOG.warn('ai-tools: Gemini falló', { error: e.message });
-    }
-  }
-
-  return null;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   02 · HELPERS
+   01 · HELPERS
    ═══════════════════════════════════════════════════════════════════════════ */
 
 function readInt(value, fallback) {
@@ -196,7 +70,7 @@ function readString(value, max = 8000) {
 }
 
 /** Extrae JSON de una respuesta del LLM (a veces viene con ```json). */
-function parseJsonLoose(text) {
+export function parseJsonLoose(text) {
   if (!text) return null;
 
   const fenced = String(text).match(/```(?:json)?\s*([\s\S]*?)```/);
@@ -216,8 +90,16 @@ function parseJsonLoose(text) {
   }
 }
 
+/**
+ * Delega en el orquestador (cascada Groq → Gemini → fallback).
+ * @see ../services/ai-orchestrator.js
+ */
+async function callLLM(params = {}) {
+  return orchestrate(params);
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
-   03 · RATE LIMIT DE IA (por usuario)
+   02 · RATE LIMIT DE IA (por usuario)
    ═══════════════════════════════════════════════════════════════════════════ */
 
 const aiBuckets = new Map();
@@ -263,7 +145,7 @@ function guardAi(req, res, max = 30) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   04 · ROUTER
+   03 · ROUTER
    ═══════════════════════════════════════════════════════════════════════════ */
 
 export function mountAiToolsRoutes(app) {
@@ -322,6 +204,7 @@ export function mountAiToolsRoutes(app) {
       degraded: !result,
       provider: result?.provider || 'local',
       model: result?.model || 'static',
+      attempts: result?.attempts || [],
     });
   }));
 
@@ -346,12 +229,7 @@ export function mountAiToolsRoutes(app) {
 
     const user = `Lenguaje: ${language}\n\nCódigo previo:\n"""\n${context || prefix}\n"""`;
 
-    const result = await callLLM({
-      system,
-      user,
-      maxTokens: 180,
-      temperature: 0.15,
-    });
+    const result = await callLLM({ system, user, maxTokens: 180, temperature: 0.15 });
 
     let suggestion = '';
     if (result) {
@@ -572,7 +450,12 @@ export function mountAiToolsRoutes(app) {
       throw new ValidationError(result.error || 'No se pudo generar el código.', 'code');
     }
 
-    res.json({ ok: true, code: result.code, created: result.created, shareUrl: `${process.env.APP_URL || ''}/?ref=${result.code}` });
+    res.json({
+      ok: true,
+      code: result.code,
+      created: result.created,
+      shareUrl: `${process.env.APP_URL || ''}/?ref=${result.code}`,
+    });
   }));
 
   /* ─── POST /api/referrals/apply ────────────────────────────────────── */
@@ -603,7 +486,7 @@ export function mountAiToolsRoutes(app) {
     res.json({ ok: true, ...result });
   }));
 
-  /* ─── Git: status / connect / commit ───────────────────────────────── */
+  /* ─── Git: status / conexiones / connect / commit ───────────────────── */
   router.get('/api/coder/git/status', requireAuth, asyncHandler(async (req, res) => {
     const status = await getGitStatus(req.user.id);
     res.json({ ok: true, ...status });
@@ -693,7 +576,9 @@ export function mountAiToolsRoutes(app) {
       'POST /api/chat/offline-sync',
       'GET /api/referrals/mine',
       'POST /api/referrals/apply',
+      'GET /api/referrals/validate/:code',
       'GET /api/coder/git/status',
+      'GET /api/coder/git/connections',
       'POST /api/coder/git/connect',
       'POST /api/coder/git/commit',
       'GET /api/theme',

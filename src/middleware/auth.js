@@ -457,12 +457,28 @@ try {
   _fileKeys = mod.TEST_KEYS ?? {};
 } catch { /* opcional */ }
 
-const SESSION_SECRETS = [...new Set([
-  process.env.JWT_SECRET,
-  process.env.SESSION_SECRET,
-  process.env.SUPABASE_JWT_SECRET,
-  _fileKeys.JWT_SECRET,
-].filter((s) => typeof s === 'string' && s.trim().length >= 16))];
+/**
+ * Secretos aceptados para verificar la firma (server-side only).
+ *
+ * Se calculan DE FORMA LAZY (en el primer uso, no al importar el módulo)
+ * porque varios módulos del proyecto usan top-level await: al importar,
+ * el evaluador de ESM puede suspender este módulo y continuar con otro,
+ * de modo que process.env podría todavía no estar configurado.
+ * Calcularlo en el primer uso elimina esa dependencia del orden de
+ * carga.
+ */
+let _sessionSecrets = null;
+
+function sessionSecrets() {
+  if (_sessionSecrets) return _sessionSecrets;
+  _sessionSecrets = [...new Set([
+    process.env.JWT_SECRET,
+    process.env.SESSION_SECRET,
+    process.env.SUPABASE_JWT_SECRET,
+    _fileKeys.JWT_SECRET,
+  ].filter((s) => typeof s === 'string' && s.trim().length >= 16))];
+  return _sessionSecrets;
+}
 
 const JWT_ALGS = ['HS256', 'HS384', 'HS512'];
 
@@ -500,7 +516,7 @@ async function verifyToken(token) {
   // Verificación criptográfica de la firma
   let payload = null;
   let lastErr = null;
-  for (const secret of SESSION_SECRETS) {
+  for (const secret of sessionSecrets()) {
     try {
       payload = jwt.verify(token, secret, { algorithms: JWT_ALGS, clockTolerance: 60 });
       break;

@@ -7,14 +7,16 @@
     "scripts": {
         "dev": "node --watch src/index.js",
         "start": "node src/index.js",
-        "test": "node --test tests/*.test.js",
+        "test": "node --test \"tests/*.test.js\"",
         "migrate": "node src/services/migrations.js up",
         "migrate:down": "node src/services/migrations.js down",
         "migrate:status": "node src/services/migrations.js status",
         "migrate:fresh": "node src/services/migrations.js fresh",
         "test:coder": "node scripts/_smoke-coder.mjs",
         "test:coder:api": "node scripts/_smoke-coder-api.mjs",
-        "audit:coder": "node scripts/_audit-wiring.mjs"
+        "audit:coder": "node scripts/_audit-wiring.mjs",
+        "test:unit": "node --test \"tests/*.test.js\"",
+        "test:watch": "node --test --watch \"tests/*.test.js\""
     },
     "dependencies": {
         "@google/genai": "^2.24.0",
@@ -28,15 +30,20 @@
         "google-auth-library": "^11.1.0",
         "groq-sdk": "^1.6.0",
         "jsonwebtoken": "^9.0.3",
-        "multer": "^2.4.0",
-        "nodemailer": "^10.1.0",
+        "multer": "^2.5.0",
+        "nodemailer": "^10.2.0",
         "openai": "^7.23.0",
         "passport": "^0.7.0",
         "passport-github": "^1.1.0",
         "pdf-parse": "^1.1.4",
         "pdfkit": "^0.17.2",
         "postgres": "^3.4.9",
+        "resend": "^6.34.1",
         "zod": "^4.6.7"
     },
-    "type": "module"
+    "type": "module",
+    "devDependencies": {
+        "nock": "^15.0.5",
+        "supertest": "^7.3.1"
+    }
 }

@@ -36,7 +36,7 @@ const CFG = Object.freeze({
   prefix: 'NUMI',
   codeLength: 6,
   referrerCredits: 1000,
-  referredCredits: 250,
+  referredCredits: 500,
   codeTtlDays: 365,
   maxCodesPerUser: 3,
   tables: {
@@ -197,7 +197,7 @@ export async function generateReferralCode(params = {}) {
     }
 
     const base = nameSlug(name) || crypto.randomBytes(3).toString('hex').toUpperCase();
-    const suffix = crypto.randomBytes(2).toString('hex').toUpperCase();
+    const suffix = crypto.randomBytes(2).toString('hex').slice(0, 2).toUpperCase();
 
     let code = `${CFG.prefix}-${base.slice(0, CFG.codeLength)}`;
     if (base.length >= CFG.codeLength) code = `${CFG.prefix}-${base.slice(0, CFG.codeLength - 2)}${suffix}`;
@@ -205,7 +205,7 @@ export async function generateReferralCode(params = {}) {
     // Si el código ya existe, se añade un sufijo numérico.
     const clash = await sql`select 1 from ${sql(CFG.tables.referrals)} where code = ${code} limit 1`;
     if (clash.length) {
-      code = `${CFG.prefix}-${base.slice(0, 4)}${crypto.randomBytes(2).toString('hex').toUpperCase()}`;
+      code = `${CFG.prefix}-${base.slice(0, 4)}${crypto.randomBytes(2).toString('hex').slice(0, 2).toUpperCase()}`;
     }
 
     const rows = await sql`
@@ -529,9 +529,19 @@ export function getReferralConfig() {
   };
 }
 
+/**
+ * Alias con el nombre de negocio ("processReferral"): aplica un código
+ * de referido y reparte los créditos (1000 al invitador, 500 al invitado).
+ *
+ * @param {object} params { code, referredId, referredEmail }
+ * @returns {Promise<object>}
+ */
+export const processReferral = applyReferralCode;
+
 export default {
   generateReferralCode,
   applyReferralCode,
+  processReferral,
   validateCode,
   getReferralStats,
   getTopReferrers,

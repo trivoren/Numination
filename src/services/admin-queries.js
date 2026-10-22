@@ -478,6 +478,7 @@ export async function listAdminUsers({ page = 1, limit = 20, q = '', role = '', 
       total,
       page: p,
       pages: Math.max(Math.ceil(total / l), 1),
+      limit: l,
     };
   } catch (e) {
     LOG.error('admin-queries: listAdminUsers falló', { error: e.message, code: e.code });
@@ -672,6 +673,7 @@ export async function listAdminPayments({ page = 1, limit = 20, status = '' } = 
       total,
       page: p,
       pages: Math.max(Math.ceil(total / l), 1),
+      limit: l,
       sumAmount: Number(sumRows[0]?.total || 0),
     };
   } catch (e) {

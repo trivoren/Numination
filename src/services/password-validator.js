@@ -184,18 +184,34 @@ export function validatePassword(password, opts = {}) {
   }
 
   /* ── Score ─────────────────────────────────────────────────────────── */
-  let score = 0;
-  if (checks.length) score++;
-  if (checks.upper) score++;
-  if (checks.lower) score++;
-  if (checks.number) score++;
-  if (checks.symbol) score++;
-  if (pwd.length >= CFG.recommendedLength) score++;
-  if (pwd.length >= 14) score++;
-  if (!checks.common && !checks.sequence && !checks.repetition) score++;
-  if (checks.emailSimilarity) score = Math.max(0, score - 2);
+  // Se.points() suma requisitos cumplidos (máx. 8) y los patrones débiles
+  // RESTAN. El score público es 0-4 (escala de uso) y se deriva de los
+  // puntos: así "Password1!" nunca puede puntuar como una contraseña
+  // aleatoria aunque cumpla la forma.
+  let points = 0;
+  if (checks.length) points++;
+  if (pwd.length >= CFG.recommendedLength) points++;
+  if (pwd.length >= 14) points++;
+  if (checks.upper) points++;
+  if (checks.lower) points++;
+  if (checks.number) points++;
+  if (checks.symbol) points++;
 
-  score = Math.max(0, Math.min(4, score));
+  // Las contraseñas que están en la lista de filtradas o que siguen
+  // patrones obvios no pueden puntuar como una fuerte: cumplen la
+  // forma, pero no la entropía.
+  if (checks.common) points -= 3;
+  if (checks.sequence) points -= 1;
+  if (checks.repetition) points -= 1;
+  if (checks.emailSimilarity) points -= 2;
+
+  points = Math.max(0, Math.min(8, points));
+
+  const score = points >= 7 ? 4
+    : points >= 6 ? 3
+      : points >= 4 ? 2
+        : points >= 2 ? 1
+          : 0;
 
   const valid = issues.length === 0;
 
@@ -214,6 +230,7 @@ export function validatePassword(password, opts = {}) {
   return {
     valid,
     message,
+    points,
     score,
     issues,
     warnings,

@@ -41,7 +41,7 @@ const BUILTIN_PATTERNS = [
   {
     category: 'prompt_injection',
     label: 'Intento de inyección de prompt',
-    weight: 55,
+    weight: 85,
     patterns: [
       /ignore\s+(all\s+)?(the\s+)?(previous|prior|above|earlier)\s+(instructions?|prompts?|rules?)/i,
       /disregard\s+(all\s+)?(the\s+)?(previous|prior|above)\s+(instructions?|prompts?|rules?)/i,
@@ -51,7 +51,7 @@ const BUILTIN_PATTERNS = [
       /(repeat|print|output)\s+(everything|all)\s+(above|before|you\s+(were|are)\s+told)/i,
       /\[\s*(system|inst)\s*\]/i,
       /<\s*(system|important|override)\s*>/i,
-      /you\s+are\s+now\s+(a|an|in)\s+(dan|jailbroken|unfiltered|developer\s+mode)/i,
+      /you\s+are\s+now\s+(dan\b|jailbroken|an?\s+unfiltered|an?\s+unrestricted|in\s+developer\s+mode|an?\s+amoral)/i,
       /developer\s+mode\s+(enabled|on)/i,
       /\bpretend\s+(you\s+are|to\s+be)\s+(an?\s+)?(unfiltered|uncensored|evil|admin)/i,
       /act\s+as\s+(if\s+you\s+have\s+no\s+)?(no\s+)?(restrictions?|filters?|rules)/i,
@@ -68,21 +68,19 @@ const BUILTIN_PATTERNS = [
   {
     category: 'xss',
     label: 'Script o HTML malicioso',
-    weight: 40,
+    weight: 85,
     patterns: [
-      /<\s*script\b/i,
-      /<\s*\/\s*script\s*>/i,
+      /<\s*script\b[\s\S]*?(?:<\s*\/\s*script\s*>|$)/i,
       /javascript\s*:/i,
       /\bon(?:error|load|mouseover|focus|click)\s*=/i,
       /data\s*:\s*text\/html/i,
       /<\s*iframe\b[^>]*srcdoc/i,
       /<\s*object\b[^>]*data\s*=/i,
-      /<\s*embed\b/i,
       /document\s*\.\s*cookie/i,
       /window\s*\.\s*location\s*=/i,
       /localStorage\s*\.\s*setItem/i,
-      /<svg[^>]*onload/i,
-      /<img[^>]*src\s*=\s*["']?\s*javascript:/i,
+      /<\s*svg[^>]*onload/i,
+      /<\s*img[^>]*src\s*=\s*["']?\s*javascript:/i,
     ],
   },
 
@@ -180,12 +178,22 @@ export function emitSpamWarning(payload) {
 
 /**
  * Registra un patrón extra.
+ *
+ * Se normaliza a la misma forma que los patrones internos
+ * ({ patterns: [...] }) para que el analizador pueda iterarlos sin
+ * distinguir el origen.
  */
 export function addPattern({ category = 'custom', label = 'Patrón personalizado', weight = 20, pattern, flags = 'i' } = {}) {
   if (!(pattern instanceof RegExp)) {
     throw new TypeError('addPattern requiere una RegExp.');
   }
-  EXTRA_PATTERNS.push({ category, label, weight, pattern, flags });
+  EXTRA_PATTERNS.push({
+    category,
+    label,
+    weight,
+    patterns: [pattern],
+    flags: pattern.flags || flags,
+  });
   return EXTRA_PATTERNS.length;
 }
 

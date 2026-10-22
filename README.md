@@ -2,266 +2,327 @@
 
 **La IA que habla el idioma de nuestra educación.**
 
-Numination es una plataforma de IA para programadores y estudiantes de código. Escribís código, lo depurás, lo explicás, lo refactorizás. Simple: entrás y chateás.
+[![Node.js](https://img.shields.io/badge/Node.js-%E2%89%A522-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15%2B-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![License](https://img.shields.io/badge/license-Proprietary-red)](docs/LICENSE.md)
+[![Build](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/trivoren/Numination/actions)
+[![Version](https://img.shields.io/badge/version-3.3.0-blue)](https://github.com/trivoren/Numination/releases)
+
+> Un SaaS de productividad con IA que orquesta modelos, contexto y créditos para que el usuario nunca vea el drama de la infraestructura.
+
+[Demo en vivo](https://numination.app) · [Documentación](docs/README.md) · [API](docs/api-reference.md) · [Contribuir](CONTRIBUTING.md) · [Seguridad](SECURITY.md)
 
 ---
 
-## Qué es
+## ¿Qué es Numination?
 
-Numination es un chat con IA enfocado en código. No es una IA genérica. No es un tutor de colegio. Es un asistente que entiende de programación y te ayuda a escribir, depurar, entender y mejorar código.
+Numination es una plataforma de IA para programadores, estudiantes y equipos que combina cuatro productos en una sola aplicación:
 
-Modelo: Numi-OT.01
-Fundadores: Álvaro García Gómez & Robinson Rodríguez Gómez
-País: Colombia
+| Producto | Qué resuelve |
+|---|---|
+| **Chat IA** | Conversación con streaming en tiempo real, búsqueda web, adjuntos e imágenes |
+| **Modo Coder** | IDE en el navegador con editor, file tree, terminal simulada y diff viewer |
+| **Sistema RAG** | Ingesta de PDFs, chunking, embeddings y búsqueda semántica sobre documentos propios |
+| **Personas** | Perfiles de IA con system prompt, temperatura, avatar y color configurables |
+
+Alrededor de esos productos viven capas transversales: autenticación con Google, GitHub y email/password; pagos con PayPal; créditos; memoria de largo plazo; webhooks salientes; notificaciones; feature flags; analytics; y un panel de administración.
+
+No es un wrapper de un modelo. Es un **orquestador** que decide en tiempo de ejecución qué motor responde, qué contexto recuperar, cuántos créditos cobrar y qué hacer cuando un proveedor cae.
 
 ---
 
 ## Features
 
-- Chat con IA: conversación en streaming, token por token
-- 3 modos: Chat general, Coder (código), Razonamiento (paso a paso)
-- Modo incógnito: conversaciones que no se guardan ni aparecen en el historial
-- Memorias: la IA recuerda lo que le contás para ayudarte mejor
-- Multi-motor: Groq → Gemini → Kimi con fallback automático
-- Google + GitHub: login OAuth, sin contraseñas
-- Email + password: alternativa si no querés usar OAuth
-- 13 conectores: Wikipedia, NASA, Open Trivia, Colombia, etc.
-- 150+ skills: habilidades específicas por categoría
+- 💬 **Chat IA con streaming** — respuestas token por token vía SSE, con heartbeat y timeout.
+- 🧑‍💻 **Modo Coder** — escribe, depura, explica y refactoriza código con un IDE integrado.
+- 🧠 **Razonamiento paso a paso** — proceso interno separado de la respuesta final.
+- 📚 **RAG sobre tus documentos** — sube PDFs, fragmenta, genera embeddings y consulta con búsqueda semántica.
+- 🔌 **13 conectores externos** — Wikipedia, NASA, Open Trivia, datos de Colombia y más.
+- 🎭 **Personas configurables** — system prompt, temperatura, avatar y color por perfil.
+- 🧾 **Pagos y créditos** — PayPal REST v2, ledger idempotente y catálogo de planes.
+- 🔐 **Autenticación completa** — Google, GitHub y email/password con cookies `HttpOnly`.
+- 🕵️ **Modo incógnito** — conversaciones que no se guardan ni aparecen en el historial.
+- 🧬 **Memoria de largo plazo** — la IA recuerda contexto relevante entre sesiones.
+- 🛡️ **Seguridad por capas** — rate limiting, verificación de webhooks y aislamiento por usuario.
+- ⚡ **Multi-motor con fallback** — Groq → Gemini → Kimi, sin que el usuario note la caída.
 
 ---
 
 ## Stack
 
-Backend:
-- Node.js 20+ (ESM)
-- Express
-- Postgres (Supabase)
-- JWT en cookies httpOnly
-- SSE para streaming
-
-IA:
-- Groq (motor principal)
-- Google Gemini (motor secundario, 3 keys rotando)
-- NVIDIA NIM / Kimi K3 (respaldo)
-
-Frontend:
-- HTML, CSS, JavaScript vanilla
-- Sin frameworks
-- Sin build step
-
-Deploy:
-- Vercel (serverless)
+```text
+Cliente      HTML5 + CSS3 + Vanilla JS (ES2022, sin bundler)
+Servidor     Node.js ≥ 22 · Express 5 · Zod 4 · JWT
+Base de datos PostgreSQL 15+ (Supabase) · pgvector opcional
+IA           Groq · Google Gemini (×3 keys) · NVIDIA NIM / Kimi
+Pagos        PayPal REST v2
+Email        Brevo / Resend
+Deploy       Vercel (serverless) · Node 22 (long-running)
+Testing      node:test · supertest · nock
+```
 
 ---
 
-## Instalación
+## Arquitectura en 30 segundos
 
-Requisitos:
-- Node.js 20 o superior
-- Cuenta de Supabase (gratis)
-- Cuenta de Google Cloud (para OAuth)
-- Cuenta de GitHub (para OAuth)
+```mermaid
+flowchart LR
+    U[Usuario] --> W[Frontend Vanilla JS]
+    W -->|HTTPS / SSE| E[Express 5]
+    E --> A[Auth + Rate Limit]
+    A --> O[Orquestador IA]
+    O --> G[Groq]
+    O --> GM[Gemini]
+    O --> K[Kimi]
+    O --> R[RAG / pgvector]
+    E --> P[(PostgreSQL)]
+    E --> PAY[PayPal]
+    E --> M[Brevo / Resend]
+```
+
+La regla es simple: **degradación elegante**. Si falta pgvector, la app arranca sin vectores. Si un proveedor de IA falla, se usa el siguiente. Si un módulo no puede acceder a la base de datos, responde `degraded: true` en lugar de tumbar el proceso.
+
+---
+
+## Quick Start
+
+### Requisitos
+
+- Node.js **22 o superior**
+- PostgreSQL **15+** (Supabase es la opción recomendada)
 - Cuenta de Groq (gratis)
+- Cuenta de Google Cloud y GitHub (para OAuth)
+- Cuenta de PayPal (para probar pagos)
 
-Pasos:
+### Instalación
 
-    git clone https://github.com/tu-usuario/numination.git
-    cd numination
-    npm install
-    cp .env.example env.local.js
-    npm run dev
+```bash
+# 1. Clonar el repositorio
+git clone https://github.com/trivoren/Numination.git
+cd Numination
 
-Abrí http://localhost:8080
+# 2. Instalar dependencias
+npm install
 
----
+# 3. Crear el archivo de entorno
+cp .env.example env.local.js
+# Edita env.local.js con tus credenciales. Nunca lo subas a Git.
 
-## Estructura
+# 4. Verificar el estado de las migraciones
+npm run migrate:status
 
-    numination/
-    ├── src/
-    │   ├── index.js           servidor Express + rutas core
-    │   ├── auth.js            login, signup, JWT, OAuth
-    │   ├── chats.js           CRUD chats + streaming SSE
-    │   ├── memories.js        memorias con tags y búsqueda
-    │   ├── skills.js          endpoint de skills
-    │   ├── connectors.js      13 conectores a APIs externas
-    │   ├── email.js           envío de correos (Brevo)
-    │   └── services/
-    │       ├── supabase.js    cliente de Postgres + helpers
-    │       ├── streaming.js   adaptadores de streaming para cada IA
-    │       └── limits.js      cuotas por plan
-    │
-    ├── public/
-    │   ├── login.html         entrada (Google, GitHub, email)
-    │   ├── chat.html          la app
-    │   ├── verify-email.html  verificación de correo
-    │   ├── reset-password.html recuperar contraseña
-    │   ├── 404.html           página no encontrada
-    │   ├── terminos.html      términos y condiciones
-    │   ├── privacidad.html    política de privacidad
-    │   └── assets/
-    │       └── js/
-    │           └── skills.js  biblioteca de 150+ skills
-    │
-    ├── env.local.js           variables (NO subir a git)
-    ├── .env.example           plantilla de variables
-    ├── package.json
-    └── README.md
+# 5. Aplicar migraciones
+npm run migrate
 
----
+# 6. Arrancar en desarrollo
+npm run dev
+```
 
-## Variables de entorno
+Abre [http://localhost:8080](http://localhost:8080) y verifica el estado del servidor:
 
-Copiá .env.example a env.local.js y rellená:
+```bash
+curl -s http://localhost:8080/api/health
+curl -s http://localhost:8080/api/version
+```
 
-    export const TEST_KEYS = {
-      DATABASE_URL: 'postgresql://...',
-      JWT_SECRET: 'clave-aleatoria-de-64-caracteres',
-      GOOGLE_CLIENT_ID: '...',
-      GOOGLE_CLIENT_SECRET: '...',
-      GITHUB_CLIENT_ID: '...',
-      GITHUB_CLIENT_SECRET: '...',
-      GROQ_API_KEY: 'gsk_...',
-      GEMINI_API_KEY: 'AIza...',
-      GEMINI_API_KEY_2: 'AIza...',
-      GEMINI_API_KEY_3: 'AIza...',
-      NVIDIA_API_KEY: 'nvapi-...',
-      BREVO_SMTP_USER: 'xsmtpsib-...',
-      BREVO_SMTP_PASSWORD: 'xsmtpsib-...',
-      BREVO_FROM_EMAIL: 'no-reply@numination.app',
-      BREVO_FROM_NAME: 'Numination',
-    };
+### Variables de entorno esenciales
+
+El servidor carga `env.local.js` en desarrollo. También acepta variables de entorno normales en Vercel o en un archivo `.env`.
+
+```js
+// env.local.js
+export const TEST_KEYS = {
+  DATABASE_URL: 'postgresql://usuario:password@host:5432/numination',
+  JWT_SECRET: 'una-clave-aleatoria-de-64-caracteres',
+  GOOGLE_CLIENT_ID: '...',
+  GOOGLE_CLIENT_SECRET: '...',
+  GITHUB_CLIENT_ID: '...',
+  GITHUB_CLIENT_SECRET: '...',
+  GROQ_API_KEY: 'gsk_...',
+  GEMINI_API_KEY: 'AIza...',
+  GEMINI_API_KEY_2: 'AIza...',
+  GEMINI_API_KEY_3: 'AIza...',
+  NVIDIA_API_KEY: 'nvapi-...',
+  BREVO_SMTP_USER: '...',
+  BREVO_SMTP_PASSWORD: '...',
+  BREVO_FROM_EMAIL: 'no-reply@numination.app',
+};
+```
+
+La lista completa, con valores de ejemplo y notas de seguridad, está en [`.env.example`](.env.example) y en [`docs/installation.md`](docs/installation.md).
 
 ---
 
-## Comandos
+## Scripts disponibles
 
-    npm run dev      Desarrollo con auto-reload
-    npm start        Producción
-    npm test         Tests (próximamente)
+| Comando | Qué hace |
+|---|---|
+| `npm run dev` | Desarrollo con auto-reload (`node --watch`) |
+| `npm start` | Arranque en producción |
+| `npm test` | Ejecuta la suite con `node:test` |
+| `npm run migrate` | Aplica migraciones pendientes |
+| `npm run migrate:down` | Revierte la última migración |
+| `npm run migrate:status` | Muestra el estado de las migraciones |
+| `npm run migrate:fresh` | Recrea la base de datos (solo desarrollo) |
+| `npm run test:coder` | Smoke test del módulo Coder |
+| `npm run test:coder:api` | Smoke test de la API del Coder |
+| `npm run audit:coder` | Auditoría de wiring del Coder |
+
+Antes de abrir un Pull Request, ejecuta siempre:
+
+```bash
+npm ci
+npm test
+npm audit --omit=dev
+```
+
+---
+
+## Estructura del repositorio
+
+```text
+.
+├── api/                  # Vercel serverless functions + handlers del Coder
+├── docs/                 # Documentación técnica completa
+├── migrations/           # SQL versionado
+├── public/               # Frontend estático (HTML + JS vanilla)
+├── scripts/              # Smoke tests y auditorías
+├── services/             # Prompts y parser de contexto
+├── src/
+│   ├── index.js          # Entrada, middleware y rutas core
+│   ├── config.js         # Configuración tipada y validada
+│   ├── auth.js           # OAuth + password + sesiones
+│   ├── chats.js          # CRUD de chats
+│   ├── coder.js          # Rutas del IDE
+│   ├── memories.js       # Memorias clásicas
+│   ├── connectors.js     # Conectores externos
+│   ├── skills.js         # Catálogo de skills
+│   ├── email.js          # Email transaccional
+│   ├── lib/              # Cache, crypto, HTTP, JWT, logger, queue, SSE
+│   ├── middleware/       # Auth, ban, errores, IP guard, rate limit, RLS
+│   ├── payments/         # PayPal, idempotencia, ledger, webhooks
+│   ├── routes/           # Admin, RAG, imágenes, voz, personas
+│   └── services/         # Servicios de dominio
+└── tests/                # Suite con node:test
+```
 
 ---
 
 ## API
 
-Todos los endpoints empiezan con /api/
+Todos los endpoints viven bajo `/api/`. La referencia completa, con parámetros y respuestas, está en [`docs/api-reference.md`](docs/api-reference.md).
 
-Autenticación:
-    POST    /api/auth/signup              Crear cuenta email + password
-    POST    /api/auth/login               Iniciar sesión
-    POST    /api/auth/logout              Cerrar sesión
-    POST    /api/auth/google              Login con Google (GIS)
-    GET     /api/auth/github              Iniciar OAuth GitHub
-    GET     /api/auth/me                  Usuario actual
-    GET     /api/auth/session             Info de la sesión
-    POST    /api/auth/forgot-password     Pedir reset
-    POST    /api/auth/reset-password      Aplicar reset
-    PATCH   /api/auth/profile             Editar perfil
-    DELETE  /api/auth/account             Eliminar cuenta
+| Área | Endpoints principales |
+|---|---|
+| Autenticación | `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me` |
+| Chat | `GET /api/chats`, `POST /api/chat/stream`, `POST /api/chat` |
+| Memorias | `GET /api/memories`, `POST /api/memories`, `GET /api/memories/stats` |
+| RAG | `POST /api/rag/upload`, `POST /api/rag/query` |
+| Coder | `POST /api/coder/chat`, `POST /api/coder/execute` |
+| Pagos | `POST /api/payments/orders`, `POST /api/payments/webhooks/paypal` |
+| Salud | `GET /api/health`, `GET /api/version` |
 
-Chat:
-    GET     /api/chats                    Listar conversaciones
-    POST    /api/chats                    Crear conversación
-    GET     /api/chats/:id                Obtener una con mensajes
-    PATCH   /api/chats/:id                Renombrar
-    DELETE  /api/chats/:id                Eliminar
-    POST    /api/chat/stream              Streaming SSE con IA
-    POST    /api/chat                     Chat sin streaming
+Todas las respuestas siguen el contrato:
 
-Memorias:
-    GET     /api/memories                 Listar con filtros
-    POST    /api/memories                 Crear
-    PATCH   /api/memories/:id             Editar
-    DELETE  /api/memories/:id             Eliminar
-    GET     /api/memories/stats           Estadísticas
+```json
+{ "ok": true, "data": {} }
+```
 
-Otros:
-    GET     /api/skills                   Lista de skills
-    GET     /api/connectors               Lista de conectores
-    POST    /api/connectors/:id/query     Ejecutar conector
-    GET     /api/limits/usage             Cuota del plan
-    GET     /api/health                   Estado del server
-
----
-
-## Modos de la IA
-
-Chat (role: 'student')
-Conversación general. Explica conceptos, resuelve dudas, sugiere caminos.
-
-Coder (role: 'teacher')
-Especializado en programación. Escribe, depura, explica y refactoriza código. Sabe JavaScript, TypeScript, Python, React, Node, SQL y más.
-
-Razonamiento (role: 'reasoning')
-Piensa paso a paso antes de responder. El proceso interno va dentro de etiquetas thinking y después viene la respuesta final limpia.
-
----
-
-## Motores de IA
-
-Numination usa 3 motores con fallback automático:
-
-    Texto     → Groq → Gemini → Kimi
-    Archivos  → Gemini → Kimi → Groq
-
-Si uno falla, pasa al siguiente. El usuario nunca ve el drama. Si los tres fallan, se devuelve un error legible.
-
-Configuración en src/index.js:
-- Groq: modelo openai/gpt-oss-120b
-- Gemini: gemini-3.6-flash con 3 keys rotando
-- NVIDIA NIM: moonshotai/kimi-k3
-
----
-
-## Deploy
-
-Vercel:
-
-    npm i -g vercel
-    vercel login
-    vercel --prod
-
-Variables de entorno en Vercel: Settings → Environment Variables. Copiá todas las de env.local.js
+```json
+{ "ok": false, "error": "Descripción legible", "code": "ERROR_CODE", "requestId": "uuid" }
+```
 
 ---
 
 ## Seguridad
 
-- Contraseñas con scrypt (64-byte key, 16-byte salt)
-- Cookies httpOnly + SameSite=Lax + Secure en producción
-- JWT firmados con expiración de 30 días
-- Rate limiting por IP y por email
-- Bloqueo de cuenta tras 5 intentos fallidos
-- Verificación de email
-- Prompt injection guard
-- CORS restringido a dominios propios
+- Contraseñas con hash fuerte y verificación de longitud.
+- Cookies `HttpOnly`, `SameSite=Lax` y `Secure` en producción.
+- JWT firmados con expiración y soporte de revocación por `jti`.
+- Rate limiting por IP, por usuario y por plan.
+- Verificación criptográfica de webhooks de PayPal.
+- Firma HMAC-SHA256 en webhooks salientes.
+- Aislamiento de recursos por `user_id` en todas las consultas.
+- Validación de entrada con Zod en el borde.
+- CSP, cabeceras de seguridad y saneamiento de HTML/URLs.
 
-Si encontrás una vulnerabilidad, escribí a seguridad@numination.app (no abras un issue público).
+Si encuentras una vulnerabilidad, **no abras un issue público**. Sigue el proceso descrito en [SECURITY.md](SECURITY.md) y escribe a [security@numination.com](mailto:security@numination.com).
+
+---
+
+## Documentación
+
+| Documento | Para qué sirve |
+|---|---|
+| [docs/README.md](docs/README.md) | Índice y mapa completo de la documentación |
+| [docs/installation.md](docs/installation.md) | Instalación paso a paso, variables y ngrok |
+| [docs/architecture.md](docs/architecture.md) | Capas, flujos y ciclo de una request |
+| [docs/api-reference.md](docs/api-reference.md) | Contratos de la API |
+| [docs/database-schema.md](docs/database-schema.md) | Esquema SQL, índices y RLS |
+| [docs/ai-orchestration.md](docs/ai-orchestration.md) | Cascada de modelos y prompts |
+| [docs/coder-module.md](docs/coder-module.md) | IDE, file tree, terminal y diff viewer |
+| [docs/memory-system.md](docs/memory-system.md) | Chunking, embeddings y pgvector |
+| [docs/payment-flow.md](docs/payment-flow.md) | PayPal, idempotencia y ledger |
+| [docs/security.md](docs/security.md) | Modelo de amenazas y controles |
+| [docs/deployment.md](docs/deployment.md) | Vercel y límites serverless |
+| [docs/troubleshooting.md](docs/troubleshooting.md) | Diagnóstico de problemas comunes |
+| [docs/roadmap.md](docs/roadmap.md) | Próximas capacidades |
+
+---
+
+## Contribuir
+
+Numination es software propietario. Las contribuciones externas están sujetas a revisión y cesión de derechos patrimoniales al titular.
+
+Antes de enviar un Pull Request:
+
+1. Lee [CONTRIBUTING.md](CONTRIBUTING.md).
+2. Respeta el [Código de Conducta](CODE_OF_CONDUCT.md).
+3. Ejecuta `npm test`.
+4. Verifica que no hay secretos en tu diff.
+5. Abre el PR con la plantilla incluida.
+
+---
+
+## Soporte
+
+- 🐛 **Bugs reproducibles:** abre un issue con la [plantilla de bug](.github/ISSUE_TEMPLATE/bug_report.md).
+- ❓ **Preguntas y discusiones:** usa [GitHub Discussions](https://github.com/trivoren/Numination/discussions).
+- 📖 **Documentación:** empieza por [docs/README.md](docs/README.md).
+- 💬 **Comunidad:** únete al [Discord de Numination](https://discord.gg/numination).
+- 📧 **Soporte directo:** [soporte@numination.app](mailto:soporte@numination.app).
+
+Más detalles en [.github/SUPPORT.md](.github/SUPPORT.md).
 
 ---
 
 ## Licencia
 
-Todos los derechos reservados. Numination es propiedad de sus fundadores.
+**Todos los derechos reservados.** Numination es propiedad de sus fundadores. El código fuente no es de código abierto y no se concede permiso para copiarlo, modificarlo ni redistribuirlo sin autorización escrita.
 
-El código fuente no es de código abierto. Si querés colaborar, escribinos.
-
----
-
-## Contacto
-
-Soporte: soporte@numination.app
-Privacidad: privacidad@numination.app
-Seguridad: seguridad@numination.app
+Consulta [`docs/LICENSE.md`](docs/LICENSE.md) para los términos completos.
 
 ---
 
 ## Estado del proyecto
 
-    Backend completo         7 módulos, 73+ endpoints
-    Frontend de auth         login, verify, reset
-    Frontend de chat         chat.html con streaming
-    Frontend legal           404, términos, privacidad
-    Deploy                   configurado en Vercel
+| Área | Estado |
+|---|---|
+| Backend | ✅ Producción — módulos de dominio y 70+ endpoints |
+| Chat + SSE | ✅ Producción — streaming con heartbeat y timeout |
+| Cascada IA | ✅ Producción — 3 proveedores y rotación de keys |
+| RAG | ✅ Producción — degrada sin pgvector |
+| Coder | ✅ Producción — sandbox simulado, no ejecución real |
+| Pagos | ✅ Producción — firma verificada e idempotencia |
+| Tests | ⚠️ Parcial — cobertura en expansión |
+| Frontend | ✅ Producción — vanilla JS sin build step |
 
-Hecho con amor en Colombia|Barranquilla · 2026
+---
+
+<div align="center">
+
+**Numination** · Hecho con amor en Barranquilla, Colombia 🇨🇴 · 2026
+
+[Web](https://numination.app) · [GitHub](https://github.com/trivoren/Numination) · [Documentación](docs/README.md)
+
+</div>

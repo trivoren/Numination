@@ -162,7 +162,14 @@ export function createRateLimiter(options = {}) {
     });
   };
 
-  if (expressRateLimit && !options.useLibrary) {
+  // `useLibrary: false` fuerza el limitador propio (determinista, sin
+  // dependencias). Por defecto se usa express-rate-limit si está
+  // instalado.
+  const useLibrary = options.useLibrary === undefined
+    ? Boolean(expressRateLimit)
+    : Boolean(options.useLibrary);
+
+  if (expressRateLimit && useLibrary) {
     try {
       return expressRateLimit({
         windowMs: opts.windowMs,

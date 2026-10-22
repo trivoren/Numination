@@ -270,6 +270,7 @@ export async function applySanction(params = {}) {
         message: warning,
         banned: false,
         suspended: false,
+        suspendedUntil: null,
       };
     }
 

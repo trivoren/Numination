@@ -733,7 +733,77 @@ export async function ensureRagSchema() {
  * @param {function} [params.onProgress] Callback (pct, stage)
  * @returns {object} Resumen del documento procesado
  */
-export async function ingestPdf({ buffer, filename, userId, onProgress = null }) {
+export async function processPDF(params = {}) {
+  const { buffer, filename, userId, onProgress = null } = params;
+
+  // Se permite inyectar el extractor y el embedder: asi los tests pueden
+  // verificar el pipeline completo sin un PDF real ni llamadas de red.
+  const extract = typeof params.extract === 'function' ? params.extract : extractPdfText;
+  const embed = typeof params.embed === 'function' ? params.embed : embedBatch;
+
+  if (!userId) throw new Error('Se requiere userId para procesar un documento.');
+  if (!buffer || !buffer.length) throw new Error('El archivo est\u00e1 vac\u00edo.');
+  if (buffer.length > CFG.maxFileBytes) {
+    throw new Error(`El PDF supera el maximo de ${Math.round(CFG.maxFileBytes / 1024 / 1024)} MB.`);
+  }
+
+  const progress = typeof onProgress === 'function' ? onProgress : () => {};
+
+  progress(5, 'extrayendo texto');
+  const extracted = await extract(buffer);
+  const text = normalizeText(extracted?.text || (typeof extracted === 'string' ? extracted : ''));
+  const extractor = extracted?.extractor || 'custom';
+
+  if (!text) throw new Error('El PDF no tiene texto extraible.');
+
+  progress(25, 'dividiendo en fragmentos');
+  const chunks = chunkText(text);
+
+  if (!chunks.length) throw new Error('El PDF no tiene texto suficiente para indexarlo.');
+
+  progress(35, 'generando embeddings');
+  const vectors = [];
+  let model = 'none';
+  let provider = 'none';
+
+  for (let i = 0; i < chunks.length; i += CFG.batchSize) {
+    const batch = chunks.slice(i, i + CFG.batchSize);
+    const result = await embed(batch.map((c) => c.text));
+    const batchVectors = Array.isArray(result) ? result : (result?.vectors || []);
+    vectors.push(...batchVectors);
+    model = Array.isArray(result) ? 'custom' : (result?.model || model);
+    provider = Array.isArray(result) ? 'custom' : (result?.provider || provider);
+    const pct = 35 + Math.round(((i + batch.length) / chunks.length) * 50);
+    progress(pct, 'generando embeddings');
+  }
+
+  progress(88, 'guardando en la base de datos');
+
+  const stored = await storeDocument({
+    userId,
+    filename,
+    title: String(filename || 'documento').replace(/\.pdf$/i, ''),
+    bytes: buffer.length,
+    pages: extracted?.pages ?? null,
+    chars: text.length,
+    chunks,
+    vectors,
+    model,
+    extractor,
+  });
+
+  progress(100, 'listo');
+
+  return {
+    ok: true,
+    ...stored,
+    extractor,
+    embeddingModel: model,
+    embeddingProvider: provider,
+  };
+}
+
+export async function ingestPdf(params = {}) {
   if (!userId) throw new Error('Se requiere userId para procesar un documento.');
   if (!buffer || !buffer.length) throw new Error('El archivo está vacío.');
   if (buffer.length > CFG.maxFileBytes) {
@@ -1019,7 +1089,7 @@ export function buildRagContext(results, budget = CFG.maxContextChars) {
 
   for (const r of results) {
     const block =
-      `[Fragmento ${r.index + 1} · ${r.docTitle || r.filename || 'documento'}] ` +
+      `[Fragmento ${parts.length + 1} · ${r.docTitle || r.filename || 'documento'}] ` +
       String(r.content || '').slice(0, 1400);
 
     if (used + block.length > budget) break;

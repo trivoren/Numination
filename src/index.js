@@ -46,7 +46,7 @@ import { rateLimitUser, getRateLimitMetrics } from './middleware/rate-limit-per-
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    ROUTERS
    â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
-import { mountAuthRoutes } from './auth.js';
+import { mountAuthRoutes, POST_LOGIN_PATH } from './auth.js';
 import { mountChatRoutes } from './chats.js';
 import { mountMemoryRoutes } from './memories.js';
 import { mountSkillsRoutes } from './skills.js';
@@ -760,14 +760,34 @@ app.use(auditMiddleware({
 
 app.use((req, res, next) => {
   if ((req.path === '/chat' || req.path === '/chat.html' || req.path === '/coder' || req.path === '/coder.html') && !req.user) {
-    return res.redirect('/login');
+    return res.redirect('/login.html');
   }
   if (req.path === '/admin' || req.path === '/admin.html') {
-    if (!req.user) return res.redirect('/login');
-    if (req.user.role !== 'admin') return res.redirect('/chat');
+    if (!req.user) return res.redirect('/login.html');
+    if (req.user.role !== 'admin') return res.redirect(POST_LOGIN_PATH);
   }
   next();
 });
+
+/* Rutas legacy sin extensión → fichero real con extensión.
+   Los enlaces antiguos (emails, referidos, buscador) apuntan a '/chat'
+   o '/coder'. En vez de depender de express.static (extensions:['html'])
+   o de cleanUrls en Vercel, se redirige siempre al .html, que existe
+   en public/ y lo sirve cualquier CDN. Se conserva el query string
+   (?chat=...&msg=...). */
+const LEGACY_PAGE_ROUTES = Object.freeze({
+  '/chat':  POST_LOGIN_PATH,
+  '/coder': '/coder.html',
+});
+
+for (const [legacy, target] of Object.entries(LEGACY_PAGE_ROUTES)) {
+  app.get(legacy, (req, res) => {
+    const query = req.originalUrl.includes('?')
+      ? req.originalUrl.slice(req.originalUrl.indexOf('?'))
+      : '';
+    return res.redirect(`${target}${query}`);
+  });
+}
 
 /* ðŸ‘ˆ AJUSTE VERCEL: express.static solo en desarrollo local. 
    En Vercel, los archivos estÃ¡ticos los sirve la CDN (vercel.json -> outputDirectory: "public") */
@@ -786,7 +806,7 @@ if (!IS_VERCEL) {
   }));
 }
 
-app.get('/', (req, res) => res.redirect('/login'));
+app.get('/', (req, res) => res.redirect('/login.html'));
 
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    15 Â· ROUTERS EXISTENTES

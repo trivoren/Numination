@@ -6,6 +6,28 @@
 <meta name="theme-color" content="#F7F9F8" />
 <title>Welcome · Numination</title>
 <meta name="supabase-publishable-key" content="sb_publishable_mrKTw0QGiuikjTb6SY0Hgg_Nak0QLk7" />
+<meta name="supabase-url" content="https://whxqciwphwgzcshejpty.supabase.co" />
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     ESCUDO DE SEGURIDAD · HASH INTERCEPTOR
+     Se carga ANTES que cualquier otro script de la página.
+     Si la URL trae #access_token=... o ?code=... (rebote de Google/GitHub
+     tras el OAuth, o confirmación de email), el escudo:
+       1) extrae el token de la URL,
+       2) lo guarda en la sesión de Supabase (localStorage) y en el token
+          de la API (numination-api-token),
+       3) limpia la URL para que el token no quede en el historial,
+       4) hace window.location.replace('/chat.html') de inmediato.
+     Sin esto, el callback caía en `numination://` y el navegador fallaba
+     con "scheme does not have a registered handler".
+     ══════════════════════════════════════════════════════════════════════ -->
+<script src="/assets/js/auth-callback.js"></script>
+<script>
+  // Arranque explícito del escudo (idempotente): si otro script movió el
+  // historial antes de que el anterior terminara, aquí se vuelve a lanzar.
+  if (window.NumerationAuthCallback) window.NuminationAuthCallback.run();
+</script>
+
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 <style>
 :root{--bg:#F7F9F8;--navy:#16325C;--ink:#111;--muted:#8A8A8A;--line:#D4D4D4;--white:#fff;--error:#C23B3B;--focus:#9AA7BC}
@@ -79,8 +101,12 @@ h2{font-size:26px;font-weight:800;margin-bottom:8px}
 <script src="/assets/js/auth.js"></script>
 <script>
 (function(){
+  // Clave legacy (app móvil). La clave real de la sesión Supabase es
+  // `sb-numination-auth` (ver config.js) y NO se toca aquí: el escudo de
+  // auth-callback.js la acaba de escribir con el token del callback OAuth.
   try{localStorage.removeItem('numination-supabase-session');}catch(_){}
   var Auth=window.NuminationAuth;
+  var Shield=window.NumerationAuthCallback;
   var $=function(id){return document.getElementById(id);};
   function show(name){['entry','password','signup'].forEach(function(v){$(v).hidden=v!==name;});}
   function isEmail(s){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(s||'').trim());}
@@ -92,8 +118,25 @@ h2{font-size:26px;font-weight:800;margin-bottom:8px}
     return m||'Error';
   }
   var pending='';
-  // Si ya hay sesión → mismo routing que Flutter (edad / chat)
-  if(Auth){
+  // Error de un callback de OAuth fallido (?error=...) → lo mostramos.
+  try{
+    var errCode=new URLSearchParams(location.search).get('error');
+    if(errCode){
+      var text={
+        state:'No pudimos validar el inicio de sesión. Intenta de nuevo.',
+        github:'No pudimos iniciar sesión con GitHub.',
+        access_denied:'Cancelaste el inicio de sesión.',
+        otp_expired:'El enlace de acceso expiró. Vuelve a intentarlo.',
+        no_session:'No se pudo completar el inicio de sesión.',
+        oauth_error:'Error de autenticación. Intenta de nuevo.'
+      }[errCode]||'No pudimos iniciar sesión. Intenta de nuevo.';
+      $('entry-error').textContent=text;
+    }
+  }catch(_){}
+  // Si ya hay sesión → mismo routing que Flutter (edad / chat).
+  // Si la URL traía un callback OAuth, el escudo ya está redirigiendo:
+  // no Competimos con su navegación.
+  if(Auth&&!(Shield&&Shield.detected&&Shield.detected())){
     Auth.getSession().then(function(s){
       if(s) Auth.routeAfterAuth(s);
     }).catch(function(){});
@@ -131,8 +174,27 @@ h2{font-size:26px;font-weight:800;margin-bottom:8px}
       }
     }catch(ex){$('su-error').textContent=msg(ex);}
   };
-  $('btn-google').onclick=async function(){try{await Auth.signInWithOAuth('google');}catch(ex){$('entry-error').textContent=msg(ex);}};
-  $('btn-github').onclick=async function(){try{await Auth.signInWithOAuth('github');}catch(ex){$('entry-error').textContent=msg(ex);}};
+  // OAuth con Google / GitHub.
+  // auth.js fuerza options.redirectTo = window.location.origin + '/chat.html'
+  // (nunca `numination://`, que rompía con "scheme does not have a
+  // registered handler"). El callback lo recoge auth-callback.js.
+  function socialBusy(btn,on){
+    if(!btn)return;
+    btn.disabled=on;
+    btn.style.opacity=on?'.55':'1';
+  }
+  async function social(provider,btn){
+    socialBusy(btn,true);
+    $('entry-error').textContent='';
+    try{
+      await Auth.signInWithOAuth(provider);
+    }catch(ex){
+      $('entry-error').textContent=msg(ex);
+      socialBusy(btn,false);
+    }
+  }
+  $('btn-google').onclick=function(){social('google',this);};
+  $('btn-github').onclick=function(){social('github',this);};
 })();
 </script>
 </body>

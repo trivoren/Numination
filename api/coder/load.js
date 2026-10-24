@@ -14,6 +14,7 @@
  */
 
 import { listFiles, getFile, languageFromPath, normalizeFilename } from './_store.js';
+import { withCoderSession } from './_session.js';
 
 /** Archivo semilla para proyectos nuevos. */
 const DEFAULT_FILE = {
@@ -41,7 +42,7 @@ const DEFAULT_FILE = {
  * @param {import('express').Response} res
  * @returns {Promise<void>}
  */
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     return res.status(405).json({ ok: false, error: 'Método no permitido. Usa GET.' });
   }
@@ -103,3 +104,4 @@ export default async function handler(req, res) {
 }
 
 export { DEFAULT_FILE };
+export default withCoderSession(handler);

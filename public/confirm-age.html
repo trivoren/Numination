@@ -67,6 +67,8 @@ h1{font-size:32px;font-weight:800;text-align:center;letter-spacing:-.6px;line-he
 <script>
 (function(){
   var Auth=window.NuminationAuth, Api=window.NuminationApi;
+  // Destino post-login: fichero real '/chat.html' (nunca '/chat').
+  var CHAT_PATH=(window.NuminationConfig&&window.NuminationConfig.postLoginPath)||'/chat.html';
   var confirmed=false;
   var check=document.getElementById('check');
   var btn=document.getElementById('continue');
@@ -82,7 +84,7 @@ h1{font-size:32px;font-weight:800;text-align:center;letter-spacing:-.6px;line-he
   }
 
   Auth.getSession().then(function(session){
-    if(!session){location.replace('/login');return;}
+    if(!session){location.replace('/login.html');return;}
     var user=session.user;
     if(isBanned(user)){
       document.getElementById('confirm-view').hidden=true;
@@ -90,10 +92,10 @@ h1{font-size:32px;font-weight:800;text-align:center;letter-spacing:-.6px;line-he
       return;
     }
     if(isAgeConfirmed(user)){
-      location.replace('/chat');
+      location.replace(CHAT_PATH);
       return;
     }
-  }).catch(function(){location.replace('/login');});
+  }).catch(function(){location.replace('/login.html');});
 
   function toggle(){
     confirmed=!confirmed;
@@ -115,7 +117,7 @@ h1{font-size:32px;font-weight:800;text-align:center;letter-spacing:-.6px;line-he
         var client=Auth.getClient();
         await client.auth.updateUser({data:{age_14_plus:true,banned_underage:false,numination_email_pending:false}});
       }catch(_){}
-      location.replace('/chat');
+      location.replace(CHAT_PATH);
     }catch(e){
       err.textContent=(e&&e.message)||'No se pudo confirmar la edad';
       btn.disabled=false;
@@ -128,13 +130,13 @@ h1{font-size:32px;font-weight:800;text-align:center;letter-spacing:-.6px;line-he
       try{await Api.request('POST','/auth/age',{confirmedUnder14:true});}catch(_){}
     }finally{
       await Auth.signOut();
-      location.replace('/login');
+      location.replace('/login.html');
     }
   };
 
   document.getElementById('banned-out').onclick=async function(){
     await Auth.signOut();
-    location.replace('/login');
+    location.replace('/login.html');
   };
 })();
 </script>

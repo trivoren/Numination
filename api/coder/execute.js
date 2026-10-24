@@ -22,6 +22,7 @@
  */
 
 import { listFiles, getFile } from './_store.js';
+import { withCoderSession } from './_session.js';
 
 /** Binarios que el sandbox simula. */
 const ALLOWED_BINARIES = new Set([
@@ -317,7 +318,7 @@ async function runMock(userId, parsed) {
  * @param {import('express').Response} res
  * @returns {Promise<void>}
  */
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ ok: false, error: 'Método no permitido. Usa POST.' });
@@ -367,3 +368,5 @@ export default async function handler(req, res) {
     });
   }
 }
+
+export default withCoderSession(handler);

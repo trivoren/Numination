@@ -107,7 +107,13 @@ const backend = [
 ];
 for (const [file, method] of backend) {
   const src = read(file);
-  ok(`${file} declara ${method}`, src.includes(`export default async function handler`) && src.includes(`'${method}'`));
+  // El patrón directo (sin sesión) era la fuente del 401 en Vercel:
+  // los handlers serverless deben usar el wrapper `withCoderSession`
+  // (resuelve cookies/query/body + attachUser en contexto serverless).
+  const okPattern =
+    src.includes(`export default withCoderSession(handler)`) ||
+    src.includes(`export default async function handler`);
+  ok(`${file} declara ${method}`, okPattern && src.includes(`'${method}'`));
 }
 const mount = read('src/coder.js');
 for (const route of ['/api/coder/load', '/api/coder/save', '/api/coder/execute', '/api/coder/chat']) {

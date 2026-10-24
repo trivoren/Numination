@@ -47,26 +47,50 @@
 .nm-explainer-btn[disabled] { opacity: .55; cursor: progress; transform: none; }
 .nm-explainer-btn__icon { display: inline-flex; }
 
+/* Modal FLOTANTE centrado (no panel lateral): nunca invaden el chat ni la
+   terminal. Se cierra con ✕, Esc o clic en el fondo atenuado. */
+.nm-explainer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 760;
+  background: rgba(5, 5, 9, .58);
+  backdrop-filter: blur(10px) saturate(1.15);
+  -webkit-backdrop-filter: blur(10px) saturate(1.15);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .22s ease;
+}
+.nm-explainer-backdrop.is-open { opacity: 1; pointer-events: auto; }
+
 .nm-explainer-panel {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 45;
-  width: min(440px, 92vw);
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 770;
+  width: min(560px, 94vw);
+  max-height: min(76vh, 660px);
   display: flex;
   flex-direction: column;
-  background: color-mix(in srgb, var(--c-bg, #0a0a0c) 96%, #fff 4%);
-  border-left: 1px solid rgba(255, 255, 255, .09);
-  box-shadow: -18px 0 48px rgba(0, 0, 0, .55);
-  transform: translateX(102%);
-  transition: transform .24s cubic-bezier(.22,.9,.3,1);
+  overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid rgba(139, 92, 246, .30);
+  background: linear-gradient(180deg, #171722 0%, color-mix(in srgb, var(--c-bg, #0a0a0c) 97%, #8b5cf6 3%) 100%);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, .60), 0 0 0 1px rgba(0,0,0,.4), 0 0 42px rgba(139, 92, 246, .17);
+  transform: translate(-50%, -47%) scale(.965);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform .24s cubic-bezier(.22,.9,.3,1), opacity .2s ease;
 }
-.nm-explainer-panel.is-open { transform: none; }
+.nm-explainer-panel.is-open {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+  pointer-events: auto;
+}
 .nm-explainer-panel__head {
   display: flex; align-items: center; gap: 10px;
   padding: 14px 16px;
   border-bottom: 1px solid rgba(255, 255, 255, .08);
+  background: rgba(139, 92, 246, .06);
 }
 .nm-explainer-panel__title { font: 700 13px/1 var(--font-sans, Inter, sans-serif); color: var(--c-text, #f4f4f7); }
 .nm-explainer-panel__meta { font-size: 11px; color: var(--c-text-2, #8b8b9c); }
@@ -74,8 +98,10 @@
   margin-left: auto; width: 28px; height: 28px; border-radius: 8px;
   border: 1px solid rgba(255,255,255,.1); background: transparent; color: var(--c-text-1, #c9c9d4);
   cursor: pointer; font-size: 16px; line-height: 1;
+  transition: background .14s ease, transform .14s ease;
 }
-.nm-explainer-panel__close:hover { background: rgba(255,255,255,.06); }
+.nm-explainer-panel__close:hover { background: rgba(255,255,255,.06); transform: scale(1.06); }
+.nm-explainer-panel__close:focus-visible { outline: 2px solid var(--c-primary, #8b5cf6); outline-offset: 2px; }
 .nm-explainer-panel__body {
   flex: 1; overflow-y: auto; padding: 16px;
   display: flex; flex-direction: column; gap: 16px;
@@ -109,10 +135,13 @@
 
   const state = {
     button: null,
+    backdrop: null,
     panel: null,
     body: null,
+    meta: null,
     busy: false,
     mounted: false,
+    lastFocus: null,
   };
 
   /* ─── Estilos ────────────────────────────────────────────────────────── */
@@ -176,12 +205,20 @@
 
   /* ─── Panel ──────────────────────────────────────────────────────────── */
 
-  function buildPanel(container) {
+  function buildPanel() {
+    const backdrop = document.createElement('div');
+    backdrop.className = 'nm-explainer-backdrop';
+    backdrop.addEventListener('click', () => hidePanel());
+
     const panel = document.createElement('div');
     panel.className = 'nm-explainer-panel';
     panel.setAttribute('role', 'dialog');
+    panel.setAttribute('aria-modal', 'true');
     panel.setAttribute('aria-label', 'Explicación del código');
     panel.hidden = false;
+    panel.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { e.stopPropagation(); hidePanel(); }
+    });
 
     const head = document.createElement('div');
     head.className = 'nm-explainer-panel__head';
@@ -197,8 +234,8 @@
     const close = document.createElement('button');
     close.className = 'nm-explainer-panel__close';
     close.type = 'button';
-    close.textContent = '×';
-    close.setAttribute('aria-label', 'Cerrar');
+    close.textContent = '✕';
+    close.setAttribute('aria-label', 'Cerrar explicación');
     close.addEventListener('click', () => hidePanel());
 
     head.append(title, meta, close);
@@ -207,9 +244,10 @@
     body.className = 'nm-explainer-panel__body';
 
     panel.append(head, body);
-    container.appendChild(panel);
+    document.body.append(backdrop, panel);
 
     state.panel = panel;
+    state.backdrop = backdrop;
     state.body = body;
     state.meta = meta;
 
@@ -218,12 +256,24 @@
 
   function showPanel() {
     if (!state.panel) return;
+    state.lastFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     state.panel.classList.add('is-open');
+    state.backdrop?.classList.add('is-open');
+    // El foco entra al modal: accesible al abrir con teclado (Ctrl+Shift+E).
+    const closeBtn = state.panel.querySelector('.nm-explainer-panel__close');
+    if (closeBtn instanceof HTMLElement) closeBtn.focus();
   }
 
   function hidePanel() {
     if (!state.panel) return;
     state.panel.classList.remove('is-open');
+    state.backdrop?.classList.remove('is-open');
+    // Foco devuelto al disparador (botón flotante) tras cerrar.
+    const focusTarget = state.lastFocus || state.button;
+    if (focusTarget && typeof focusTarget.focus === 'function' && focusTarget.isConnected) {
+      focusTarget.focus();
+    }
+    state.lastFocus = null;
   }
 
   function setStatus(text) {
@@ -363,7 +413,7 @@
     button.addEventListener('click', explain);
 
     host.appendChild(button);
-    buildPanel(host);
+    buildPanel(); // modal flotante en document.body: jamás tapa chat/terminal
 
     state.button = button;
     state.mounted = true;

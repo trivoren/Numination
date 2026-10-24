@@ -5,6 +5,28 @@
   if (!CFG || !Api) { console.error('[auth] falta config o api'); return; }
   let supabase = null;
 
+  /* ═══════════════════════════════════════════════════════════════════════
+     REGLA DURA · URL DE REDIRECCIÓN DE SUPABASE AUTH
+
+     Todo callback de Supabase (Google, GitHub, confirmación de email,
+     recuperación de contraseña) debe volver SIEMPRE a un origen http(s)
+     de esta misma web. Nunca a un esquema personalizado (`numination://`),
+     porque el navegador responde "scheme does not have a registered
+     handler" y el usuario queda atascado en el login.
+
+     Destino único e innegociable: window.location.origin + '/chat.html'
+     ═══════════════════════════════════════════════════════════════════════ */
+  const CHAT_PATH = '/chat.html';
+
+  function getRedirectUrl() {
+    try {
+      const origin = global.location && global.location.origin;
+      if (origin && /^https?:\/\//i.test(origin)) return origin + CHAT_PATH;
+    } catch (_) {}
+    // Fallback relativo: nunca devuelve un esquema no http(s).
+    return CHAT_PATH;
+  }
+
   function getClient() {
     if (supabase) return supabase;
     var lib = global.supabase;
@@ -40,14 +62,14 @@
   /** Ruta post-login igual que nextScreenAfterAuth en Flutter */
   function routeAfterAuth(session) {
     if (!session || !session.user) {
-      location.replace('/login');
+      location.replace('/login.html');
       return;
     }
     if (isBannedUnderage(session.user) || !isAgeConfirmed(session.user)) {
-      location.replace('/confirm-age');
+      location.replace('/confirm-age.html');
       return;
     }
-    location.replace('/chat');
+    location.replace(CFG.postLoginPath || '/chat.html');
   }
 
   async function syncTokenFromSession(session) {
@@ -76,23 +98,62 @@
     return syncTokenFromSession((result.data && result.data.session) || null);
   }
 
+  /**
+   * Alta de cuenta. El email de confirmación vuelve a
+   * window.location.origin + '/chat.html' (nunca a un esquema custom).
+   */
   async function signUp(email, password, meta) {
     const client = getClient();
     const result = await client.auth.signUp({
       email: String(email).trim(),
       password: String(password),
-      options: { data: meta || {}, emailRedirectTo: CFG.authRedirectUrl },
+      options: {
+        data: meta || {},
+        emailRedirectTo: getRedirectUrl(),
+      },
     });
     if (result.error) throw result.error;
     return syncTokenFromSession((result.data && result.data.session) || null);
   }
 
+  /**
+   * Google / GitHub. `redirectTo` SIEMPRE es origin + '/chat.html':
+   * si la URL no estuviera en la allow-list de Supabase, el proyecto
+   * redirigía al Site URL (`numination://`) y el navegador fallaba con
+   * "scheme does not have a registered handler".
+   */
   async function signInWithOAuth(provider) {
     const client = getClient();
     const result = await client.auth.signInWithOAuth({
       provider: provider,
-      options: { redirectTo: CFG.authRedirectUrl, skipBrowserRedirect: false },
+      options: {
+        redirectTo: getRedirectUrl(),
+        skipBrowserRedirect: false,
+      },
     });
+    if (result.error) throw result.error;
+    return result.data;
+  }
+
+  /**
+   * Recuperación de contraseña. El enlace de recuperación vuelve a
+   * window.location.origin + '/chat.html' con el token en el hash; el
+   * escudo de auth-callback.js lo intercepta y abre la sesión.
+   */
+  async function resetPasswordForEmail(email, options) {
+    const client = getClient();
+    const opts = options || {};
+    const result = await client.auth.resetPasswordForEmail(String(email).trim(), {
+      redirectTo: opts.redirectTo || getRedirectUrl(),
+    });
+    if (result.error) throw result.error;
+    return result.data;
+  }
+
+  /** Cambio de contraseña desde una sesión de recuperación. */
+  async function updatePassword(newPassword) {
+    const client = getClient();
+    const result = await client.auth.updateUser({ password: String(newPassword) });
     if (result.error) throw result.error;
     return result.data;
   }
@@ -111,9 +172,12 @@
     signInWithPassword: signInWithPassword,
     signUp: signUp,
     signInWithOAuth: signInWithOAuth,
+    resetPasswordForEmail: resetPasswordForEmail,
+    updatePassword: updatePassword,
     signOut: signOut,
     isAgeConfirmed: isAgeConfirmed,
     isBannedUnderage: isBannedUnderage,
     routeAfterAuth: routeAfterAuth,
+    getRedirectUrl: getRedirectUrl,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

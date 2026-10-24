@@ -1,229 +1,1109 @@
 ﻿<!DOCTYPE html>
-<html lang="es-CO" data-theme="oscuro">
+<html lang="es" data-theme="blanco">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Chat · Numination</title>
-<meta name="theme-color" content="#0a0a0c" />
-<link rel="icon" href="favicon.ico" />
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Numination | Chat</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="/assets/js/escritura.js"></script>
+  
+  <style>
+    /* ═══════════════════════════════════════════════════════════════
+       SISTEMA DE TEMAS (Exactos a las capturas)
+       ═══════════════════════════════════════════════════════════════ */
+    [data-theme="blanco"] {
+      --bg: #ffffff;
+      --bg-soft: #f5f6f8;
+      --bg-hover: #eef0f3;
+      --text: #050505;
+      --text-sub: #65676b;
+      --border: #e4e6eb;
+      --accent: #1877f2;
+      --accent-soft: #e7f3ff;
+      --danger: #dc2626;
+      --success: #16a34a;
+      --switch-bg: #e4e4e7;
+      --switch-active: #1877f2;
+      --shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
 
-<!-- Cargamos el CSS y el motor -->
-<link rel="stylesheet" href="/assets/css/chat.css">
-<link rel="stylesheet" href="/assets/css/payments.css">
-<script src="/assets/js/escritura.js"></script>
+    [data-theme="gris"] {
+      --bg: #f0f1f3;
+      --bg-soft: #e8eaed;
+      --bg-hover: #dde0e5;
+      --text: #050505;
+      --text-sub: #65676b;
+      --border: #d2d6dd;
+      --accent: #1877f2;
+      --accent-soft: #e7f3ff;
+      --danger: #dc2626;
+      --success: #16a34a;
+      --switch-bg: #ccc;
+      --switch-active: #1877f2;
+      --shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    [data-theme="oscuro"] {
+      --bg: #0a0a0c;
+      --bg-soft: #141416;
+      --bg-hover: #1e1e22;
+      --text: #f4f4f5;
+      --text-sub: #a1a1aa;
+      --border: #26262c;
+      --accent: #3b82f6;
+      --accent-soft: rgba(59,130,246,0.15);
+      --danger: #ef4444;
+      --success: #10b981;
+      --switch-bg: #3f3f46;
+      --switch-active: #3b82f6;
+      --shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+
+    [data-theme="medianoche"] {
+      --bg: #0f1116;
+      --bg-soft: #181b22;
+      --bg-hover: #20242d;
+      --text: #f0f2f5;
+      --text-sub: #8b919b;
+      --border: #2a2f3a;
+      --accent: #4090ff;
+      --accent-soft: rgba(64,144,255,0.15);
+      --danger: #ff5555;
+      --success: #4dff88;
+      --switch-bg: #3a4150;
+      --switch-active: #4090ff;
+      --shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      height: 100dvh;
+      width: 100vw;
+      overflow: hidden;
+      display: flex;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    button {
+      background: none;
+      border: none;
+      color: inherit;
+      cursor: pointer;
+      font: inherit;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    input, textarea {
+      font: inherit;
+      color: inherit;
+      background: none;
+      border: none;
+      outline: none;
+    }
+
+    svg {
+      display: block;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .app-container { display: flex; width: 100%; height: 100dvh; position: relative; }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 300px; height: 100%; background: var(--bg); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; flex-shrink: 0; z-index: 50;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .sidebar-header { display: flex; align-items: center; gap: 12px; padding: 20px 16px; cursor: pointer; }
+    .sidebar-avatar {
+      width: 42px; height: 42px; border-radius: 50%; background: var(--accent-soft); color: var(--accent);
+      display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; overflow: hidden; flex-shrink: 0;
+    }
+    .sidebar-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .sidebar-name { flex: 1; font-weight: 700; font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sidebar-logout { color: var(--text-sub); padding: 8px; border-radius: 50%; }
+    .sidebar-logout:hover { background: var(--bg-hover); color: var(--text); }
+
+    .sidebar-nav { display: flex; flex-direction: column; padding: 0 12px; gap: 2px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 16px; padding: 14px 16px; border-radius: 12px;
+      color: var(--text); font-weight: 500; font-size: 15px; width: 100%; text-align: left;
+    }
+    .nav-item:hover { background: var(--bg-hover); }
+    .nav-item svg { width: 22px; height: 22px; color: var(--text); }
+    .nav-item-text { flex: 1; }
+    .nav-item-badge { color: var(--accent); font-weight: 600; font-size: 14px; }
+
+    .sidebar-divider { height: 1px; background: var(--border); margin: 16px 24px; }
+    .sidebar-sessions { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+    .sessions-header { display: flex; align-items: center; justify-content: space-between; padding: 0 20px 12px; }
+    .sessions-title { font-size: 16px; font-weight: 700; }
+    .sessions-filter {
+      display: flex; align-items: center; gap: 6px; padding: 6px 12px;
+      border: 1px solid var(--border); border-radius: 20px; font-size: 13px; font-weight: 500;
+    }
+    .sessions-filter svg { width: 14px; height: 14px; }
+    .sessions-list { flex: 1; overflow-y: auto; padding: 0 12px; display: flex; flex-direction: column; gap: 4px; }
+    .session-item {
+      display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px;
+      color: var(--text); font-size: 14px; font-weight: 500; width: 100%; text-align: left;
+    }
+    .session-item:hover { background: var(--bg-hover); }
+    .session-item.is-active { background: var(--bg-hover); }
+    .session-item svg { width: 18px; height: 18px; color: var(--accent); }
+    .sidebar-fab {
+      position: absolute; bottom: 24px; right: 24px; width: 56px; height: 56px;
+      border-radius: 18px; background: var(--accent); color: #fff; box-shadow: 0 8px 24px var(--accent-soft);
+    }
+    .sidebar-fab svg { width: 24px; height: 24px; stroke-width: 2.5; }
+
+    /* MAIN AREA */
+    .main { flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; background: var(--bg); }
+    .topbar { height: 64px; display: flex; align-items: center; padding: 0 20px; gap: 16px; flex-shrink: 0; }
+    .menu-btn { display: none; color: var(--text); padding: 8px; margin-left: -8px; }
+    .menu-btn svg { width: 24px; height: 24px; }
+    .search-pill {
+      flex: 1; display: flex; align-items: center; gap: 12px; background: var(--bg-soft);
+      padding: 10px 16px; border-radius: 24px; color: var(--text-sub); font-size: 15px; cursor: text;
+    }
+    .search-pill svg { width: 18px; height: 18px; }
+    .ghost-btn { color: var(--text); padding: 8px; }
+    .ghost-btn svg { width: 24px; height: 24px; }
+
+    .chat-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; padding: 0 20px; scroll-behavior: smooth; }
+    .welcome-screen {
+      flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding-bottom: 20vh;
+    }
+    .welcome-title { font-size: 28px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.5px; }
+    .welcome-sub { color: var(--text-sub); font-size: 16px; }
+
+    .thread { max-width: 800px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 24px; padding: 20px 0; }
+    .message { display: flex; gap: 16px; max-width: 90%; }
+    .message--user { align-self: flex-end; flex-direction: row-reverse; }
+    .message-avatar {
+      width: 32px; height: 32px; border-radius: 50%; background: var(--accent-soft); color: var(--accent);
+      display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0;
+    }
+    .message-bubble {
+      background: var(--bg-soft); padding: 14px 18px; border-radius: 18px; border-bottom-left-radius: 4px;
+      font-size: 15px; line-height: 1.6; color: var(--text); overflow-wrap: break-word; word-break: break-word;
+    }
+    .message--user .message-bubble {
+      background: var(--accent); color: #fff; border-radius: 18px; border-bottom-right-radius: 4px;
+    }
+
+    /* COMPOSER */
+    .composer-container { padding: 12px 20px 24px; max-width: 840px; margin: 0 auto; width: 100%; background: var(--bg); }
+    .suggestion-chips { display: flex; gap: 10px; margin-bottom: 16px; overflow-x: auto; scrollbar-width: none; }
+    .suggestion-chips::-webkit-scrollbar { display: none; }
+    .chip {
+      display: flex; align-items: center; gap: 8px; padding: 10px 16px;
+      background: var(--bg-soft); border-radius: 20px; font-size: 14px; font-weight: 500; white-space: nowrap;
+    }
+    .chip svg { width: 18px; height: 18px; color: var(--accent); }
+    .composer-box {
+      display: flex; align-items: center; gap: 12px; background: var(--bg-soft);
+      border-radius: 28px; padding: 8px 8px 8px 20px; border: 1px solid var(--border);
+    }
+    .composer-add { color: var(--text-sub); }
+    .composer-add svg { width: 24px; height: 24px; }
+    .composer-input { flex: 1; font-size: 16px; height: 24px; background: transparent; }
+    .composer-input::placeholder { color: var(--text-sub); }
+    .composer-actions { display: flex; align-items: center; gap: 8px; }
+    .composer-mic { color: var(--text-sub); padding: 8px; }
+    .composer-mic svg { width: 22px; height: 22px; }
+    .composer-send { width: 44px; height: 44px; border-radius: 50%; background: var(--accent); color: #fff; }
+    .composer-send:disabled { opacity: 0.5; background: var(--text-sub); }
+    .composer-send svg { width: 20px; height: 20px; stroke-width: 2.5; }
+
+    /* OVERLAYS */
+    .page-overlay {
+      position: fixed; inset: 0; background: var(--bg); z-index: 100; display: flex; flex-direction: column;
+      transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .page-overlay.is-active { transform: translateX(0); }
+    .page-header { display: flex; align-items: center; padding: 16px 20px; height: 64px; gap: 16px; border-bottom: 1px solid var(--border); }
+    .page-back { padding: 8px; margin-left: -8px; color: var(--text); }
+    .page-back svg { width: 24px; height: 24px; }
+    .page-title { font-size: 20px; font-weight: 700; flex: 1; }
+    .page-refresh { color: var(--text); padding: 8px; }
+    .page-refresh svg { width: 20px; height: 20px; }
+    .page-body { flex: 1; overflow-y: auto; padding: 20px; max-width: 600px; margin: 0 auto; width: 100%; }
+
+    /* SETTINGS */
+    .setting-row { display: flex; align-items: center; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+    .setting-row:last-child { border-bottom: none; }
+    .setting-row:hover { opacity: 0.8; }
+    .setting-icon { width: 24px; height: 24px; color: var(--text); display: flex; align-items: center; justify-content: center; }
+    .setting-icon svg { width: 22px; height: 22px; }
+    .setting-text { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+    .setting-label { font-size: 16px; font-weight: 500; }
+    .setting-sub { font-size: 13px; color: var(--text-sub); }
+    .setting-chevron { color: var(--text-sub); }
+    .setting-chevron svg { width: 20px; height: 20px; }
+    .setting-row--danger .setting-label, .setting-row--danger .setting-icon { color: var(--danger); }
+
+    .toggle-switch {
+      width: 50px; height: 28px; border-radius: 20px; background: var(--switch-bg); position: relative; cursor: pointer; transition: background 0.2s;
+    }
+    .toggle-switch::after {
+      content: ''; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: transform 0.2s;
+    }
+    .toggle-switch.is-on { background: var(--switch-active); }
+    .toggle-switch.is-on::after { transform: translateX(22px); }
+
+    /* CONNECTORS & PLANS */
+    .connector-card, .plan-card { border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 16px; background: var(--bg); }
+    .connector-head { display: flex; gap: 16px; margin-bottom: 16px; }
+    .connector-logo { width: 48px; height: 48px; border-radius: 12px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; background: #fff; padding: 8px; }
+    .connector-logo svg { width: 100%; height: 100%; }
+    .connector-info { flex: 1; }
+    .connector-name { font-size: 17px; font-weight: 700; }
+    .connector-desc { font-size: 14px; color: var(--text-sub); margin-top: 2px; }
+    .connector-action { color: var(--accent); font-weight: 600; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 12px; border-radius: 12px; }
+    .connector-action:hover { background: var(--accent-soft); }
+
+    .plan-card.is-featured { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); position: relative; }
+    .plan-badge { position: absolute; top: -12px; right: 24px; background: var(--accent-soft); color: var(--accent); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+    .plan-name { font-size: 20px; font-weight: 800; }
+    .plan-price { font-size: 32px; font-weight: 800; margin: 8px 0; }
+    .plan-period { font-size: 14px; color: var(--text-sub); font-weight: 500; }
+    .plan-features { list-style: none; margin: 24px 0; display: flex; flex-direction: column; gap: 12px; }
+    .plan-features li { display: flex; align-items: flex-start; gap: 12px; font-size: 14px; color: var(--text); }
+    .plan-features svg { width: 18px; height: 18px; color: var(--accent); flex-shrink: 0; }
+    .plan-btn { width: 100%; padding: 16px; border-radius: 14px; background: var(--accent); color: #fff; font-size: 16px; font-weight: 600; }
+    .plan-btn:disabled { opacity: 0.5; }
+
+    /* ESTADOS VACÍOS */
+    .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; height: 100%; min-height: 50vh; color: var(--text-sub); }
+    .empty-icon { width: 72px; height: 72px; background: var(--bg-soft); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin-bottom: 24px; color: var(--accent); }
+    .empty-icon svg { width: 32px; height: 32px; }
+    .empty-title { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+    .empty-sub { font-size: 14px; line-height: 1.5; max-width: 300px; }
+
+    .credits-big-card { background: var(--bg-soft); border-radius: 24px; padding: 32px; text-align: center; margin-bottom: 24px; }
+    .credits-icon { color: var(--accent); margin-bottom: 16px; display: flex; justify-content: center; }
+    .credits-icon svg { width: 32px; height: 32px; }
+    .credits-label { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+    .credits-amount { font-size: 64px; font-weight: 800; line-height: 1; margin-bottom: 12px; }
+    .credits-desc { font-size: 14px; color: var(--text-sub); }
+
+    .theme-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+    .theme-card { display: flex; align-items: center; gap: 16px; padding: 16px; border: 1px solid var(--border); border-radius: 16px; cursor: pointer; }
+    .theme-card.is-active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+    .theme-preview { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); }
+    .theme-dot { width: 16px; height: 16px; border-radius: 50%; background: var(--accent); }
+    .theme-name { flex: 1; font-weight: 600; font-size: 16px; }
+    .theme-check { color: var(--accent); display: none; }
+    .theme-card.is-active .theme-check { display: block; }
+
+    @media (min-width: 769px) {
+      .menu-btn { display: none; }
+      .sidebar { transform: none !important; }
+      .topbar { padding: 0 40px; }
+      .chat-area { padding: 0 40px; }
+      .composer-container { padding: 20px 40px 32px; }
+      .welcome-screen { padding-bottom: 10vh; }
+    }
+
+    @media (max-width: 768px) {
+      .sidebar { position: fixed; left: 0; top: 0; bottom: 0; transform: translateX(-100%); box-shadow: 4px 0 24px rgba(0,0,0,0.1); }
+      .sidebar.is-open { transform: translateX(0); }
+      .menu-btn { display: flex; }
+      .page-body { padding: 16px; }
+      .main { width: 100%; }
+      .message { max-width: 95%; }
+      .topbar { padding: 0 16px; }
+      .chat-area { padding: 0 16px; }
+      .composer-container { padding: 10px 16px 16px; }
+    }
+  </style>
 </head>
 <body>
 
-<aside class="sidebar">
-  <div class="sidebar__head" onclick="document.querySelector('[data-settings-page]').hidden=false">
-    <div class="sidebar__avatar" data-user-avatar>U</div>
-    <div class="sidebar__name" data-user-name>Usuario</div>
-  </div>
-  <nav class="sidebar__nav">
-    <a href="/coder" class="nav-item"><svg viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg><span class="nav-item__text">Proyectos</span></a>
-    <a href="/prompts" class="nav-item"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span class="nav-item__text">Prompts</span></a>
-    <button class="nav-item" onclick="document.querySelector('[data-connectors-page]').hidden=false"><svg viewBox="0 0 24 24"><path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 0 1 0 10h-2"/><line x1="8" y1="12" x2="16" y2="12"/></svg><span class="nav-item__text">Conectores</span></button>
-    <button class="nav-item" type="button" data-open-payments><svg viewBox="0 0 24 24"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span class="nav-item__text">Planes</span></button>
-  </nav>
-</aside>
-
-<main class="main">
-  <header class="topbar"><h1 class="topbar__title">Chat</h1></header>
-  <div class="chat-scroll" id="chat-scroll">
-    <div class="welcome" id="welcome">
-      <h1>¿Por dónde empezamos?</h1>
-      <p>Escribe una pregunta o empieza con una idea.</p>
-    </div>
-    <div class="thread" id="thread" hidden></div>
-  </div>
-  <div class="composer-area">
-    <form class="composer" id="chat-form">
-      <input type="text" class="composer__field" id="chat-input" placeholder="Pregunta a Numination" autocomplete="off" />
-      <button type="submit" class="composer__send" id="chat-send" disabled><svg viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></button>
-    </form>
-  </div>
-</main>
-
-<!-- OVERLAY CONECTORES -->
-<div class="page-overlay" data-connectors-page hidden>
-  <header class="page-header">
-    <button class="page-back" onclick="document.querySelector('[data-connectors-page]').hidden=true"><svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
-    <h1 class="page-title">Conectores</h1>
-  </header>
-  <div style="padding:24px;max-width:600px;margin:0 auto;width:100%;">
-    <div class="connector-card">
-      <div class="connector-head">
-        <div class="connector-logo"><svg viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg></div>
-        <div><div class="connector-name">Google Workspace</div><div class="connector-desc">Gmail, Drive y Calendar</div></div>
+  <div class="app-container">
+    
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header" onclick="openPage('settings-main')">
+        <div class="sidebar-avatar" id="user-avatar">N</div>
+        <div class="sidebar-name" id="user-name">Cargando...</div>
+        <button class="sidebar-logout" onclick="event.stopPropagation(); logout()">
+          <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
       </div>
-      <div class="connector-action" onclick="alert('Redirigiendo a OAuth...')">Conectar</div>
-    </div>
-    <div class="connector-card">
-      <div class="connector-head">
-        <div class="connector-logo"><svg viewBox="0 0 24 24"><path fill="#f25022" d="M1 1h10v10H1z"/><path fill="#7fba00" d="M13 1h10v10H13z"/><path fill="#00a4ef" d="M1 13h10v10H1z"/><path fill="#ffb900" d="M13 13h10v10H13z"/></svg></div>
-        <div><div class="connector-name">Microsoft 365</div><div class="connector-desc">Outlook, Calendar y OneDrive</div></div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-item" onclick="openPage('projects')">
+          <svg viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
+          <span class="nav-item-text">Proyectos</span>
+        </button>
+        <button class="nav-item" onclick="openPage('artifacts')">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          <span class="nav-item-text">Artefactos</span>
+        </button>
+        <button class="nav-item" onclick="openPage('connectors')">
+          <svg viewBox="0 0 24 24"><path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 0 1 0 10h-2"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+          <span class="nav-item-text">Conectores</span>
+        </button>
+        <button class="nav-item" onclick="openPage('notifications')">
+          <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="nav-item-text">Notificaciones</span>
+        </button>
+        <button class="nav-item" onclick="openPage('credits')">
+          <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+          <span class="nav-item-text">Créditos</span>
+          <span class="nav-item-badge" id="sidebar-credits">500</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-divider"></div>
+
+      <div class="sidebar-sessions">
+        <div class="sessions-header">
+          <span class="sessions-title">Sesiones</span>
+          <button class="sessions-filter">
+            Chat <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
+        <div class="sessions-list" id="sessions-list">
+          <!-- Se llena por JS -->
+        </div>
       </div>
-      <div class="connector-action" onclick="alert('Redirigiendo a OAuth...')">Configurar OAuth</div>
+
+      <button class="sidebar-fab" onclick="startNewChat()">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+    </aside>
+
+    <!-- MAIN AREA -->
+    <main class="main">
+      <header class="topbar">
+        <button class="menu-btn" onclick="toggleSidebar()">
+          <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        
+        <div class="search-pill" onclick="openPage('search')">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="20" y1="20" x2="16.65" y2="16.65"/></svg>
+          <span>Buscar chats</span>
+        </div>
+
+        <button class="ghost-btn" onclick="alert('Modo incógnito')">
+          <svg viewBox="0 0 24 24"><path d="M9 10h.01M15 10h.01M12 2a8 8 0 0 0-8 8v4a6 6 0 0 0 6 6h4a6 6 0 0 0 6-6v-4a8 8 0 0 0-8-8Z"/></svg>
+        </button>
+      </header>
+
+      <div class="chat-area" id="chat-area">
+        <div class="welcome-screen" id="welcome-screen">
+          <h1 class="welcome-title">¿Qué vamos a resolver hoy?</h1>
+          <p class="welcome-sub">Escribe una pregunta o empieza con una idea.</p>
+        </div>
+        <div class="thread" id="thread" style="display: none;"></div>
+      </div>
+
+      <div class="composer-container">
+        <div class="suggestion-chips" id="suggestion-chips">
+          <button class="chip" onclick="insertSuggestion('Escribir código')">
+            <svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            Escribir código
+          </button>
+          <button class="chip" onclick="insertSuggestion('Explicar un concepto')">
+            <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+            Explicar un concepto
+          </button>
+        </div>
+
+        <form class="composer-box" id="chat-form">
+          <button type="button" class="composer-add" onclick="alert('Adjuntar')">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+          
+          <input type="text" class="composer-input" id="chat-input" placeholder="Enséñame paso a paso." autocomplete="off">
+          
+          <div class="composer-actions">
+            <button type="button" class="composer-mic" onclick="alert('Voz')">
+              <svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v1a7 7 0 0 0 14 0v-1"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
+            </button>
+            <button type="submit" class="composer-send" id="chat-send" disabled>
+              <svg viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+            </button>
+          </div>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       OVERLAYS (Páginas)
+       ═══════════════════════════════════════════════════════════════ -->
+
+  <!-- AJUSTES MAIN -->
+  <div class="page-overlay" id="page-settings-main">
+    <header class="page-header">
+      <button class="page-back" onclick="closePage('settings-main')"><svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+      <h1 class="page-title">Ajustes</h1>
+    </header>
+    <div class="page-body">
+      <div class="setting-row" onclick="openPage('settings-profile')">
+        <div class="setting-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+        <div class="setting-text"><span class="setting-label">Perfil</span><span class="setting-sub" id="settings-email">cargando...</span></div>
+        <div class="setting-chevron"><svg viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"/></svg></div>
+      </div>
+      <div class="setting-row" onclick="openPage('memories')">
+        <div class="setting-icon"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="8" y="8" width="8" height="8" rx="1"/></svg></div>
+        <div class="setting-text"><span class="setting-label">Memorias</span><span class="setting-sub">Lo que Numination recuerda de tus chats</span></div>
+        <div class="setting-chevron"><svg viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"/></svg></div>
+      </div>
+      <div class="setting-row" onclick="openPage('notifications')">
+        <div class="setting-icon"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+        <div class="setting-text"><span class="setting-label">Notificaciones</span></div>
+        <div class="setting-chevron"><svg viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"/></svg></div>
+      </div>
+      <div class="setting-row" onclick="openPage('privacy')">
+        <div class="setting-icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+        <div class="setting-text"><span class="setting-label">Privacidad</span></div>
+        <div class="setting-chevron"><svg viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"/></svg></div>
+      </div>
+      <div class="setting-row" onclick="alert('Términos de uso')">
+        <div class="setting-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></div>
+        <div class="setting-text"><span class="setting-label">Términos de uso</span><span class="setting-sub">Condiciones para usar Numination</span></div>
+        <div class="setting-chevron"><svg viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"/></svg></div>
+      </div>
+      <div class="setting-row" onclick="alert('Política de privacidad')">
+        <div class="setting-icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg></div>
+        <div class="setting-text"><span class="setting-label">Política de privacidad web</span><span class="setting-sub">Cómo tratamos tus datos</span></div>
+        <div class="setting-chevron"><svg viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"/></svg></div>
+      </div>
+      <div style="height:1px;background:var(--border);margin:8px 0;"></div>
+      <div class="setting-row" onclick="openPage('settings-theme')">
+        <div class="setting-icon"><svg viewBox="0 0 24 24"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="10.5" r="2.5"/><circle cx="8.5" cy="7.5" r="2.5"/><circle cx="6.5" cy="12.5" r="2.5"/></svg></div>
+        <div class="setting-text"><span class="setting-label">Cambiar tema</span></div>
+        <div class="setting-chevron"><svg viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"/></svg></div>
+      </div>
+      <div class="setting-row" style="cursor:default;">
+        <div class="setting-text"><span class="setting-label">Actualizaciones automáticas</span><span class="setting-sub">Detecta y descarga nuevas versiones de Numination automáticamente</span></div>
+        <div class="toggle-switch" onclick="this.classList.toggle('is-on')"></div>
+      </div>
+      <div class="setting-row" onclick="openPage('credits')">
+        <div class="setting-icon"><svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+        <div class="setting-text"><span class="setting-label">Créditos</span><span class="setting-sub">Consulta tu saldo y consigue más créditos</span></div>
+        <div class="setting-chevron"><svg viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"/></svg></div>
+      </div>
+      <div class="setting-row" onclick="openPage('subscriptions')">
+        <div class="setting-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg></div>
+        <div class="setting-text"><span class="setting-label">Suscripciones</span><span class="setting-sub">Planes, créditos semanales y beneficios</span></div>
+        <div class="setting-chevron"><svg viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"/></svg></div>
+      </div>
+      <div style="height:1px;background:var(--border);margin:8px 0;"></div>
+      <div class="setting-row" onclick="alert('Suscripción Coder')">
+        <div class="setting-icon"><svg viewBox="0 0 24 24"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"/><path d="M5 20h14"/></svg></div>
+        <div class="setting-text"><span class="setting-label">Suscripción Coder</span></div>
+        <div class="setting-chevron"><svg viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"/></svg></div>
+      </div>
+      <div class="setting-row setting-row--danger" onclick="logout()" style="margin-top:20px;">
+        <div class="setting-icon"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div>
+        <div class="setting-text"><span class="setting-label">Cerrar sesión</span></div>
+      </div>
     </div>
   </div>
-</div>
 
-<!-- OVERLAY AJUSTES -->
-<div class="page-overlay" data-settings-page hidden>
-  <header class="page-header">
-    <button class="page-back" onclick="document.querySelector('[data-settings-page]').hidden=true"><svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
-    <h1 class="page-title">Ajustes</h1>
-  </header>
-  <div style="padding:24px;max-width:600px;margin:0 auto;width:100%;">
-    <div class="settings-row"><div class="settings-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><div><div class="settings-label">Perfil</div><div class="settings-sub" data-settings-email>cargando...</div></div></div>
-    <div class="settings-row" onclick="if(confirm('Cerrar sesión?')) window.location.href='/api/auth/logout'"><div class="settings-icon" style="color:var(--c-danger)"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div><div><div class="settings-label" style="color:var(--c-danger)">Cerrar sesión</div></div></div>
+  <!-- PRIVACIDAD -->
+  <div class="page-overlay" id="page-privacy">
+    <header class="page-header">
+      <button class="page-back" onclick="closePage('privacy')"><svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+      <h1 class="page-title">Privacidad</h1>
+    </header>
+    <div class="page-body">
+      <div class="setting-row" style="cursor:default;">
+        <div class="setting-text"><span class="setting-label">Guardar historial de chats</span><span class="setting-sub">Tus chats normales (no incógnito) se guardan en tu cuenta</span></div>
+        <div class="toggle-switch is-on"></div>
+      </div>
+      <div class="setting-row" style="cursor:default;">
+        <div class="setting-text"><span class="setting-label">Compartir datos de uso anónimos</span><span class="setting-sub">Ayuda a mejorar Numination</span></div>
+        <div class="toggle-switch"></div>
+      </div>
+      <div class="setting-row setting-row--danger" style="margin-top:24px;" onclick="alert('Eliminando chats...')">
+        <div class="setting-icon"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg></div>
+        <div class="setting-text"><span class="setting-label">Eliminar todos mis chats</span></div>
+      </div>
+    </div>
   </div>
-</div>
 
-<script>
-window.__nm = window.__nm || {};
-__nm.esc = function(s){ var d = document.createElement('div'); d.textContent = String(s == null ? '' : s); return d.innerHTML; };
+  <!-- TEMAS -->
+  <div class="page-overlay" id="page-settings-theme">
+    <header class="page-header">
+      <button class="page-back" onclick="closePage('settings-theme')"><svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+      <h1 class="page-title">Cambiar tema</h1>
+    </header>
+    <div class="page-body">
+      <div class="theme-grid">
+        <div class="theme-card" data-theme-val="oscuro" onclick="setTheme('oscuro')">
+          <div class="theme-preview" style="background:#0a0a0c;"><div class="theme-dot" style="background:#3b82f6;"></div></div>
+          <span class="theme-name">Oscuro</span>
+          <div class="theme-check"><svg viewBox="0 0 24 24" style="width:20px;height:20px;"><polyline points="20 6 9 17 4 12"/></svg></div>
+        </div>
+        <div class="theme-card" data-theme-val="gris" onclick="setTheme('gris')">
+          <div class="theme-preview" style="background:#f0f1f3;"><div class="theme-dot" style="background:#1877f2;"></div></div>
+          <span class="theme-name">Gris</span>
+          <div class="theme-check"><svg viewBox="0 0 24 24" style="width:20px;height:20px;"><polyline points="20 6 9 17 4 12"/></svg></div>
+        </div>
+        <div class="theme-card" data-theme-val="blanco" onclick="setTheme('blanco')">
+          <div class="theme-preview" style="background:#ffffff; border:1px solid #eee;"><div class="theme-dot" style="background:#1877f2;"></div></div>
+          <span class="theme-name">Blanco</span>
+          <div class="theme-check"><svg viewBox="0 0 24 24" style="width:20px;height:20px;"><polyline points="20 6 9 17 4 12"/></svg></div>
+        </div>
+        <div class="theme-card" data-theme-val="medianoche" onclick="setTheme('medianoche')">
+          <div class="theme-preview" style="background:#0f1116;"><div class="theme-dot" style="background:#4090ff;"></div></div>
+          <span class="theme-name">Medianoche</span>
+          <div class="theme-check"><svg viewBox="0 0 24 24" style="width:20px;height:20px;"><polyline points="20 6 9 17 4 12"/></svg></div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-// FIX bucle infinito de autenticación: el backend expone /api/auth/me.
-// Antes se llamaba a /api/auth/session, que no existe en este flujo y dejaba
-// al frontend en un ciclo de redirección sin resolver.
-fetch('/api/auth/me', { credentials: 'include' })
-  .then(r => r.json())
-  .then(data => {
-    // Blindaje: se redirige SOLO cuando la respuesta es definitivamente
-    // inválida (sin ok, o sin usuario). Una respuesta ambigua (error de red,
-    // cuerpo roto, timeout) NO redirige: el middleware del servidor ya
-    // protege /chat cuando no hay sesión.
-    if (!data || !data.ok || !data.user) { window.location.href = '/login'; return; }
-    var user = data.user;
-    var name = user.name || user.email || 'Usuario';
-    document.querySelectorAll('[data-user-name]').forEach(el => el.textContent = name);
-    document.querySelectorAll('[data-settings-email]').forEach(el => el.textContent = user.email || '');
-    var pic = user.picture || user.avatar;
-    var av = document.querySelector('[data-user-avatar]');
-    if (av) { if(pic) av.innerHTML = `<img src="${pic}">`; else av.textContent = name.charAt(0).toUpperCase(); }
-  }).catch(() => {
-    // Respuesta ambigua (red caída / JSON inválido): NO se redirige.
-    console.warn('[chat] no se pudo confirmar la sesión');
-  });
+  <!-- CRÉDITOS -->
+  <div class="page-overlay" id="page-credits">
+    <header class="page-header">
+      <button class="page-back" onclick="closePage('credits')"><svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+      <h1 class="page-title">Créditos</h1>
+      <button class="page-refresh"><svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
+    </header>
+    <div class="page-body">
+      <div class="credits-big-card">
+        <div class="credits-icon"><svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+        <div class="credits-label">Créditos actuales</div>
+        <div class="credits-amount" id="page-credits-val">500</div>
+        <div class="credits-desc">Tu saldo disponible para usar Numination AI.</div>
+      </div>
+      <h2 style="font-size:20px; font-weight:700; margin-bottom:8px;">Consigue más créditos</h2>
+      <p style="font-size:14px; color:var(--text-sub); margin-bottom:16px;">Consulta los planes disponibles y sus beneficios.</p>
+      <button class="plan-btn" onclick="openPage('subscriptions')">Ver planes</button>
+    </div>
+  </div>
 
-var input = document.getElementById('chat-input');
-var sendBtn = document.getElementById('chat-send');
-var form = document.getElementById('chat-form');
-var thread = document.getElementById('thread');
-var welcome = document.getElementById('welcome');
-var scroll = document.getElementById('chat-scroll');
+  <!-- SUSCRIPCIONES -->
+  <div class="page-overlay" id="page-subscriptions">
+    <header class="page-header">
+      <button class="page-back" onclick="closePage('subscriptions')"><svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+      <h1 class="page-title">Suscripciones</h1>
+      <button class="page-refresh"><svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
+    </header>
+    <div class="page-body">
+      <h2 style="font-size:24px; font-weight:800; margin-bottom:8px;">Elige tu plan</h2>
+      <p style="font-size:15px; color:var(--text-sub); margin-bottom:24px;">Más créditos para tus conversaciones, proyectos y herramientas de IA.</p>
+      <div class="plan-card">
+        <div class="plan-name">Free</div>
+        <p style="font-size:14px; color:var(--text-sub); margin-top:4px;">Empieza a trabajar con Numination.</p>
+        <ul class="plan-features">
+          <li><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> 500 créditos diarios</li>
+          <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Acceso al chat de IA</li>
+          <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Coder con límites diarios</li>
+        </ul>
+        <div style="color:var(--accent); font-weight:600; font-size:14px;">Plan gratuito</div>
+      </div>
+      <div class="plan-card">
+        <div class="plan-name">Pro</div>
+        <div class="plan-price">COP $30.000</div>
+        <div class="plan-period">por mes</div>
+        <ul class="plan-features">
+          <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> 30.000 créditos por semana</li>
+          <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Acceso a las funciones incluidas en tu plan</li>
+          <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Más capacidad para trabajar cada semana</li>
+        </ul>
+        <button class="plan-btn" onclick="alert('Pago con Nequi')">Pagar con Nequi</button>
+        <button class="plan-btn" style="background:transparent; color:var(--text-sub); border:1px solid var(--border); margin-top:8px;" disabled>PayPal no disponible</button>
+      </div>
+      <div class="plan-card is-featured">
+        <div class="plan-badge">MÁS CAPACIDAD</div>
+        <div class="plan-name">Ultimate</div>
+        <div class="plan-price">COP $45.000</div>
+        <div class="plan-period">por mes</div>
+        <ul class="plan-features">
+          <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> 45.000 créditos por semana</li>
+          <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Acceso a las funciones incluidas en tu plan</li>
+          <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Más capacidad para proyectos de mayor uso</li>
+        </ul>
+        <button class="plan-btn" onclick="alert('Pago con Nequi')">Pagar con Nequi</button>
+        <button class="plan-btn" style="background:transparent; color:var(--text-sub); border:1px solid var(--border); margin-top:8px;" disabled>PayPal no disponible</button>
+      </div>
+    </div>
+  </div>
 
-let currentChatId = null;
-let chatHistory = [];
+  <!-- CONECTORES -->
+  <div class="page-overlay" id="page-connectors">
+    <header class="page-header">
+      <button class="page-back" onclick="closePage('connectors')"><svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+      <h1 class="page-title">Conectores</h1>
+      <button class="page-refresh"><svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
+    </header>
+    <div class="page-body">
+      <div style="border:1px solid var(--border); border-radius:16px; padding:20px; margin-bottom:20px;">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px; color:var(--accent);">
+          <svg viewBox="0 0 24 24" style="width:24px;height:24px;"><path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 0 1 0 10h-2"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+          <h3 style="font-size:18px; font-weight:700; color:var(--text);">Tu workspace, conectado</h3>
+        </div>
+        <p style="font-size:14px; color:var(--text-sub); line-height:1.5; margin-bottom:16px;">Conecta tus servicios para consultar correo, archivos, eventos, repositorios y páginas desde Numination.</p>
+        <div style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-sub);">
+          <svg viewBox="0 0 24 24" style="width:16px;height:16px;color:var(--accent);"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+          Cifrado de tokens configurado
+        </div>
+      </div>
+      <div class="connector-card">
+        <div class="connector-head">
+          <div class="connector-logo"><svg viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg></div>
+          <div class="connector-info"><div class="connector-name">Google Workspace</div><div class="connector-desc">Gmail, Drive y Google Calendar</div></div>
+        </div>
+        <button class="connector-action" onclick="alert('Conectar Google')"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> Conectar</button>
+      </div>
+      <div class="connector-card">
+        <div class="connector-head">
+          <div class="connector-logo"><svg viewBox="0 0 24 24"><path fill="#f25022" d="M1 1h10v10H1z"/><path fill="#7fba00" d="M13 1h10v10H13z"/><path fill="#00a4ef" d="M1 13h10v10H1z"/><path fill="#ffb900" d="M13 13h10v10H13z"/></svg></div>
+          <div class="connector-info"><div class="connector-name">Microsoft 365</div><div class="connector-desc">Outlook, Calendar y OneDrive</div></div>
+        </div>
+        <button class="connector-action" onclick="alert('Configurar OAuth Microsoft')"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> Configurar OAuth</button>
+      </div>
+      <div class="connector-card">
+        <div class="connector-head">
+          <div class="connector-logo" style="background:#24292e; border-color:#24292e;"><svg viewBox="0 0 24 24" fill="#fff" stroke="none"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg></div>
+          <div class="connector-info"><div class="connector-name">GitHub</div><div class="connector-desc">Repositorios y código fuente</div></div>
+        </div>
+        <button class="connector-action" onclick="alert('Conectar GitHub')"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> Conectar</button>
+      </div>
+    </div>
+  </div>
 
-// Cargar historial de Supabase
-fetch('/api/chats', { credentials: 'include' }).then(r=>r.json()).then(async data => {
-    if (data.ok && data.chats && data.chats.length > 0) {
-        currentChatId = data.chats[0].id;
-        const res = await fetch(`/api/chats/${currentChatId}`, { credentials: 'include' });
-        const msgData = await res.json();
-        if (msgData.ok && msgData.chat && msgData.chat.messages) {
-            welcome.hidden = true; thread.hidden = false;
-            msgData.chat.messages.forEach(msg => {
-                var role = msg.role === 'user' ? 'user' : 'assistant';
-                appendMessage(role, msg.content, false);
-                chatHistory.push({ role: role, content: msg.content });
-            });
-            scroll.scrollTop = scroll.scrollHeight;
-        }
-    }
-}).catch(()=>{});
+  <!-- NOTIFICACIONES -->
+  <div class="page-overlay" id="page-notifications">
+    <header class="page-header">
+      <button class="page-back" onclick="closePage('notifications')"><svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+      <h1 class="page-title">Notificaciones</h1>
+    </header>
+    <div class="page-body" style="display:flex; flex-direction:column;">
+      <div class="empty-state" style="flex:1;">
+        <div class="empty-icon" style="background:transparent; color:var(--text-sub);">
+          <svg viewBox="0 0 24 24" style="width:48px;height:48px;"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
+        </div>
+        <h3 class="empty-title">Todo al día</h3>
+        <p class="empty-sub">Aquí aparecerán los avisos reales de tu cuenta y tus proyectos.</p>
+      </div>
+    </div>
+  </div>
 
-input.addEventListener('input', () => sendBtn.disabled = !input.value.trim());
+  <!-- MEMORIAS -->
+  <div class="page-overlay" id="page-memories">
+    <header class="page-header">
+      <button class="page-back" onclick="closePage('memories')"><svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+      <h1 class="page-title">Memorias</h1>
+    </header>
+    <div class="page-body" style="display:flex; flex-direction:column;">
+      <div class="empty-state" style="flex:1;">
+        <div class="empty-icon" style="background:transparent; color:var(--accent);">
+           <svg viewBox="0 0 24 24" style="width:64px;height:64px;"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="8" y="8" width="8" height="8" rx="1"/><line x1="12" y1="4" x2="12" y2="8"/><line x1="12" y1="16" x2="12" y2="20"/><line x1="4" y1="12" x2="8" y2="12"/><line x1="16" y1="12" x2="20" y2="12"/></svg>
+        </div>
+        <h3 class="empty-title">Numination todavía no ha guardado memorias sobre ti.</h3>
+        <p class="empty-sub">Toca "+" para guardar algo manualmente, o sigue conversando: lo relevante se guardará solo.</p>
+      </div>
+      <button class="sidebar-fab" style="position:fixed; bottom:24px; right:24px;" onclick="alert('Crear memoria')">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+    </div>
+  </div>
 
-form.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  var text = input.value.trim();
-  if (!text) return;
-  input.value = ''; sendBtn.disabled = true; welcome.hidden = true; thread.hidden = false;
+  <!-- PROYECTOS -->
+  <div class="page-overlay" id="page-projects">
+    <header class="page-header">
+      <button class="page-back" onclick="closePage('projects')"><svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+      <h1 class="page-title">Proyectos</h1>
+    </header>
+    <div class="page-body" style="display:flex; flex-direction:column;">
+      <div class="empty-state" style="flex:1;">
+        <div class="empty-icon" style="background:transparent; color:var(--accent);">
+          <svg viewBox="0 0 24 24" style="width:64px;height:64px;"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/><path d="M16 20a2 2 0 0 0 2-2v-1"/></svg>
+        </div>
+        <h3 class="empty-title">No tienes proyectos</h3>
+        <p class="empty-sub">Crea uno y empieza a chatear</p>
+      </div>
+      <button class="sidebar-fab" style="position:fixed; bottom:24px; right:24px;" onclick="alert('Crear proyecto')">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+    </div>
+  </div>
 
-  chatHistory.push({ role: 'user', content: text });
-  appendMessage('user', text, true);
-  
-  var assistantBubble = appendMessage('assistant', '', true);
-  var contentEl = assistantBubble.querySelector('.message__content');
-  contentEl.innerHTML = '<span style="display:inline-block;width:6px;height:6px;background:var(--c-primary);border-radius:50%;animation:pulse 1s infinite"></span>';
+  <!-- ARTEFACTOS -->
+  <div class="page-overlay" id="page-artifacts">
+    <header class="page-header">
+      <button class="page-back" onclick="closePage('artifacts')"><svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+      <h1 class="page-title">Artefactos</h1>
+    </header>
+    <div class="page-body" style="display:flex; flex-direction:column;">
+      <div class="empty-state" style="flex:1;">
+        <div class="empty-icon" style="background:transparent; color:var(--accent); border:1px solid var(--border); border-radius:20px;">
+          <svg viewBox="0 0 24 24" style="width:40px;height:40px;"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        </div>
+        <h3 class="empty-title">Sin artifacts todavía</h3>
+        <p class="empty-sub">Los snippets de código que guardes desde el chat en modo Coder aparecerán aquí.</p>
+      </div>
+    </div>
+  </div>
 
-  if (!currentChatId) {
+  <!-- BUSCAR -->
+  <div class="page-overlay" id="page-search" style="background:var(--bg-soft);">
+    <div style="padding:16px 20px; background:var(--bg);">
+      <div style="display:flex; align-items:center; gap:12px; background:var(--bg-soft); padding:12px 16px; border-radius:12px; border:1px solid var(--accent);">
+        <svg viewBox="0 0 24 24" style="width:20px;height:20px;color:var(--text-sub);"><circle cx="11" cy="11" r="7"/><line x1="20" y1="20" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="Escribe lo que buscas" style="flex:1; font-size:16px; background:transparent;">
+      </div>
+    </div>
+    <div class="page-body" style="padding:20px; background:var(--bg); min-height:100vh;">
+      <div class="session-item" style="padding:16px 0; border-bottom:1px solid var(--border);">
+        <svg viewBox="0 0 24 24" style="width:24px;height:24px;color:var(--accent); margin-right:16px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <span style="font-size:16px; color:var(--text);">Nuevo chat</span>
+      </div>
+    </div>
+    <button onclick="closePage('search')" style="position:absolute; top:20px; right:20px; font-size:14px; font-weight:600; color:var(--text-sub);">Cancelar</button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       JAVASCRIPT (ÚNICO Y DEFINITIVO)
+       ═══════════════════════════════════════════════════════════════ -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      'use strict';
+
+      // ==========================================
+      // 1. SISTEMA DE TEMAS
+      // ==========================================
       try {
-          const res = await fetch('/api/chats', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ title: text.slice(0, 40) }) });
-          const d = await res.json();
-          if (d.ok && d.chat) currentChatId = d.chat.id;
-      } catch (err) {}
-  }
+        const savedTheme = localStorage.getItem('numi-theme') || 'blanco';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+      } catch(e) {}
 
-  fetch('/api/chat/stream', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-    body: JSON.stringify({ message: text, history: chatHistory.slice(0, -1), role: 'student', chatId: currentChatId })
-  }).then(res => {
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    var reader = res.body.getReader(); var dec = new TextDecoder(); var buffer = ''; var fullText = '';
-    contentEl.innerHTML = '';
-
-    function pump() {
-      return reader.read().then(x => {
-        if (x.done) { chatHistory.push({ role: 'assistant', content: fullText }); return; }
-        buffer += dec.decode(x.value, { stream: true });
-        var parts = buffer.split('\n\n'); buffer = parts.pop() || '';
-        parts.forEach(p => {
-          if (p.indexOf('data: ') !== 0) return;
-          try {
-            var evt = JSON.parse(p.slice(6));
-            if (evt.token) {
-              fullText += evt.token;
-              contentEl.innerHTML = window.Escritura ? Escritura.render(fullText) : __nm.esc(fullText);
-              scroll.scrollTop = scroll.scrollHeight;
-            }
-          } catch(e) {}
+      window.setTheme = function(themeId, save = true) {
+        document.documentElement.setAttribute('data-theme', themeId);
+        if (save) localStorage.setItem('numi-theme', themeId);
+        document.querySelectorAll('.theme-card').forEach(card => {
+          if(card.dataset.themeVal === themeId) card.classList.add('is-active');
+          else card.classList.remove('is-active');
         });
-        return pump();
-      });
-    }
-    return pump();
-  }).catch(err => { contentEl.textContent = 'Error: ' + err.message; }).finally(() => { sendBtn.disabled = false; input.focus(); });
-});
+      };
 
-function appendMessage(role, text, doScroll) {
-  var div = document.createElement('div');
-  div.className = 'message message--' + role;
-  div.innerHTML = `${role === 'assistant' ? '<div class="message__avatar">N</div>' : ''}<div class="message__content">${role === 'assistant' ? (window.Escritura ? Escritura.render(text) : __nm.esc(text)) : __nm.esc(text)}</div>`;
-  thread.appendChild(div);
-  if (doScroll !== false) scroll.scrollTop = scroll.scrollHeight;
-  return div;
-}
-</script>
+      // ==========================================
+      // 2. NAVEGACIÓN SPA
+      // ==========================================
+      window.openPage = function(pageId) {
+        const page = document.getElementById('page-' + pageId);
+        if(page) page.classList.add('is-active');
+        document.getElementById('sidebar')?.classList.remove('is-open');
+      };
 
-<!-- ══════════════════════════════════════════════════════════════════════
-     CHECKOUT DE PAGOS · PayPal
-     · #nm-pay-root es el punto de montaje donde payments-ui.js genera el
-       modal con las dos tarjetas de plan (Pro 30.000 COP / USD 7.50 y
-       Ultimate 45.000 COP / USD 11.00).
-     · El orden importa: primero payments-client.js (wrapper de fetch con
-       retry exponencial + showToast) y después payments-ui.js (modal + SDK).
-     ══════════════════════════════════════════════════════════════════════ -->
-<div id="nm-pay-root" class="nm-pay" aria-live="polite"></div>
+      window.closePage = function(pageId) {
+        const page = document.getElementById('page-' + pageId);
+        if(page) page.classList.remove('is-active');
+      };
 
-<script src="/assets/js/payments-client.js"></script>
-<script src="/assets/js/payments-ui.js"></script>
+      window.toggleSidebar = function() {
+        document.getElementById('sidebar')?.classList.toggle('is-open');
+      };
 
-<!-- ══════════ FASE 1 + FASE 4 · UX global del chat ══════════
-     gestor de toasts (cola, 3 visibles, auto-destrucción) · skeletons
-     · efectos de sonido · modo offline · instalador PWA · detector de
-     idioma (inyecta "Responde en español" en el system prompt) -->
-<script src="/assets/js/toast-manager.js"></script>
-<script src="/assets/js/loading-skeletons.js"></script>
-<script src="/assets/js/sound-effects.js"></script>
-<script src="/assets/js/offline-mode.js"></script>
-<script src="/assets/js/pwa-installer.js"></script>
-<script src="/assets/js/language-detector.js"></script>
+      // ==========================================
+      // 3. CARGAR USUARIO
+      // ==========================================
+      async function loadUser() {
+        const nameEl = document.getElementById('user-name');
+        const emailEl = document.getElementById('settings-email');
+        const avatarEl = document.getElementById('user-avatar');
+        const creditsEl = document.getElementById('sidebar-credits');
+        const creditsPageEl = document.getElementById('page-credits-val');
+
+        try {
+          const res = await fetch('/api/auth/me', { credentials: 'include' });
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          
+          const data = await res.json();
+          if(!data.ok || !data.user) throw new Error('No user');
+
+          const user = data.user;
+          const name = user.name || (user.email ? user.email.split('@')[0] : 'Usuario');
+          const initial = name.charAt(0).toUpperCase();
+          
+          if(nameEl) nameEl.textContent = name;
+          if(emailEl) emailEl.textContent = user.email || 'Sin correo';
+          
+          if(avatarEl) {
+            if(user.picture || user.avatar) {
+              avatarEl.innerHTML = `<img src="${user.picture || user.avatar}" alt="${name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+            } else {
+              avatarEl.textContent = initial;
+            }
+          }
+
+          const credits = user.credits ?? user.balance ?? 500;
+          if(creditsEl) creditsEl.textContent = credits;
+          if(creditsPageEl) creditsPageEl.textContent = credits;
+
+        } catch(e) {
+          if(nameEl) nameEl.textContent = 'Usuario';
+          if(emailEl) emailEl.textContent = 'Inicia sesión';
+          if(avatarEl) avatarEl.textContent = 'U';
+        }
+      }
+
+      window.logout = async function() {
+        try { await fetch('/api/auth/logout', { method: 'POST' }); } catch(e){}
+        window.location.href = '/login.html';
+      };
+
+      // ==========================================
+      // 4. LÓGICA DEL CHAT CON MEMORIA Y SSE
+      // ==========================================
+      const chatForm = document.getElementById('chat-form');
+      const chatInput = document.getElementById('chat-input');
+      const chatSend = document.getElementById('chat-send');
+      const thread = document.getElementById('thread');
+      const welcomeScreen = document.getElementById('welcome-screen');
+      const chatArea = document.getElementById('chat-area');
+      const suggestionChips = document.getElementById('suggestion-chips');
+      const sessionsList = document.getElementById('sessions-list');
+
+      let currentChatId = null;
+      let chatHistory = [];
+
+      if(chatInput) {
+        chatInput.addEventListener('input', () => {
+          if(chatSend) chatSend.disabled = !chatInput.value.trim();
+        });
+      }
+
+      window.insertSuggestion = function(text) {
+        if(chatInput) {
+          chatInput.value = text + ' ';
+          chatInput.focus();
+          if(chatSend) chatSend.disabled = false;
+        }
+      };
+
+      function appendMessage(role, text, isSilent = false) {
+        if(!welcomeScreen || !thread || !suggestionChips) return null;
+        
+        welcomeScreen.style.display = 'none';
+        suggestionChips.style.display = 'none';
+        thread.style.display = 'flex';
+
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message message--${role}`;
+
+        let avatarHtml = role === 'assistant' ? `<div class="message-avatar">N</div>` : '';
+
+        const bubble = document.createElement('div');
+        bubble.className = 'message-bubble';
+        
+        if(role === 'assistant' && window.Escritura) {
+          bubble.innerHTML = window.Escritura.render(text);
+        } else {
+          bubble.textContent = text;
+        }
+
+        msgDiv.innerHTML = avatarHtml;
+        msgDiv.appendChild(bubble);
+        thread.appendChild(msgDiv);
+        
+        if (!isSilent && chatArea) chatArea.scrollTop = chatArea.scrollHeight;
+        return bubble;
+      }
+
+      async function loadSessions() {
+        if(!sessionsList) return;
+        try {
+          const res = await fetch('/api/chats', { credentials: 'include' });
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          
+          const data = await res.json();
+          sessionsList.innerHTML = '';
+          
+          if (data.ok && data.chats && data.chats.length > 0) {
+            data.chats.forEach(chat => {
+              const item = document.createElement('div');
+              item.className = `session-item ${chat.id === currentChatId ? 'is-active' : ''}`;
+              item.innerHTML = `
+                <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${chat.title || 'Nuevo chat'}</span>
+              `;
+              item.onclick = () => loadChat(chat.id);
+              sessionsList.appendChild(item);
+            });
+
+            if (!currentChatId) loadChat(data.chats[0].id);
+          } else {
+            sessionsList.innerHTML = `<div style="padding:16px; font-size:13px; color:var(--text-sub); text-align:center;">Sin resultados</div>`;
+          }
+        } catch (e) {
+          if(sessionsList) sessionsList.innerHTML = `<div style="padding:16px; font-size:13px; color:var(--text-sub); text-align:center;">Error de conexión</div>`;
+        }
+      }
+
+      async function loadChat(chatId) {
+        if (currentChatId === chatId) return;
+        try {
+          currentChatId = chatId;
+          if(thread) thread.innerHTML = '';
+          chatHistory = [];
+          
+          const res = await fetch(`/api/chats/${chatId}`, { credentials: 'include' });
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+
+          const data = await res.json();
+          if (data.ok && data.chat && data.chat.messages) {
+             chatHistory = data.chat.messages.map(m => ({ role: m.role, content: m.content }));
+             data.chat.messages.forEach(m => {
+                appendMessage(m.role === 'user' ? 'user' : 'assistant', m.content, true);
+             });
+             if(chatArea) chatArea.scrollTop = chatArea.scrollHeight;
+             loadSessions();
+          }
+        } catch (e) {
+          console.error('Error cargando chat:', e);
+        }
+      }
+
+      async function createNewChat() {
+        try {
+          const res = await fetch('/api/chats', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ title: 'Nueva conversación' })
+          });
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+
+          const data = await res.json();
+          if (data.ok && data.chat) {
+            currentChatId = data.chat.id;
+            return data.chat.id;
+          }
+        } catch (e) { console.warn('Error creando chat:', e); }
+        return null;
+      }
+
+      if(chatForm) {
+        chatForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const text = chatInput.value.trim();
+          if(!text) return;
+
+          chatInput.value = '';
+          if(chatSend) chatSend.disabled = true;
+
+          appendMessage('user', text);
+          chatHistory.push({ role: 'user', content: text });
+
+          const bubble = appendMessage('assistant', '');
+          if(bubble) bubble.innerHTML = '<span style="color:var(--text-sub); animation:pulse 1s infinite;">Pensando...</span>';
+
+          if (!currentChatId) {
+              currentChatId = await createNewChat();
+              loadSessions();
+          }
+
+          try {
+            const res = await fetch('/api/chat/stream', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({ 
+                  message: text, 
+                  history: chatHistory.slice(0, -1),
+                  chatId: currentChatId,
+                  role: 'student'
+              })
+            });
+
+            if(!res.ok) throw new Error('Error de red en el stream');
+            
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+            let fullText = '';
+            
+            if(bubble) bubble.innerHTML = '';
+
+            while(true) {
+              const { done, value } = await reader.read();
+              if(done) break;
+              
+              buffer += decoder.decode(value, { stream: true });
+              const parts = buffer.split('\n\n');
+              buffer = parts.pop() || '';
+
+              for(const part of parts) {
+                if(part.startsWith('data: ')) {
+                  try {
+                    const data = JSON.parse(part.slice(6));
+                    if(data.token) {
+                      fullText += data.token;
+                      if(bubble) {
+                        if(window.Escritura) bubble.innerHTML = window.Escritura.render(fullText);
+                        else bubble.textContent = fullText;
+                      }
+                      if(chatArea) chatArea.scrollTop = chatArea.scrollHeight;
+                    }
+                  } catch(e) {}
+                }
+              }
+            }
+
+            if (fullText) {
+                chatHistory.push({ role: 'assistant', content: fullText });
+            }
+
+          } catch(err) {
+            if(bubble) bubble.textContent = 'Error de conexión. Intenta de nuevo.';
+          } finally {
+            if(chatSend) chatSend.disabled = false;
+            if(chatInput) chatInput.focus();
+          }
+        });
+      }
+
+      window.startNewChat = function() {
+        currentChatId = null;
+        chatHistory = [];
+        if(thread) {
+            thread.innerHTML = '';
+            thread.style.display = 'none';
+        }
+        if(welcomeScreen) welcomeScreen.style.display = 'flex';
+        if(suggestionChips) suggestionChips.style.display = 'flex';
+        document.getElementById('sidebar')?.classList.remove('is-open');
+        loadSessions();
+      };
+
+      // Iniciar
+      loadUser();
+      loadSessions();
+
+      const style = document.createElement('style');
+      style.textContent = `@keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }`;
+      document.head.appendChild(style);
+
+    });
+  </script>
 </body>
 </html>

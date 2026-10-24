@@ -1,10 +1,8 @@
 /* ═══════════════════════════════════════════════════════════════════════════════
-   NUMINATION · ESCRITURA.JS · v3.0 · Ultra Premium Markdown & Code Engine
+   NUMINATION · ESCRITURA.JS · v3.1 · Ultra Premium Markdown & Code Engine
    ───────────────────────────────────────────────────────────────────────────────
-   Autor: Numination Team
-   Descripción: Motor de renderizado de Markdown de alto rendimiento diseñado
-   específicamente para interfaces de chat con IA. Incluye resaltado de sintaxis
-   nativo, tablas avanzadas, SVGs de lenguajes, y componentes de UI interactivos.
+   Motor de renderizado de Markdown para chat con IA. 
+   Totalmente adaptado a temas dinámicos (Claro, Oscuro, Medianoche, Gris).
    ═══════════════════════════════════════════════════════════════════════════════ */
 
 window.Escritura = (function () {
@@ -80,43 +78,32 @@ window.Escritura = (function () {
   }
 
   /* ═══════════════════════════════════════════════════════════════════════════════
-     SECCIÓN 4: MOTOR DE RESALTADO DE SINTAXIS (Regex-based Lexer)
+     SECCIÓN 4: MOTOR DE RESALTADO DE SINTAXIS
      ═══════════════════════════════════════════════════════════════════════════════ */
 
   function highlight(code, lang) {
     let html = escapeHTML(code);
     
-    // 1. Resaltar Strings (comillas simples, dobles y backticks)
-    // Usamos un regex negativo para no capturar comillas escapadas
+    // Strings
     html = html.replace(/(["'`])(?:(?=(\\?))\2.)*?\1/g, '<span class="nm-token-string">$&</span>');
 
-    // 2. Resaltar Comentarios
+    // Comentarios
     if (lang === 'py' || lang === 'bash' || lang === 'rb') {
       html = html.replace(/(#.*)/g, '<span class="nm-token-comment">$&</span>');
     } else {
-      // C-style comments (// y /* */)
       html = html.replace(/(\/\/.*|\/\*[\s\S]*?\*\/)/g, '<span class="nm-token-comment">$&</span>');
     }
 
-    // 3. Resaltar Números
+    // Números
     html = html.replace(/\b(\d+(\.\d+)?)\b/g, '<span class="nm-token-number">$1</span>');
 
-    // 4. Resaltar Keywords
+    // Keywords
     const kwRegex = SYNTAX_KEYWORDS[lang] || SYNTAX_KEYWORDS['default'];
-    // Este replace es simplificado. En producción se usa un AST o un lexer real.
-    // Para evitar romper los spans ya inyectados, buscamos palabras que no estén dentro de un span.
-    // Una técnica rudimentaria es dividir por espacios, pero rompería símbolos.
-    // Aquí usamos una aproximación que resalta las palabras clave.
     html = html.replace(kwRegex, function(match) {
-      // Verificamos si ya está dentro de un span (heurística simple basada en la posición)
-      // Dado que estamos haciendo replace global, si la palabra ya fue capturada por string o comment,
-      // el regex de keyword podría coincidir dentro del texto del string.
-      // Para evitar esto, usamos un truco temporal: reemplazar solo si no está precedido por una comilla.
-      // (Esta es una solución pragmática para no meter un parser de 10k líneas).
       return `<span class="nm-token-keyword">${match}</span>`;
     });
 
-    // 5. Resaltar Funciones y Propiedades (Básico)
+    // Funciones
     html = html.replace(/\b([a-zA-Z_]\w*)\s*\(/g, '<span class="nm-token-function">$1</span>(');
 
     return html;
@@ -127,7 +114,6 @@ window.Escritura = (function () {
      ═══════════════════════════════════════════════════════════════════════════════ */
 
   function parseBlocks(md) {
-    // Dividimos el texto en líneas para un análisis estructural
     const lines = md.split('\n');
     const blocks = [];
     let inCode = false;
@@ -140,7 +126,7 @@ window.Escritura = (function () {
     for (let i = 0; i < lines.length; i++) {
       let line = lines[i];
 
-      // ─── BLOQUES DE CÓDIGO ───
+      // Bloques de Código
       if (line.trim().startsWith('```')) {
         if (!inCode) {
           inCode = true;
@@ -160,7 +146,7 @@ window.Escritura = (function () {
         continue;
       }
 
-      // ─── TABLAS ───
+      // Tablas
       if (line.trim().startsWith('|') && line.trim().endsWith('|')) {
         if (!inTable) {
           inTable = true;
@@ -174,7 +160,7 @@ window.Escritura = (function () {
         tableLines = [];
       }
 
-      // ─── CALLOUTS ───
+      // Callouts
       const calloutMatch = line.match(/^&gt;\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/i);
       if (calloutMatch) {
         const type = calloutMatch[1].toUpperCase();
@@ -187,20 +173,20 @@ window.Escritura = (function () {
         continue;
       }
 
-      // ─── HEADERS ───
+      // Headers
       const headerMatch = line.match(/^(#{1,6})\s+(.*)/);
       if (headerMatch) {
         blocks.push({ type: 'header', level: headerMatch[1].length, text: headerMatch[2] });
         continue;
       }
 
-      // ─── LISTAS (Básico, se refina en el render) ───
+      // Listas
       if (/^\s*[-*]\s+/.test(line) || /^\s*\d+\.\s+/.test(line)) {
         blocks.push({ type: 'list-item', text: line });
         continue;
       }
 
-      // ─── PÁRRAFOS (Por defecto) ───
+      // Párrafos
       if (line.trim().length > 0) {
         blocks.push({ type: 'paragraph', text: line });
       } else {
@@ -219,7 +205,7 @@ window.Escritura = (function () {
   }
 
   /* ═══════════════════════════════════════════════════════════════════════════════
-     SECCIÓN 6: PARSER DE TEXTO INLINE (Negritas, Links, etc.)
+     SECCIÓN 6: PARSER DE TEXTO INLINE
      ═══════════════════════════════════════════════════════════════════════════════ */
 
   function parseInline(text) {
@@ -228,12 +214,12 @@ window.Escritura = (function () {
     // Código Inline (`code`)
     html = html.replace(/`([^`\n]+)`/g, '<code class="nm-inline-code">$1</code>');
 
-    // Imágenes ![alt](url)
+    // Imágenes
     html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, url) => {
       return `<img src="${sanitizeURL(url)}" alt="${escapeHTML(alt)}" class="nm-image" loading="lazy" />`;
     });
 
-    // Enlaces [text](url)
+    // Enlaces
     html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, text, url) => {
       return `<a href="${sanitizeURL(url)}" target="_blank" rel="noopener noreferrer" class="nm-link">${text} <svg viewBox="0 0 24 24" class="nm-link-icon"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>`;
     });
@@ -244,7 +230,6 @@ window.Escritura = (function () {
     html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
     html = html.replace(/~~(.+?)~~/g, '<del>$1</del>');
 
-    // Retornar sin tocar saltos de línea (se manejan en bloques)
     return html;
   }
 
@@ -302,13 +287,11 @@ window.Escritura = (function () {
 
     lines.forEach(line => {
       const trimmed = line.trim();
-      // Ignorar la línea de separación (|---|---|)
       if (/^\|[\s\-\|:]+\|$/.test(trimmed)) {
         isHeader = false;
         return;
       }
       
-      // Extraer celdas
       const cells = trimmed.split('|').filter((c, i, arr) => i !== 0 && i !== arr.length - 1);
       const tag = isHeader ? 'th' : 'td';
       
@@ -345,24 +328,18 @@ window.Escritura = (function () {
   function render(markdownText) {
     if (!markdownText) return '';
 
-    // 1. Parsear en bloques
     const blocks = parseBlocks(markdownText);
-
-    // 2. Renderizar cada bloque
     let html = '';
     let inList = false;
 
-    blocks.forEach((block, index) => {
-      // Manejo de listas
+    blocks.forEach((block) => {
       if (block.type === 'list-item') {
         if (!inList) {
           html += '<ul class="nm-ul">';
           inList = true;
         }
-        const isOrdered = /^\s*\d+\.\s+/.test(block.text);
         let content = block.text.replace(/^\s*([-*]|\d+\.)\s+/, '');
         
-        // Checkboxes
         if (/^\[x\]\s+/i.test(content)) {
           html += `<li class="nm-li nm-task"><input type="checkbox" checked disabled> ${parseInline(content.replace(/^\[x\]\s+/i, ''))}</li>`;
         } else if (/^\[\s*\]\s+/.test(content)) {
@@ -404,7 +381,7 @@ window.Escritura = (function () {
   }
 
   /* ═══════════════════════════════════════════════════════════════════════════════
-     SECCIÓN 9: ACCIONES DE LOS BOTONES (Copy & Download)
+     SECCIÓN 9: ACCIONES DE LOS BOTONES
      ═══════════════════════════════════════════════════════════════════════════════ */
 
   function copyCode(btn, encodedCode) {
@@ -438,7 +415,7 @@ window.Escritura = (function () {
   }
 
   /* ═══════════════════════════════════════════════════════════════════════════════
-     SECCIÓN 10: INYECCIÓN DE ESTILOS CSS MASIVOS
+     SECCIÓN 10: INYECCIÓN DE ESTILOS CSS ADAPTATIVOS
      ═══════════════════════════════════════════════════════════════════════════════ */
 
   function injectStyles() {
@@ -448,34 +425,34 @@ window.Escritura = (function () {
     style.id = 'nm-escritura-styles';
     style.textContent = `
       /* ==========================================
-         BASE TIPOGRÁFICA
+         BASE TIPOGRÁFICA (Adaptable al Tema)
          ========================================== */
       .nm-p {
         margin-bottom: 16px;
         line-height: 1.75;
         font-size: 15px;
-        color: var(--c-text, #e4e4e7);
+        color: var(--text, inherit);
         word-break: break-word;
       }
       .nm-h1, .nm-h2, .nm-h3, .nm-h4, .nm-h5, .nm-h6 {
-        color: var(--c-text, #f0f0f5);
+        color: var(--text, inherit);
         font-weight: 700;
         margin: 28px 0 16px;
         line-height: 1.3;
         letter-spacing: -0.02em;
       }
-      .nm-h1 { font-size: 26px; border-bottom: 1px solid var(--c-border, #26262c); padding-bottom: 8px; }
+      .nm-h1 { font-size: 26px; border-bottom: 1px solid var(--border, #26262c); padding-bottom: 8px; }
       .nm-h2 { font-size: 22px; }
       .nm-h3 { font-size: 19px; }
       .nm-h4 { font-size: 17px; }
       .nm-h5 { font-size: 15px; text-transform: uppercase; letter-spacing: 0.05em; }
-      .nm-h6 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--c-text-muted, #8e8e98); }
+      .nm-h6 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-sub, #8e8e98); }
       
       /* ==========================================
          ENLACES E IMÁGENES
          ========================================== */
       .nm-link {
-        color: #3b82f6;
+        color: var(--accent, #3b82f6);
         text-decoration: underline;
         text-underline-offset: 3px;
         font-weight: 500;
@@ -495,19 +472,19 @@ window.Escritura = (function () {
       .nm-image {
         max-width: 100%;
         border-radius: 12px;
-        border: 1px solid var(--c-border, #26262c);
+        border: 1px solid var(--border, #26262c);
         margin: 16px 0;
         display: block;
       }
 
       /* ==========================================
-         BLOQUES DE CÓDIGO
+         BLOQUES DE CÓDIGO (Siempre Oscuro)
          ========================================== */
       .nm-code-block {
         margin: 20px 0;
         border-radius: 12px;
         overflow: hidden;
-        border: 1px solid var(--c-border, #26262c);
+        border: 1px solid var(--border, #26262c);
         background: #0d0d0f;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
       }
@@ -517,7 +494,7 @@ window.Escritura = (function () {
         align-items: center;
         padding: 10px 16px;
         background: #161619;
-        border-bottom: 1px solid var(--c-border, #26262c);
+        border-bottom: 1px solid var(--border, #26262c);
       }
       .nm-code-lang {
         display: flex;
@@ -613,13 +590,13 @@ window.Escritura = (function () {
       .nm-token-function { color: #61afef; }
 
       /* ==========================================
-         TABLAS
+         TABLAS (Adaptables al Tema)
          ========================================== */
       .nm-table-wrapper {
         overflow-x: auto;
         margin: 20px 0;
         border-radius: 10px;
-        border: 1px solid var(--c-border, #26262c);
+        border: 1px solid var(--border, #26262c);
       }
       .nm-table {
         width: 100%;
@@ -628,23 +605,23 @@ window.Escritura = (function () {
         font-size: 14px;
       }
       .nm-table th {
-        background: #1c1c1f;
+        background: var(--bg-soft, #1c1c1f);
         padding: 12px 16px;
         font-weight: 700;
-        color: #f0f0f5;
-        border-bottom: 2px solid var(--c-border, #26262c);
+        color: var(--text, #f0f0f5);
+        border-bottom: 2px solid var(--border, #26262c);
         white-space: nowrap;
       }
       .nm-table td {
         padding: 12px 16px;
-        border-bottom: 1px solid var(--c-border-soft, #1a1a1e);
-        color: #a1a1aa;
+        border-bottom: 1px solid var(--border, #1a1a1e);
+        color: var(--text, #a1a1aa);
       }
       .nm-table tr:last-child td {
         border-bottom: none;
       }
       .nm-table tr:hover td {
-        background: rgba(255, 255, 255, 0.02);
+        background: var(--bg-hover, rgba(255, 255, 255, 0.02));
       }
 
       /* ==========================================
@@ -664,7 +641,7 @@ window.Escritura = (function () {
       }
       .nm-callout-content {
         font-size: 14px;
-        color: #e4e4e7;
+        color: var(--text, #e4e4e7);
         line-height: 1.6;
         flex: 1;
       }
@@ -675,11 +652,11 @@ window.Escritura = (function () {
       .nm-inline-code {
         font-family: 'JetBrains Mono', monospace;
         font-size: 13px;
-        background: rgba(255, 255, 255, 0.1);
+        background: var(--bg-hover, rgba(255, 255, 255, 0.1));
         padding: 2px 6px;
         border-radius: 4px;
-        color: #f0f0f5;
-        border: 1px solid rgba(255, 255, 255, 0.05);
+        color: var(--text, #f0f0f5);
+        border: 1px solid var(--border, rgba(255, 255, 255, 0.05));
       }
       .nm-ul, .nm-ol {
         padding-left: 20px;
@@ -688,7 +665,7 @@ window.Escritura = (function () {
       .nm-li {
         margin-bottom: 8px;
         font-size: 15px;
-        color: #d4d4d8;
+        color: var(--text, #d4d4d8);
         line-height: 1.6;
       }
       .nm-task {
@@ -701,7 +678,7 @@ window.Escritura = (function () {
       .nm-task input[type="checkbox"] {
         width: 16px;
         height: 16px;
-        accent-color: #8b5cf6;
+        accent-color: var(--accent, #8b5cf6);
         cursor: not-allowed;
       }
 

@@ -18,7 +18,19 @@
     apiBaseUrl: API_BASE_URL,
     updaterBaseUrl: UPDATER_BASE_URL,
     get supabasePublishableKey() { return readPublishableKey(); },
-    authRedirectUrl: (typeof location !== 'undefined' ? location.origin + '/login' : ''),
+    // Destino de los callbacks de Supabase Auth (OAuth, confirmación de
+    // email, recuperación de contraseña).
+    // REGLA DURA: origin + '/chat.html'. Nunca '/login' (ruta sin extensión
+    // que dependía de cleanUrls/extensions del servidor) y nunca un esquema
+    // personalizado (`numination://` → "scheme does not have a registered
+    // handler" en el navegador).
+    authRedirectUrl: (typeof location !== 'undefined' ? location.origin + '/chat.html' : '/chat.html'),
+    // Destino post-login: SIEMPRE el fichero real '/chat.html'.
+    // Las rutas sin extensión ('/chat') dependen de que el servidor de
+    // estáticos resuelva la extensión implícita (express.static
+    // 'extensions' en local, cleanUrls en Vercel); si no la resuelve,
+    // '/chat' cae en el 404 o en la app por defecto en vez de abrir el chat.
+    postLoginPath: '/chat.html',
     appVersion: '1.0.0',
     // IMPORTANTE: no reutilizar la misma key que supabase.auth (rompe getSession)
     storageKeys: {

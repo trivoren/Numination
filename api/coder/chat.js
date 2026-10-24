@@ -29,6 +29,7 @@ import { streamGroq, streamGemini } from '../../src/services/streaming.js';
 import { buildCoderSystemPrompt, buildCoderUserPrompt, clampCode, extractCodeBlock } from '../../services/code-prompts.js';
 import { analyzeCode } from '../../services/context-parser.js';
 import { verificarLimite, registrarUso, buildRateLimitHeaders } from '../../src/services/limits.js';
+import { withCoderSession } from './_session.js';
 
 /* ── Límites del endpoint ── */
 const MAX_PROMPT_LEN = 4_000;
@@ -139,7 +140,7 @@ function sanitizeHistory(history) {
  * @param {import('express').Response} res
  * @returns {Promise<void>}
  */
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ ok: false, error: 'Método no permitido. Usa POST.' });
@@ -274,3 +275,5 @@ export default async function handler(req, res) {
   try { registrarUso(req).catch(() => {}); } catch { /* noop */ }
   console.log(`[coder/chat] user=${userId} provider=${provider} tokens=${tokens} ${Date.now() - started}ms`);
 }
+
+export default withCoderSession(handler);

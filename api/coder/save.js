@@ -12,6 +12,7 @@
  */
 
 import { upsertFile, normalizeFilename, languageFromPath, MAX_FILE_BYTES } from './_store.js';
+import { withCoderSession } from './_session.js';
 
 /**
  * Handler POST.
@@ -19,7 +20,7 @@ import { upsertFile, normalizeFilename, languageFromPath, MAX_FILE_BYTES } from 
  * @param {import('express').Response} res
  * @returns {Promise<void>}
  */
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ ok: false, error: 'Método no permitido. Usa POST.' });
@@ -70,3 +71,5 @@ export default async function handler(req, res) {
     });
   }
 }
+
+export default withCoderSession(handler);

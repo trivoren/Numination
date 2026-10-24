@@ -102,6 +102,62 @@ const VERIFY_WINDOW_MIN    = 15;
 const LOCKOUT_ATTEMPTS = 5;
 const LOCKOUT_MINUTES  = 15;
 
+/* ─── Ruta de aterrizaje post-login ───────────────────────────────────────
+   Un login correcto tiene que terminar SIEMPRE en un fichero real
+   ('/chat.html'), nunca en una ruta sin extensión ('/chat').
+
+   POR QUÉ
+     '/chat' sólo existe si el servidor de estáticos sabe resolver la
+     extensión implícita:
+       · local  → express.static con extensions:['html']
+       · Vercel → cleanUrls en vercel.json
+     Cuando esa resolución no está (deploy sin estáticos, CDN, proxy),
+     '/chat' cae al 404 / a la app por defecto en lugar de abrir el chat.
+
+   VARIABLES (en este orden)
+     POST_LOGIN_REDIRECT → ruta o URL absoluta (p.ej. '/chat.html')
+     REDIRECT_URL        → URL base de la app (se le añade chat.html)
+     FRONTEND_URL        → URL base de la app (se le añade chat.html)
+   Por defecto: '/chat.html'. */
+const CHAT_PAGE = '/chat.html';
+
+function normalizeChatPath(value) {
+  const raw = String(value ?? '').trim();
+  if (!raw) return CHAT_PAGE;
+
+  let pathname = raw;
+  if (/^https?:\/\//i.test(raw)) {
+    try { pathname = new URL(raw).pathname; }
+    catch { pathname = ''; }
+  }
+
+  pathname = String(pathname).split('?')[0].split('#')[0].trim();
+  if (!pathname) return CHAT_PAGE;
+  if (!pathname.startsWith('/')) pathname = `/${pathname}`;
+  pathname = pathname.replace(/\/+$/, '');
+
+  const segments = pathname.split('/').filter(Boolean);
+  if (!segments.length) return CHAT_PAGE;
+
+  const last = segments[segments.length - 1];
+  if (/\.html?$/i.test(last)) return `/${segments.join('/')}`;
+  if (/\.[a-z0-9]+$/i.test(last)) {
+    segments[segments.length - 1] = `${last}.html`;
+    return `/${segments.join('/')}`;
+  }
+
+  segments[segments.length - 1] = 'chat.html';
+  return `/${segments.join('/')}`;
+}
+
+const POST_LOGIN_PATH = normalizeChatPath(
+  pickEnv('POST_LOGIN_REDIRECT', TEST_KEYS.POST_LOGIN_REDIRECT)
+  || pickEnv('REDIRECT_URL',     TEST_KEYS.REDIRECT_URL)
+  || pickEnv('FRONTEND_URL',     TEST_KEYS.FRONTEND_URL)
+);
+
+export { POST_LOGIN_PATH, normalizeChatPath, CHAT_PAGE };
+
 /* ─── Diagnóstico de env vars ─── */
 
 if (!CLIENT_ID) {
@@ -622,17 +678,50 @@ async function clearFailedAttempts(/* profile */) {
    12 · OPERACIONES DE USUARIO
    ══════════════════════════════════════════════════════════════════════════ */
 
+/* FIX-ORPHAN · dominios que indican correo placeholder (nunca deben ser
+   email de una cuenta nueva). Los perfiles YA existentes con estos dominios
+   se les permite loguear; solo se bloquea su creación. */
+const PLACEHOLDER_EMAIL_DOMAINS = new Set([
+  'invalid.numination.local',
+  'github.local',
+]);
+
 async function findOrCreateUser({ email, name, picture, provider = 'google', emailVerified = false, req = null }) {
+  // FIX-ORPHAN · 1/3: sin email del proveedor → error controlado (el caller
+  // responde 400/503); jamás se fabrica un correo sintético.
+  if (!isValidEmail(email)) {
+    log('error', 'auth.orphan.no_email', { provider }, req);
+    audit('auth.orphan.no_email', { provider });
+    return null;
+  }
+
   const key = String(email).toLowerCase();
   let profile = null;
   try { profile = await getProfileByEmail(key); }
   catch (e) { log('warn', 'auth.getProfileByEmail.failed', { message: e.message }, req); }
 
   if (profile) {
+    // FIX-LINK: el proveedor ya afirmó que este email es verificado →
+    // si el perfil existente (creado antes con email/password o GitHub)
+    // no lo estaba, hereda la verificación. Login continúa como siempre.
+    if (emailVerified === true && profile.email_verified !== true) {
+      try {
+        await setEmailVerified(profile.id);
+        profile = { ...profile, email_verified: true };
+      } catch {}
+    }
     try { await updateLastLogin(profile.id); } catch {}
     log('info', 'auth.login.oauth.existing', { email: key, provider }, req);
     audit('login.oauth.existing', { email: key, provider });
     return profile;
+  }
+
+  // FIX-ORPHAN · 2/3: se crea cuenta NUEVA → nunca con dominio placeholder.
+  const domain = key.split('@')[1] || '';
+  if (PLACEHOLDER_EMAIL_DOMAINS.has(domain)) {
+    log('error', 'auth.orphan.blocked', { provider }, req);
+    audit('auth.orphan.blocked', { provider });
+    return null;
   }
 
   const nuevo = {
@@ -660,8 +749,16 @@ async function findOrCreateUser({ email, name, picture, provider = 'google', ema
     log('warn', 'auth.createProfile.failed', { message: e.message }, req);
   }
 
-  log('warn', 'auth.user.ephemeral', { email: key, provider }, req);
-  return nuevo;
+  // FIX-ORPHAN · 3/3: si createProfile falló, se reconsulta (carrera con
+  // otro signup del mismo email). Si tampoco está, se devuelve null para
+  // que el caller falle con 503: nunca más un "usuario efímero" con sesión
+  // y datos en memoria que no existen en BD.
+  try { profile = await getProfileByEmail(key); } catch {}
+  if (profile) return profile;
+
+  log('error', 'auth.user.persist_failed', { email: key, provider }, req);
+  audit('auth.user.persist_failed', { provider });
+  return null;
 }
 
 async function findUserByEmail(email) {
@@ -750,6 +847,13 @@ async function handleGoogleLogin(req, res) {
     req,
   });
 
+  // FIX-ORPHAN: si la cuenta no se pudo persistir, fallar con 503.
+  // Antes se emitía sesión sobre un objeto efímero que no existía en BD.
+  if (!user) {
+    return fail(res, 503, 'user_persist_failed',
+      'No se pudo crear la cuenta. Reintenta en unos segundos.');
+  }
+
   log('info', 'auth.login.google.ok', { email: user.email }, req);
   audit('login.google.ok', { email: user.email });
   return res.json(issueSession(res, user, remember, req));
@@ -759,10 +863,14 @@ async function handleGoogleLogin(req, res) {
    14 · GITHUB
    ══════════════════════════════════════════════════════════════════════════ */
 
+/* FIX-ORPHAN · antes caía a `${profile?.username}@github.local` cuando GitHub
+   no devolvía emails, y se terminaba creando un perfil que nunca podría
+   recibir correo ni resetear su password (usuario huérfano). Ahora:
+   · null        → el caller deniega el login (error, cero cuentas falsas).
+   · {verified}  → para el M-002 del perfil/link (solo emails verificados
+                   por GitHub confían de suficiente para vincular cuentas). */
 async function resolverEmailGitHub(accessToken, profile) {
-  const fallback = () =>
-    String(profile?.emails?.[0]?.value || `${profile?.username}@github.local`).toLowerCase();
-  if (!accessToken) return fallback();
+  if (!accessToken) return null;
   try {
     const res = await fetch('https://api.github.com/user/emails', {
       headers: {
@@ -775,20 +883,27 @@ async function resolverEmailGitHub(accessToken, profile) {
     });
     if (!res.ok) {
       log('warn', 'auth.github.emails.http', { status: res.status });
-      return fallback();
+      return null;
     }
     const emails = await res.json();
-    if (!Array.isArray(emails) || emails.length === 0) return fallback();
+    if (!Array.isArray(emails) || emails.length === 0) return null;
+    // Solo email verificado por GitHub (o que GitHub lista como verificado;
+    // el "primary" no verificado NO sirve para crear ni vincular cuentas).
     const elegido =
       emails.find((e) => e.primary && e.verified) ||
       emails.find((e) => e.verified) ||
-      emails.find((e) => e.primary) ||
-      emails[0];
+      null;
     const email = String(elegido?.email || '').trim().toLowerCase();
-    return email || fallback();
+    if (!email) {
+      log('warn', 'auth.github.emails.unverified', {
+        username: profile?.username || null,
+      });
+      return null;
+    }
+    return { email, verified: elegido.verified === true };
   } catch (e) {
     log('warn', 'auth.github.emails.error', { message: e.message });
-    return fallback();
+    return null;
   }
 }
 
@@ -803,12 +918,19 @@ if (GITHUB_ENABLED) {
       },
       async (accessToken, _refreshToken, profile, done) => {
         try {
-          const email = await resolverEmailGitHub(accessToken, profile);
+          const resolved = await resolverEmailGitHub(accessToken, profile);
+          // FIX-ORPHAN: sin email verificable de GitHub → login denegado
+          // (nada de @github.local ni usuarios huérfanos).
+          if (!resolved) {
+            log('warn', 'auth.github.no_email', { username: profile?.username || null });
+            return done(null, null, { message: 'github_no_email' });
+          }
           const user = await findOrCreateUser({
-            email,
+            email: resolved.email,
             name: profile.displayName || profile.username || 'Usuario GitHub',
             picture: profile.photos?.[0]?.value || null,
             provider: 'github',
+            emailVerified: resolved.verified,
           });
           return done(null, user);
         } catch (err) {
@@ -856,7 +978,7 @@ export function mountAuthRoutes(app) {
       // M-005 · rechazar callback sin state válido (login CSRF).
       if (!verifyOAuthState(req.query.state)) {
         log('warn', 'auth.github.callback.bad_state', {}, req);
-        return res.redirect('/login?error=state');
+        return res.redirect('/login.html?error=state');
       }
       passport.authenticate(
         'github',
@@ -864,18 +986,23 @@ export function mountAuthRoutes(app) {
         (err, user, info) => {
           if (err) {
             log('error', 'auth.github.callback.error', { message: err.message }, req);
-            return res.redirect('/login?error=github');
+            return res.redirect('/login.html?error=github');
           }
           if (!user) {
-            const reason = info?.message === 'access_denied' ? 'access_denied' : 'github';
+            const reason =
+              info?.message === 'access_denied'   ? 'access_denied' :
+              info?.message === 'github_no_email' ? 'github_no_email' :
+              'github';
             log('warn', 'auth.github.callback.no_user', { reason }, req);
-            return res.redirect('/login?error=' + reason);
+            return res.redirect('/login.html?error=' + reason);
           }
-          const token = signSession(user, true);
-          setSessionCookie(res, token, true, req);
+          // La cookie se emite ANTES del redirect (issueSession → setSessionCookie):
+          // si el navegador no la guarda, /chat.html volvería a pedir login.
+          issueSession(res, user, true, req);
           log('info', 'auth.login.github.ok', { email: user.email }, req);
           audit('login.github.ok', { email: user.email });
-          return res.redirect('/chat');
+          // Destino estricto con extensión: /chat.html (nunca '/chat').
+          return res.redirect(POST_LOGIN_PATH);
         }
       )(req, res, next);
     });

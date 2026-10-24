@@ -56,7 +56,9 @@
   function ensureInit() {
     if (initialized || !promptPxEl) return;
     if (typeof window.Terminal === 'undefined') {
-      window.NuminToast.error('No se pudo cargar la terminal (CDN).');
+      dot('error');
+      writeColored('No se pudo cargar la terminal (CDN de xterm bloqueado).', 'red');
+      window.NuminToast?.error?.('No se pudo cargar la terminal (CDN).');
       return;
     }
     initialized = true;
@@ -79,6 +81,9 @@
     term.onData(onTerminalData);
     printBanner();
     drawPrompt();
+    fit();                                        // medir tras el primer print
+    dot('ready');
+    window.eventBus?.emit('term:ready', {});
   }
 
   /** Banner inicial del mock (idéntico a la salida de execute --help). */
@@ -180,12 +185,70 @@
   function drawPromptSoft() { drawPrompt(); }
 
   /**
+   * Estado del indicador del punto en la barra + pestaña de Terminal.
+   * CSS premium define: is-ready (violeta) · is-running (verde pulso) ·
+   * is-error (rojo). Elementos: #terminal-dot (toolbar) y dot de la pestaña.
+   * @param {'ready'|'running'|'error'} state
+   */
+  function dot(state) {
+    const targets = [document.getElementById('terminal-dot')];
+    const tabDot = document.querySelector('#tab-terminal .assistant-tabs__dot');
+    if (tabDot) targets.push(tabDot);
+    for (const el of targets) {
+      if (!el) continue;
+      el.classList.toggle('is-ready', state === 'ready');
+      el.classList.toggle('is-running', state === 'running');
+      el.classList.toggle('is-error', state === 'error');
+    }
+  }
+
+  /**
+   * MOCK LOCAL de emergencia: si /api/coder/execute no responde (red caída,
+   * 5xx), la terminal NO se queda muda. Simula los comandos más habituales
+   * con salida verde/rojo, marcando el origen con una nota tenue.
+   * @param {string} command
+   * @returns {void}
+   */
+  function runLocalMock(command) {
+    const lower = command.toLowerCase();
+    const note = '\u001b[90m(mock local · el servidor de ejecución no respondió)\u001b[0m';
+    let out = '';
+    let ok = true;
+
+    if (lower === 'help') out = 'Comandos: ls · cat <archivo> · npm install | run | test · node <archivo> · pwd · whoami · env · git status · clear';
+    else if (lower === 'pwd') out = '~/proyecto';
+    else if (lower === 'whoami') out = 'usuario numination (sandbox local)';
+    else if (lower === 'env') out = 'NODE_ENV=sandbox\nMOCK=true';
+    else if (lower === 'npm install' || lower === 'npm i' || lower === 'npm ci') {
+      out = 'added 0 packages in 0.4s\n17 packages are looking for funding\nrun `npm fund` for details';
+    } else if (lower === 'npm test' || lower === 'npm run test') {
+      out = '> mock-runner\nPASS (3 pruebas simuladas)';
+    } else if (lower === 'npm run' || lower === 'npm run dev' || lower === 'npm start') {
+      out = 'Sandbox iniciado (simulación). No se ejecutan procesos reales.';
+    } else if (lower === 'git status') {
+      out = 'On branch main\nnothing to commit, working tree clean';
+    } else if (lower === 'ls' || lower.startsWith('ls ')) {
+      out = ['index.js', 'components/', 'styles/', 'README.md'].join('  ');
+    } else if (lower.startsWith('cat ') || lower.startsWith('node ')) {
+      out = `El contenido de “${command.split(' ').slice(1).join(' ')}” no está disponible sin conexión con el servidor.`;
+      ok = false;
+    } else {
+      ok = false;
+      out = `comando no reconocido en el mock local: ${command}`;
+    }
+
+    writeColored(out, ok ? 'green' : 'red');
+    writeColored(note, 'dim');
+  }
+
+  /**
    * POST al backend mock. Colores: verde éxito, rojo fallo.
    * @param {string} command
    * @returns {Promise<void>}
    */
   async function executeRemote(command) {
     running = true;
+    dot('running');
     try {
       const body = window.NumAPI
         ? await window.NumAPI.post(EXECUTE_URL, { command }, { silent: true })
@@ -193,7 +256,7 @@
             const res = await fetch(EXECUTE_URL, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-              credentials: 'same-origin',
+              credentials: 'include',
               body: JSON.stringify({ command })
             });
             const data = await res.json().catch(() => null);
@@ -209,9 +272,21 @@
         writeColored(body.output, 'red');
         if (body.detail) writeColored(body.detail, 'dim');
       }
+      dot('ready');
     } catch (err) {
-      writeColored('Error de red: ' + err.message, 'red');
-      window.NuminToast.error('La terminal no pudo ejecutar el comando.');
+      dot('error');
+      const status = err?.status;
+      const code = err?.code || '';
+      if (Number(status) === 401 || err?.message?.includes('Sesión requerida')) {
+        writeColored('Sesión requerida: iniciá sesión para ejecutar comandos en el sandbox.', 'red');
+      } else if (code === 'network_error' || code === 'timeout' || Number(status) >= 500) {
+        // Backend caído → simulación local para que la terminal siga viva.
+        runLocalMock(command);
+      } else {
+        writeColored('Error: ' + (err?.message || 'desconocido'), 'red');
+      }
+      window.NuminToast?.error?.('La terminal no pudo ejecutar el comando.');
+      setTimeout(() => { if (!running) dot('ready'); }, 2200);
     } finally {
       running = false;
       window.eventBus.emit('term:command', { command, done: true });
@@ -237,14 +312,50 @@
     if (isHttpError) term.writeln('');
   }
 
-  /* ═══ Arranque: xterm necesita estar visible → init bajo demanda ═══ */
+  /* ═══ Arranque: xterm necesita estar visible → init bajo demanda ═══
+     Se coordina por DOS vías para que nunca quede muerta:
+       1. clic directo en la pestaña "Terminal" (esta página).
+       2. evento `assistant:tab` emitido por el controlador de pestañas. */
   const terminalPanel = document.getElementById('panel-terminal');
   const tabTerminal = document.getElementById('tab-terminal');
   if (tabTerminal && terminalPanel) {
     tabTerminal.addEventListener('click', () => {
-      requestAnimationFrame(ensureInit); // layout listo en el siguiente frame
+      requestAnimationFrame(activateWhenVisible); // layout listo en el siguiente frame
     });
   }
+  window.eventBus?.on?.('assistant:tab', (data) => {
+    if (data?.id !== 'terminal') return;
+    requestAnimationFrame(activateWhenVisible);
+  });
   // Fallback: algunos usuarios entran con la terminal abierta por hash.
   if (window.location.hash === '#terminal') ensureInit();
+
+  /** Si el panel de terminal ya es visible: init + fit + focus.
+     Si aún sigue oculto (transición de pestaña), no-op hasta el próximo
+     `assistant:tab`. Así la terminal nunca arranca sin layout real. */
+  function activateWhenVisible() {
+    if (terminalPanel?.hidden) return;
+    ensureInit();
+    try { fitAddon?.fit(); } catch { /* sin layout */ }
+    try { term?.focus(); } catch { /* sin init */ }
+  }
+
+  /* API pública mínima para el shell de coder.html (pestañas, toolbar). */
+  window.NuminTerminal = {
+    /** Garantiza init (necesita panel visible) + fit + focus. */
+    activate() { activateWhenVisible(); },
+    focus() { try { term?.focus(); } catch { /* sin init */ } },
+    clear() {
+      if (!term) return;
+      try {
+        term.reset();
+        inputLine = '';
+        cursorPos = 0;
+        printBanner();
+        drawPrompt();
+        term.focus();
+      } catch { /* sin init */ }
+    },
+    isReady() { return initialized; },
+  };
 })();

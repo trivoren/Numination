@@ -16,8 +16,41 @@
 
   const API = {
     load: '/api/coder/load',
+    altLoad: '/api/coder/files',
     save: '/api/coder/save'
   };
+
+  /** Endpoint activo para cargar archivos (se recuerda si el backup funciona). */
+  let activeLoadEndpoint = API.load;
+
+  /** Elemento con el estado de conexión del backend de archivos. */
+  const connEl = document.getElementById('explorer-conn');
+  const connLabel = document.getElementById('explorer-conn-label');
+
+  function setConn(state, text) {
+    if (connEl) connEl.dataset.state = state;
+    if (connLabel) connLabel.textContent = text;
+  }
+
+  /** Guarda para evitar el bucle de redirección 401 si la sesión realmente no está. */
+  const REDIRECT_FLAG = 'nm:coder:authRedirect';
+
+  /**
+   * 401 desde /api/coder/* → login con retorno. Si ya se redirigió en el
+   * último minuto (backend con 401 espurio) no se rebota al usuario.
+   * @returns {boolean} true si se lanzó la redirección
+   */
+  function redirectToLogin() {
+    try {
+      const last = sessionStorage.getItem(REDIRECT_FLAG);
+      if (last && Date.now() - Number(last) < 60_000) return false;
+      sessionStorage.setItem(REDIRECT_FLAG, String(Date.now()));
+    } catch { /* storage no disponible: se redirige igual */ }
+    const next = window.location.pathname + window.location.search;
+    if (connLabel) setConn('err', 'Sesión requerida — redirigiendo a login…');
+    setTimeout(() => window.location.assign('/login.html?next=' + encodeURIComponent(next)), 900);
+    return true;
+  }
 
   const treeEl = document.getElementById('file-tree');
   const refreshBtn = document.getElementById('btn-refresh-tree');
@@ -49,7 +82,7 @@
     try {
       res = await fetch(url, {
         headers: { 'Accept': 'application/json', ...(options.headers || {}) },
-        credentials: 'same-origin',
+        credentials: 'include', // cookies de sesión también en subdominios
         ...options
       });
     } catch (networkErr) {
@@ -59,7 +92,7 @@
     try { body = await res.json(); } catch { /* respuesta sin JSON */ }
     if (!res.ok) {
       const msg = body?.error || res.statusText || 'Error del servidor';
-      throw Object.assign(new Error(`HTTP ${res.status}: ${msg}`), { status: res.status });
+      throw Object.assign(new Error(`HTTP ${res.status}: ${msg}`), { status: res.status, payload: body });
     }
     return body;
   }
@@ -208,7 +241,7 @@
 
       let file = fileIndex.get(path);
       if (!file || typeof file.content !== 'string') {
-        const data = await requestJson(`${API.load}?f=${encodeURIComponent(path)}`);
+        const data = await requestJson(`${activeLoadEndpoint}?f=${encodeURIComponent(path)}`);
         file = data?.file;
         if (!file || typeof file.content !== 'string') throw new Error('El backend no devolvió contenido.');
         fileIndex.set(path, file);
@@ -216,12 +249,16 @@
       window.EditorState.setValue({
         path: file.path || path,
         content: file.content,
-        language: file.language || window.languageFromPath?.(path),
-        isSaved: true
+        language: file.language || window.languageFromPath?.(path)
       });
       window.eventBus.emit('file:opened', { path, loaded: true });
     } catch (err) {
       console.error('[file-tree] openFile:', err);
+      if (err?.status === 401 && redirectToLogin()) return;
+      if (err?.status === 404) {
+        window.NuminToast.info(`“${path}” ya no existe en tu proyecto. Recarga el árbol.`);
+        return;
+      }
       window.NuminToast.error(`No se pudo abrir “${path}”. ${err.message}`);
     }
   }
@@ -249,6 +286,7 @@
       window.NuminToast.ok(`“${target}” guardado.`);
     } catch (err) {
       console.error('[file-tree] save:', err);
+      if (err?.status === 401 && redirectToLogin()) return;
       window.NuminToast.error(`Guardado falló (${err.status || 'red'}): ${err.message}`);
     }
   }
@@ -276,26 +314,53 @@
 
   /* ═══ Ciclo de carga ═══ */
 
+  /**
+   * Carga el árbol probando el endpoint activo y, si no existe (404/405),
+   * el alternativo (/api/coder/files) del backend deployado.
+   * @returns {Promise<Array<{path:string, language?:string, size?:number}>>}
+   */
+  async function fetchTree() {
+    try {
+      const data = await requestJson(activeLoadEndpoint);
+      const files = Array.isArray(data?.files) ? data.files : [];
+      return files;
+    } catch (err) {
+      // 401 NO alterna endpoints: es sesión, no ruta.
+      if (err?.status === 401) redirectToLogin();
+      const retry = err?.status === 404 || err?.status === 405;
+      if (!retry || activeLoadEndpoint === API.altLoad) throw err;
+      const alt = await requestJson(API.altLoad);
+      activeLoadEndpoint = API.altLoad; // este deploy expone el nombre alternativo
+      return Array.isArray(alt?.files) ? alt.files : (Array.isArray(alt) ? alt : []);
+    }
+  }
+
   async function refreshTree() {
     if (isLoading) return;
     isLoading = true;
     treeEl.setAttribute('aria-busy', 'true');
+    setConn('busy', 'Conectando con el backend…');
     try {
-      const data = await requestJson(API.load);
-      const files = [];
-      for (const meta of data?.files || []) {
-        files.push(meta);
+      const files = await fetchTree();
+      const norm = [];
+      for (const meta of files) {
+        norm.push(meta);
         fileIndex.set(meta.path, meta); // pre-carga de contenidos si vienen inline
       }
-      renderTree(files);
+      renderTree(norm);
+      setConn('ok', norm.length ? `Conectado · ${norm.length} archivo${norm.length === 1 ? '' : 's'}` : 'Conectado · proyecto vacío');
     } catch (err) {
       console.error('[file-tree] refresh:', err);
-      treeEl.textContent = '';
-      const note = document.createElement('p');
-      note.className = 'tree-note';
-      note.textContent = 'Sin conexión con el backend de archivos. Pulsa Recargar para reintentar.';
-      treeEl.appendChild(note);
-      window.NuminToast.error(`Explorador sin datos: ${err.message}`);
+      const redirected = err?.status === 401 && redirectToLogin();
+      if (!redirected) {
+        treeEl.textContent = '';
+        const note = document.createElement('p');
+        note.className = 'tree-note';
+        note.textContent = 'Sin conexión con el backend de archivos. Pulsa Recargar para reintentar.';
+        treeEl.appendChild(note);
+        window.NuminToast.error(`Explorador sin datos: ${err.message}`);
+        setConn('err', 'Sin conexión · pulsa Recargar');
+      }
     } finally {
       isLoading = false;
       treeEl.removeAttribute('aria-busy');
